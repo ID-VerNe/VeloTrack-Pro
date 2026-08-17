@@ -43,6 +43,7 @@ export default function RideTitleHeader({
 }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [customTitle, setCustomTitle] = useState(title);
+  const [isComposing, setIsComposing] = useState(false);
 
   const handleStartEdit = () => {
     setCustomTitle(title);
@@ -50,6 +51,7 @@ export default function RideTitleHeader({
   };
 
   const handleConfirmSave = () => {
+    if (isComposing) return;
     if (customTitle.trim() && customTitle.trim() !== title) {
       onSaveTitle(customTitle.trim());
     }
@@ -102,9 +104,17 @@ export default function RideTitleHeader({
               type="text"
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleConfirmSave();
-                if (e.key === 'Escape') handleCancelEdit();
+                if (e.key === 'Enter' && !isComposing) {
+                  e.preventDefault();
+                  handleConfirmSave();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  handleCancelEdit();
+                }
               }}
               autoFocus
               className="flex-1 px-3 py-1.5 bg-white border-2 border-slate-900 rounded-xl text-lg font-extrabold text-slate-900 focus:outline-none shadow-xs"

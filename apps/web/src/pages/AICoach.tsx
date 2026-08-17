@@ -18,10 +18,10 @@ import ChatComposer from '../components/chat/ChatComposer';
 import type { ChatMessage, SessionSummary } from '../types/rider';
 
 const SUGGESTED_PROMPTS = [
-  '⚡ 平路巡航 20km/h 进阶：测算 46T 牙盘最佳踏频与齿比档位',
-  '🎯 阶段训练目标重设：结合近期负荷生成下一周期公里数与均速',
-  '🦵 膝关节生物力学诊断：评估大齿比做功负荷与踏频漂移风险',
-  '📈 深圳/广州多路线巡航做功对比与心肺恢复评估',
+  '测算大行P8在46T齿比下平路巡航20km/h的推荐踏频与档位',
+  '结合近期实战双均速与负荷，评估下一阶段周里程与均速目标',
+  '评估大齿比爬坡对右膝半月板的受力影响与降档节奏',
+  '对比深圳湾与二沙岛等路线的巡航做功特征与心率恢复',
 ];
 
 const DEFAULT_WELCOME_MSG: ChatMessage = {
@@ -103,6 +103,8 @@ export default function AICoach() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+
   const handleSelectSession = (sid: string) => {
     setSessionId(sid);
   };
@@ -113,8 +115,14 @@ export default function AICoach() {
     setMessages([DEFAULT_WELCOME_MSG]);
   };
 
-  const handleClearSession = async (sid = sessionId) => {
-    if (!window.confirm('确定要清空该对话历史吗？')) return;
+  const handleRequestDeleteSession = (sid = sessionId) => {
+    setSessionToDelete(sid);
+  };
+
+  const handleConfirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    const sid = sessionToDelete;
+    setSessionToDelete(null);
     try {
       await fetch(`/api/ai/coach/${sid}`, { method: 'DELETE' });
       if (sid === sessionId) {
@@ -235,7 +243,7 @@ export default function AICoach() {
           riderBike={riderInfo.bike}
           onSelectSession={handleSelectSession}
           onNewSession={handleNewSession}
-          onDeleteSession={handleClearSession}
+          onDeleteSession={handleRequestDeleteSession}
           onOpenProfile={() => setIsProfileOpen(true)}
         />
 
@@ -304,7 +312,7 @@ export default function AICoach() {
 
               <button
                 type="button"
-                onClick={() => handleClearSession()}
+                onClick={() => handleRequestDeleteSession(sessionId)}
                 className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                 title="清空当前推演记录"
               >
@@ -361,6 +369,44 @@ export default function AICoach() {
           fetchRiderInfo();
         }}
       />
+
+      {/* In-App Delete Session Confirmation Modal */}
+      {sessionToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 animate-in fade-in select-none">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">清空对话记录</h3>
+                <p className="text-xs text-slate-500 mt-0.5">确定要清空该推演会话的历史记录吗？</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+              清空后该专项推演的历史消息将被清除，但已沉淀的车手档案与目标记忆不会受到影响。
+            </p>
+
+            <div className="flex items-center justify-end space-x-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSessionToDelete(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteSession}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-all active:scale-95 cursor-pointer"
+              >
+                确认清空
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

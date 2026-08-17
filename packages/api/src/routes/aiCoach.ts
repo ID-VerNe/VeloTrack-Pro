@@ -9,6 +9,12 @@ import {
   upsertRiderMemory, 
   getRiderContextPrompt 
 } from '../services/riderService';
+import {
+  calculateGearCadenceSpeed,
+  calculateClimbingPower,
+  calculateHeartRateZones,
+  calculateGoalTimeline
+} from '../utils/cyclingPhysicsEngine';
 
 export const aiCoachRouter = new Hono<{ Bindings: Bindings }>();
 
@@ -64,7 +70,7 @@ aiCoachRouter.delete('/coach/:session', async (c) => {
   }
 });
 
-// 4. 多轮对话与 Tool Calling 执教引擎 (分层 Agentic Memory 架构)
+// 4. 多轮对话与 Tool Calling 执教引擎 (集成确定性运动物理计算引擎)
 aiCoachRouter.post('/coach/:session/chat', async (c) => {
   const sessionId = c.req.param('session');
   try {
@@ -87,24 +93,22 @@ aiCoachRouter.post('/coach/:session/chat', async (c) => {
 
 ${riderContext}
 
-【教练核心执教职责与【分层记忆与主动评估】铁律】：
-1. **科学运用【双均速】与【运动/停顿时间】进行专业剖析**：
+【教练核心执教职责与【确定性物理计算与主动评估】铁律】：
+1. **严禁心算运动学与物理数据，必须调用计算工具**：
+   - 当涉及**齿比与时速踏频换算**（如 46T 牙盘配 17T/19T 飞轮在 90rpm 的时速、或 20km/h 巡航所需踏频）、**爬坡克服重力功率做功 (W/kg 与 %FTP)**、**Karvonen 生理心率 5 区计算** 或 **目标达成剩余周数推演**时，**严禁口算猜测！必须优先调用工具 calculate_cycling_kinematics 获取 100% 确定性的数学物理计算结果**，并在分析中精准引用！
+2. **科学运用【双均速】与【运动/停顿时间】进行专业剖析**：
    - ⚡ **停表均速 (Moving Avg Speed)**：基于纯踩踏运动做功时间计算，是评估车手真实巡航体能、输出功率与踏频匹配度的**首要核心基准**（不受城市红绿灯与路口停顿拉低）；
    - 🌐 **总均速 (Elapsed Avg Speed)**：基于门到门总历时计算，反映路线通畅度、红绿灯密集度与长途拉练节奏；
    - ⏸️ **停顿时间 (Paused Time)**：当发现车手总均速明显低于停表均速（如停顿 20~30 分钟），说明红绿灯走走停停较多。**必须重点提醒车手：红绿灯起步前务必提前降档至中轻齿比，绿灯亮起以轻快高踏频平顺起步，严禁用大齿比死蹬重踏，以防膝盖半月板急性劳损！**
-2. **主动洞察车手当前状态与自主设定目标**：
-   - 每次对话时，你必须首先审视【车手真实数据库近期实战状态】与【系统当前量化目标】。
-   - 当车手在对话中进行日常交流、咨询训练、汇报骑行或表达任何想法时，**你必须扮演主动引领的职业总教练**：
-     - 如果车手近期周完成度高（如已达 80%+、单次轻松突破 40km、膝盖无伤病反馈），**你要主动向车手指出其良好表现，并主动提出调高/进阶目标**；
-     - 如果车手处于减量期或身体疲劳，主动提出减量与恢复目标；
-   - **只要你提出调整目标，必须在当前轮次主动调用工具 set_training_goals 将新参数直接写入系统生效！**
-3. **器材与硬件独立局部更新原则**：
-   - 当车手提及改装、更换齿比（如 46T牙盘+11-28T 7速）、更换外胎、脚踏或战车时，**必须调用 update_rider_profile 工具进行局部合并更新，绝不能抹去已有的外胎或其他配件数据**！
-4. **数据查库优先**：当分析历史表现、对比或做计划时，**优先调用工具 query_rides_summary 获取真实数据**。
-5. **结构化专业输出**：
+3. **主动洞察车手当前状态与自主设定目标**：
+   - 审视【车手真实数据库近期实战状态】与【系统当前量化目标】。当车手近期周完成度高（80%+、单次突破、无伤病），主动提出调高目标，并**在当前轮次主动调用 set_training_goals 写入系统生效**。
+4. **器材与硬件独立局部更新原则**：
+   - 当车手提及改装、更换齿比（如 46T牙盘+11-28T 7速）、更换外胎、脚踏或战车时，**必须调用 update_rider_profile 工具进行局部合并更新，绝不能抹去已有的外胎或配件数据**！
+5. **数据查库优先**：当分析历史表现、对比或做计划时，**优先调用工具 query_rides_summary 获取真实数据**。
+6. **结构化专业输出**：
    - 📊 **车手近期状态主动洞察（含停表均速与有效运动时间分析）**
-   - 🎯 **量化目标与硬件适配分析**
-   - 🛠️ **专属器材齿比、起步控频与 4 周执行指南**`;
+   - ⚙️ **精准物理运动学计算与齿比/功率解析（基于精确计算工具结果）**
+   - 🎯 **量化目标与专属 4 周执行指南（含红绿灯起步控频与膝盖保护）**`;
 
     const messages: any[] = [
       { role: 'system', content: eliteCoachSystemPrompt }
@@ -138,6 +142,45 @@ ${riderContext}
     `).bind(sessionId, message).run();
 
     const tools = [
+      {
+        type: 'function',
+        function: {
+          name: 'calculate_cycling_kinematics',
+          description: '【运动学与物理确定性计算引擎】计算齿比时速踏频对照表、爬坡克服重力做功与功率瓦特(W/kg)、Karvonen心率5区阈值、目标达成剩余周数时间预算',
+          parameters: {
+            type: 'object',
+            properties: {
+              operation: {
+                type: 'string',
+                enum: ['gear_cadence_speed', 'climbing_power', 'hr_zones', 'goal_timeline'],
+                description: '计算类型：gear_cadence_speed(齿比踏频时速换算), climbing_power(爬升做功与克服重力功率), hr_zones(心率储备5区), goal_timeline(目标达成时间推演)'
+              },
+              // For gear_cadence_speed
+              chainring: { type: 'number', description: '前牙盘齿数，例如 46 或 53' },
+              cogs: { type: 'array', items: { type: 'number' }, description: '后飞轮齿数列表，如 [11, 13, 15, 17, 19, 21, 24, 28]' },
+              wheel_spec: { type: 'string', description: '轮径规格，如 "20x2.0" (大行P8/406), "20x1-1/8" (451), "700x25c"' },
+              cadence_rpm: { type: 'number', description: '给定踩踏踏频(rpm)，计算各档位时速' },
+              target_speed_kmh: { type: 'number', description: '给定目标巡航时速(km/h)，计算各档位所需踏频并找出85-95rpm黄金档位' },
+              // For climbing_power
+              rider_weight_kg: { type: 'number', description: '车手体重(kg)' },
+              bike_weight_kg: { type: 'number', description: '战车整备重量(kg)' },
+              ascent_meters: { type: 'number', description: '累计爬升高度(米)' },
+              moving_time_seconds: { type: 'number', description: '纯运动耗时(秒)' },
+              ftp_watts: { type: 'number', description: '车手功能阈值功率(FTP)' },
+              // For hr_zones
+              max_hr: { type: 'number', description: '最大心率(bpm)' },
+              resting_hr: { type: 'number', description: '静息心率(bpm)' },
+              current_hr: { type: 'number', description: '当前骑行平均心率(bpm)' },
+              // For goal_timeline
+              current_total_km: { type: 'number', description: '当前已完成累计里程(km)' },
+              target_total_km: { type: 'number', description: '总目标里程(km)' },
+              weekly_target_km: { type: 'number', description: '每周目标骑行里程(km)' },
+              sessions_per_week: { type: 'number', description: '每周计划骑行频次，默认3' }
+            },
+            required: ['operation']
+          }
+        }
+      },
       {
         type: 'function',
         function: {
@@ -197,7 +240,41 @@ ${riderContext}
     let executedToolCalls: any[] = [];
 
     async function executeTool(name: string, args: any) {
-      if (name === 'query_rides_summary') {
+      if (name === 'calculate_cycling_kinematics') {
+        const op = args.operation;
+        if (op === 'gear_cadence_speed') {
+          return calculateGearCadenceSpeed({
+            chainring: args.chainring || 46,
+            cogs: args.cogs || [11, 13, 15, 17, 19, 21, 24, 28],
+            wheelSpec: args.wheel_spec || '20x2.0',
+            cadenceRpm: args.cadence_rpm,
+            targetSpeedKmh: args.target_speed_kmh
+          });
+        } else if (op === 'climbing_power') {
+          return calculateClimbingPower({
+            riderWeightKg: args.rider_weight_kg || 75,
+            bikeWeightKg: args.bike_weight_kg || 11.5,
+            ascentMeters: args.ascent_meters || 0,
+            movingTimeSeconds: args.moving_time_seconds || 3600,
+            ftpWatts: args.ftp_watts || 165
+          });
+        } else if (op === 'hr_zones') {
+          return calculateHeartRateZones({
+            maxHr: args.max_hr || 188,
+            restingHr: args.resting_hr || 55,
+            currentAvgHr: args.current_hr
+          });
+        } else if (op === 'goal_timeline') {
+          return calculateGoalTimeline({
+            currentTotalKm: args.current_total_km || 0,
+            targetTotalKm: args.target_total_km || 1000,
+            weeklyTargetKm: args.weekly_target_km || 60,
+            sessionsPerWeek: args.sessions_per_week || 3,
+            targetAvgSpeedKmh: args.target_speed_kmh || 18
+          });
+        }
+        return { error: `Unsupported calculation operation: ${op}` };
+      } else if (name === 'query_rides_summary') {
         const city = args.city || '全部';
         const allRides = await c.env.DB.prepare('SELECT * FROM rides ORDER BY start_time DESC').all<any>();
         const filtered = (allRides.results || []).filter((r: any) => {
@@ -255,7 +332,7 @@ ${riderContext}
           await updateRiderProfile(c.env.DB, { primary_goal: args.primary_goal });
         }
 
-        // Record episodic milestone evolution (L3 Episodic Memory - NOT L2 semantic fact pollution!)
+        // Record episodic milestone evolution (L3 Episodic Memory)
         await addGoalMilestone(c.env.DB, {
           weekly_distance_km: args.weekly_distance_km || 60,
           target_avg_speed_kmh: args.target_avg_speed_kmh || 18,

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Plus, Sparkles, ShieldAlert, Wrench, Compass, BookmarkCheck } from 'lucide-react';
+import { Trash2, Plus, BookmarkCheck, ShieldAlert, Wrench, Compass } from 'lucide-react';
 import type { RiderMemory } from '../../types/rider';
 
 interface Props {
@@ -15,6 +15,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
   const [newCategory, setNewCategory] = useState('health');
   const [newContent, setNewContent] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const filteredMemories = useMemo(() => {
     if (selectedFilter === 'all') return memories;
@@ -38,11 +39,19 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
     }
   };
 
+  const handleConfirmDelete = async (id: number) => {
+    try {
+      await onDeleteMemory(id);
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  };
+
   const getCategoryMeta = (cat: string) => {
     if (cat === 'health' || cat === 'physiology') {
       return {
-        label: '健康与安全底线',
-        shortLabel: '健康底线',
+        label: '健康与身体底线',
+        shortLabel: '身体底线',
         icon: ShieldAlert,
         color: 'bg-rose-50 text-rose-700 border-rose-200/80',
         cardBorder: 'hover:border-rose-300',
@@ -74,11 +83,11 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
       {/* Intro Header */}
       <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-200/70">
         <div className="flex items-center space-x-2 text-xs font-bold text-slate-800">
-          <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-          <span>车手长期语义记忆与偏好画像 (Agentic Profile Memory)</span>
+          <BookmarkCheck className="w-4 h-4 text-slate-700 shrink-0" />
+          <span>车手习惯与身体备忘</span>
         </div>
         <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">
-          AI 教练在对话与实战中自动反思提炼的【持久原子事实】。每次生成训练指导或复盘时，均自动分层装配为高优先级先验约束。
+          记录你平时随手提到的膝盖状况、齿比改件或骑行偏好。制定课表和推演配速时，都会先照着这些习惯来。
         </p>
       </div>
 
@@ -103,7 +112,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
           }`}
         >
           <ShieldAlert className="w-3 h-3" />
-          <span>健康底线</span>
+          <span>身体底线</span>
         </button>
         <button
           onClick={() => setSelectedFilter('gear')}
@@ -148,10 +157,10 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
                     <span>{meta.shortLabel}</span>
                   </span>
 
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                    isCoachExtracted ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-slate-100 text-slate-600'
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded font-mono ${
+                    isCoachExtracted ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-slate-100 text-slate-600'
                   }`}>
-                    {isCoachExtracted ? '🤖 教练反思沉淀' : '👤 手动设定'}
+                    {isCoachExtracted ? '实战沟通沉淀' : '手动设定'}
                   </span>
 
                   <span className="text-[10px] text-slate-400 font-mono ml-auto">
@@ -164,20 +173,37 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
                 </p>
               </div>
 
-              <button
-                onClick={() => onDeleteMemory(mem.id)}
-                className="text-slate-300 hover:text-rose-600 transition-colors p-1.5 rounded-lg opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
-                title="删除该条事实"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              {confirmDeleteId === mem.id ? (
+                <div className="flex items-center space-x-1.5 shrink-0 bg-rose-50 border border-rose-200 rounded-xl p-1 animate-in fade-in">
+                  <button
+                    onClick={() => handleConfirmDelete(mem.id)}
+                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
+                  >
+                    确认
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(null)}
+                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-[10px] font-medium border border-slate-200 transition-all cursor-pointer"
+                  >
+                    取消
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDeleteId(mem.id)}
+                  className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg cursor-pointer shrink-0"
+                  title="删除该条备忘"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           );
         })}
 
         {filteredMemories.length === 0 && (
           <div className="text-center py-10 text-slate-400 text-xs font-medium bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-            该分类下暂无原子记忆条目。在与教练对话中提及身体感受或硬件配置，AI 将自动为你精炼沉淀。
+            该分类下暂无备忘条目。平时推演时聊到的身体感受或改件习惯，都会自动整理到这里。
           </div>
         )}
       </div>
@@ -186,7 +212,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
       <div className="pt-3 border-t border-slate-100 space-y-2.5">
         <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
           <Plus className="w-3.5 h-3.5 text-slate-500" />
-          <span>手动添加车手原子事实 (≤40字)</span>
+          <span>手动添加身体或器材备忘</span>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -195,18 +221,18 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
             onChange={(e) => setNewCategory(e.target.value)}
             className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer"
           >
-            <option value="health">🩺 健康与安全底线</option>
-            <option value="gear">🚲 战车调校经验</option>
-            <option value="habit">⏱️ 习惯与时空偏好</option>
-            <option value="preference">🎯 训练风格偏好</option>
+            <option value="health">健康与身体底线</option>
+            <option value="gear">战车与配件经验</option>
+            <option value="habit">骑行时段与路线习惯</option>
+            <option value="preference">配速与训练偏好</option>
           </select>
 
           <input
             type="text"
-            placeholder="例如：右膝曾有劳损，需维持85rpm以上高踏频..."
+            placeholder="例如：右膝曾有劳损，需维持 85rpm 以上高踏频..."
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
           />
 
           <button

@@ -166,7 +166,7 @@ export function AIConfigCard() {
               type="button"
               onClick={handleSave}
               disabled={saveStatus === 'saving'}
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer flex items-center space-x-1.5"
+              className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer flex items-center space-x-1.5"
             >
               {saveStatus === 'saved' ? (
                 <>

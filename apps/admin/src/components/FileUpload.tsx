@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, RefreshCw, Layers, FileCode, X } from 'lucide-react';
 
 export interface BatchProgress {
   total: number;
@@ -40,7 +40,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
         f.name.toLowerCase().endsWith('.tcx') || f.name.toLowerCase().endsWith('.gpx')
       );
       if (files.length > 0) {
-        setStagedFiles(files);
+        setStagedFiles((prev) => [...prev, ...files]);
       }
     }
   }, []);
@@ -49,9 +49,17 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
     e.preventDefault();
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      setStagedFiles(files);
+      setStagedFiles((prev) => [...prev, ...files]);
     }
   }, []);
+
+  const handleRemoveFile = (index: number) => {
+    setStagedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAll = () => {
+    setStagedFiles([]);
+  };
 
   const handleTriggerUpload = () => {
     if (stagedFiles.length > 0) {
@@ -64,10 +72,10 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
     : 0;
 
   return (
-    <div className="flex flex-col items-center w-full space-y-6">
+    <div className="flex flex-col items-center w-full space-y-5">
       {/* Drag & Drop Area */}
       <div
-        className={`relative flex flex-col items-center justify-center w-full h-[320px] border-2 border-dashed rounded-3xl transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center w-full h-[260px] border-2 border-dashed rounded-3xl transition-all duration-200 ${
           isDragActive
             ? 'border-blue-500 bg-blue-50/50 scale-[1.005]'
             : 'border-slate-300 bg-slate-50/60 hover:bg-slate-50'
@@ -89,25 +97,25 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
           aria-label="选取或拖入骑行数据文件"
         />
 
-        <div className="flex flex-col items-center text-center space-y-4 p-6 pointer-events-none w-full max-w-md">
+        <div className="flex flex-col items-center text-center space-y-3 p-6 pointer-events-none w-full max-w-md">
           {status === 'idle' && (
             <>
-              <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center text-slate-400">
-                {stagedFiles.length > 1 ? (
-                  <Layers className="w-8 h-8 text-blue-600 stroke-[1.8]" />
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center text-slate-400">
+                {stagedFiles.length > 0 ? (
+                  <Layers className="w-7 h-7 text-blue-600 stroke-[1.8]" />
                 ) : (
-                  <UploadCloud className="w-8 h-8 text-slate-400 stroke-[1.8]" />
+                  <UploadCloud className="w-7 h-7 text-slate-400 stroke-[1.8]" />
                 )}
               </div>
               <div>
-                <p className="text-lg sm:text-xl font-bold text-slate-800">
+                <p className="text-base sm:text-lg font-bold text-slate-800">
                   {stagedFiles.length > 0 
-                    ? `已选取 ${stagedFiles.length} 个骑行运动文件`
+                    ? `已暂存 ${stagedFiles.length} 个骑行文件 (可继续拖入)`
                     : '拖入 TCX 或 GPX 骑行文件至此处'
                   }
                 </p>
-                <p className="text-xs text-slate-400 font-medium mt-1.5">
-                  支持 Garmin、华为运动健康、Apple Watch 等标准格式文件批量拖入
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  支持 Garmin、华为运动健康、Apple Watch 等格式文件批量拖入
                 </p>
               </div>
             </>
@@ -144,7 +152,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
               <div>
                 <p className="text-lg font-bold text-emerald-600">批量上传并脱敏成功！</p>
                 <p className="text-xs text-slate-500 font-medium mt-1">
-                  已成功同步 {stagedFiles.length || '全部'} 次骑行数据至云端 D1 数据库
+                  已成功同步全部骑行数据至云端 D1 数据库
                 </p>
               </div>
             </>
@@ -161,6 +169,49 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
           )}
         </div>
       </div>
+
+      {/* Staged Files List Preview */}
+      {stagedFiles.length > 0 && status === 'idle' && (
+        <div className="w-full bg-white rounded-2xl border border-slate-200 p-4 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700">
+              待上传文件清单 ({stagedFiles.length})
+            </span>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="text-xs text-slate-400 hover:text-rose-600 font-semibold transition-colors cursor-pointer"
+            >
+              清空待选
+            </button>
+          </div>
+
+          <div className="max-h-40 overflow-y-auto space-y-1.5 [scrollbar-width:none]">
+            {stagedFiles.map((file, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700"
+              >
+                <div className="flex items-center space-x-2 truncate mr-2">
+                  <FileCode className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span className="truncate font-medium">{file.name}</span>
+                  <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                    ({(file.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFile(idx)}
+                  className="text-slate-400 hover:text-rose-600 p-1 transition-colors cursor-pointer shrink-0"
+                  title="移除该文件"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Action Button */}
       <button

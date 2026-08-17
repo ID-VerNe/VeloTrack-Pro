@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
   X, 
@@ -7,7 +7,7 @@ import {
   ListFilter 
 } from 'lucide-react';
 import type { CityInfo } from '../../utils/geoUtils';
-import { MAP_STYLES } from '../../utils/mapStyles';
+import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
 
 interface Props {
   searchTerm: string;
@@ -15,8 +15,8 @@ interface Props {
   availableCities: CityInfo[];
   selectedCity: string;
   onCitySelect: (cityId: string) => void;
-  currentMapStyle: 'light' | 'satellite';
-  onMapStyleChange: (style: 'light' | 'satellite') => void;
+  currentMapStyle: MapStyleKey;
+  onMapStyleChange: (style: MapStyleKey) => void;
 }
 
 export default function DashboardControls({
@@ -30,6 +30,35 @@ export default function DashboardControls({
 }: Props) {
   const [isStyleMenuOpen, setIsStyleMenuOpen] = useState(false);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+
+  const styleMenuRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
+
+  // Global click-outside & Escape key handlers
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (styleMenuRef.current && !styleMenuRef.current.contains(e.target as Node)) {
+        setIsStyleMenuOpen(false);
+      }
+      if (legendRef.current && !legendRef.current.contains(e.target as Node)) {
+        setIsLegendOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsStyleMenuOpen(false);
+        setIsLegendOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <div className="absolute top-4 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-auto">
@@ -47,7 +76,7 @@ export default function DashboardControls({
           {searchTerm && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
             >
               <X className="w-3 h-3" />
             </button>
@@ -62,17 +91,17 @@ export default function DashboardControls({
               <button
                 key={city.id}
                 onClick={() => onCitySelect(city.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
                   isSelected
                     ? 'bg-slate-900 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
-                {city.id !== 'all' && <MapPin className="w-2.5 h-2.5 mr-0.5" />}
+                {city.id !== 'all' && <MapPin className="w-3 h-3 text-slate-400" />}
                 <span>{city.name}</span>
                 <span
-                  className={`text-[10px] px-1 py-0.2 rounded-full font-medium ${
-                    isSelected ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-400'
+                  className={`text-[10px] font-mono ml-0.5 px-1 py-0.2 rounded-full ${
+                    isSelected ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500'
                   }`}
                 >
                   {city.count}
@@ -83,80 +112,90 @@ export default function DashboardControls({
         </div>
       </div>
 
-      {/* Right Map Tools (Style Switcher & Legend) */}
+      {/* Map Layer Switcher Capsule + Legend Popover */}
       <div className="flex items-center space-x-2">
-        {/* Style Switcher Menu */}
-        <div className="relative">
+        {/* Style Switcher */}
+        <div ref={styleMenuRef} className="relative">
           <button
-            onClick={() => {
-              setIsStyleMenuOpen(!isStyleMenuOpen);
-              setIsLegendOpen(false);
-            }}
-            className="px-2.5 py-1.5 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 font-bold text-xs rounded-xl border border-slate-200/80 shadow-sm flex items-center space-x-1.5 transition-all cursor-pointer active:scale-95"
+            onClick={() => setIsStyleMenuOpen(!isStyleMenuOpen)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-md hover:bg-white text-slate-800 rounded-xl text-xs font-bold border border-slate-200/80 shadow-sm transition-all cursor-pointer"
           >
-            <MapStyleIcon className="w-3.5 h-3.5 text-slate-500" />
-            <span>{MAP_STYLES[currentMapStyle].name}</span>
+            <span>{MAP_STYLES[currentMapStyle]?.icon || '🗺️'}</span>
+            <span>{MAP_STYLES[currentMapStyle]?.name || '切换底图'}</span>
           </button>
 
           {isStyleMenuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 p-1.5 w-36 z-20 animate-in fade-in zoom-in-95 duration-100">
-              {(Object.keys(MAP_STYLES) as ('light' | 'satellite')[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    onMapStyleChange(key);
-                    setIsStyleMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-1.5 text-xs rounded-lg font-bold transition-colors cursor-pointer flex items-center justify-between ${
-                    currentMapStyle === key
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{MAP_STYLES[key].name}</span>
-                  {currentMapStyle === key && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  )}
-                </button>
-              ))}
+            <div className="absolute right-0 mt-1.5 w-36 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-150 z-20">
+              {(['light', 'dark', 'satellite', 'terrain'] as MapStyleKey[]).map((key) => {
+                const isCurrent = currentMapStyle === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      onMapStyleChange(key);
+                      setIsStyleMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isCurrent
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="flex items-center space-x-1.5">
+                      <span>{MAP_STYLES[key].icon}</span>
+                      <span>{MAP_STYLES[key].name}</span>
+                    </span>
+                    {isCurrent && <span className="text-[10px]">●</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Legend Button & Floating Panel */}
-        <div className="relative">
+        {/* Legend Toggle */}
+        <div ref={legendRef} className="relative">
           <button
-            onClick={() => {
-              setIsLegendOpen(!isLegendOpen);
-              setIsStyleMenuOpen(false);
-            }}
-            className="p-1.5 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 rounded-xl border border-slate-200/80 shadow-sm transition-all cursor-pointer active:scale-95"
-            title="查看图例"
+            onClick={() => setIsLegendOpen(!isLegendOpen)}
+            className="p-1.5 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 rounded-xl border border-slate-200/80 shadow-sm transition-all cursor-pointer"
+            title="速度图例"
           >
-            <ListFilter className="w-4 h-4 text-slate-500" />
+            <ListFilter className="w-4 h-4" />
           </button>
 
           {isLegendOpen && (
-            <div className="absolute right-0 top-full mt-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-200 p-3 w-48 z-20 animate-in fade-in zoom-in-95 duration-100 text-xs">
-              <div className="font-bold text-slate-800 mb-2 text-[11px] uppercase tracking-wider">
-                图例说明
+            <div className="absolute right-0 mt-1.5 w-48 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-xl border border-slate-800 p-3 space-y-2 text-xs font-medium z-20">
+              <div className="font-bold text-slate-300 text-[11px] uppercase tracking-wider pb-1 border-b border-slate-800">
+                动力学速度谱系
               </div>
-              <div className="space-y-2 text-[11px] text-slate-600 font-medium">
-                <div className="flex items-center space-x-2">
-                  <span className="w-3.5 h-1 rounded bg-[#4F46E5]" />
-                  <span>当前城市骑行轨迹</span>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                    <span className="text-slate-300 text-[11px]">&lt; 12 km/h</span>
+                  </span>
+                  <span className="text-slate-400 text-[10px]">停顿/低速</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-3.5 h-1 rounded bg-[#06B6D4]" />
-                  <span>正在悬停高亮轨迹</span>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+                    <span className="text-slate-300 text-[11px]">12 - 18 km/h</span>
+                  </span>
+                  <span className="text-slate-400 text-[10px]">起步/爬坡</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span>路线起点</span>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+                    <span className="text-emerald-400 text-[11px] font-bold">18 - 24 km/h</span>
+                  </span>
+                  <span className="text-emerald-400 text-[10px] font-bold">巡航甜点</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                  <span>路线终点</span>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
+                    <span className="text-blue-400 text-[11px] font-bold">&gt; 24 km/h</span>
+                  </span>
+                  <span className="text-blue-400 text-[10px] font-bold">冲刺提拉</span>
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import BentoMetricCard from '../common/BentoMetricCard';
-import { formatDuration, calculateDualSpeeds } from '../../utils/cyclingCalculations';
+import { formatFriendlyDuration, calculateDualSpeeds } from '../../utils/cyclingCalculations';
 
 interface Props {
   ride: any;
@@ -21,35 +21,37 @@ export default function RideMetricsGrid({ ride, calories }: Props) {
     ride?.elapsed_time_seconds
   );
 
-  const movingDurationFormatted = formatDuration(movingTimeSeconds);
-  const pausedMins = Math.round(pausedTimeSeconds / 60);
+  const movingDurationFriendly = formatFriendlyDuration(movingTimeSeconds);
+  const elapsedDurationFriendly = formatFriendlyDuration(elapsedTimeSeconds);
+  const pausedMins = Number((pausedTimeSeconds / 60).toFixed(1));
+  const pausedRatio = 100 - movingRatioPct;
   const distanceKm = ((ride?.distance_meters || 0) / 1000).toFixed(2);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+    <div className="grid grid-cols-2 gap-3">
       <BentoMetricCard
         label="骑行总里程"
         value={distanceKm}
         unit="公里"
-        subLabel={`运动 ${movingDurationFormatted}${pausedMins > 0 ? ` · 停顿 ${pausedMins}分` : ''}`}
+        subLabel={`总历时 ${elapsedDurationFriendly} · 踩踏做功 ${movingDurationFriendly}`}
       />
       <BentoMetricCard
-        label="⚡ 停表骑行均速"
+        label="停表骑行均速"
         value={movingAvgSpeedKmh}
         unit="km/h"
-        subLabel={`最高冲刺 ${ride?.max_speed_kmh || 0} km/h`}
+        subLabel={`纯踩踏做功均速 · 最高 ${ride?.max_speed_kmh || 0} km/h`}
       />
       <BentoMetricCard
-        label="🌐 综合总均速"
+        label="门到门综合均速"
         value={elapsedAvgSpeedKmh}
         unit="km/h"
-        subLabel={`门到门耗时 · 做功占比 ${movingRatioPct}%`}
+        subLabel={`全历时总均速 · 停顿 ${pausedMins}分 (${pausedRatio}%)`}
       />
       <BentoMetricCard
         label="累计爬升 / 能量"
         value={ride?.total_ascent_meters || 0}
         unit="米"
-        subLabel={`最高 ${ride?.max_altitude_meters || 0}m · 消耗 ${calories}kcal`}
+        subLabel={`最高海拔 ${ride?.max_altitude_meters || 0}m · 消耗 ${calories}kcal`}
       />
     </div>
   );

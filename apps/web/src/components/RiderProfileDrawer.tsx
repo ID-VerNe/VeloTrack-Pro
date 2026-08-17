@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   X, 
-  Bot, 
   SlidersHorizontal, 
-  Sparkles,
+  BookmarkCheck,
   RefreshCw, 
   Check 
 } from 'lucide-react';
@@ -173,8 +172,8 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>长期记忆与画像</span>
+              <BookmarkCheck className="w-3.5 h-3.5 text-slate-700" />
+              <span>习惯与身体备忘</span>
               <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">
                 {memories.length}
               </span>

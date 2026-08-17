@@ -6,7 +6,7 @@ import {
   Layers, 
   Compass, 
   Target, 
-  Bot, 
+  Activity, 
   BarChart3, 
   SlidersHorizontal,
   UploadCloud,
@@ -102,7 +102,7 @@ export default function Sidebar() {
     {
       title: '科学训练',
       items: [
-        { name: '训练决策舱', icon: Bot, path: '/ai-coach' },
+        { name: '训练决策舱', icon: Activity, path: '/ai-coach' },
         { name: '目标与阶梯课表', icon: Target, path: '/goals', badge: `${goalPct}%` },
       ],
     },

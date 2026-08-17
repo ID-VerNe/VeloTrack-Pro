@@ -169,29 +169,44 @@ export default function PeriodicReports() {
               ))}
             </div>
 
-            {/* Pagination Controls */}
-            <div className="flex items-center space-x-1 border border-slate-200 rounded-xl p-1 bg-white">
-              <button
-                onClick={handlePrevPeriod}
-                className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                title="上一周期"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrentTimestamp(latestActiveTimestamp)}
-                className="px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              >
-                最新
-              </button>
-              <button
-                onClick={handleNextPeriod}
-                className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                title="下一周期"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Pagination Controls with Boundary Awareness */}
+            {(() => {
+              const isLatest = currentTimestamp >= latestActiveTimestamp;
+              return (
+                <div className="flex items-center space-x-1 border border-slate-200 rounded-xl p-1 bg-white shadow-2xs">
+                  <button
+                    onClick={handlePrevPeriod}
+                    className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="上一周期"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentTimestamp(latestActiveTimestamp)}
+                    className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                      isLatest
+                        ? 'bg-slate-900 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                    title={isLatest ? '当前已是最新活跃周期' : '返回最新活跃周期'}
+                  >
+                    最新
+                  </button>
+                  <button
+                    onClick={handleNextPeriod}
+                    disabled={isLatest}
+                    className={`p-1 rounded-lg transition-colors ${
+                      isLatest
+                        ? 'text-slate-300 cursor-not-allowed'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer'
+                    }`}
+                    title={isLatest ? '已达最新周期' : '下一周期'}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </header>
 

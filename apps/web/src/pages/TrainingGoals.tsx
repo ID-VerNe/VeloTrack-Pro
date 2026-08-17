@@ -6,21 +6,24 @@ import { computeGoalStatsFromRides } from '../utils/goalCalculations';
 
 import GoalTargetCards from '../components/goals/GoalTargetCards';
 import CoachPlanSection from '../components/goals/CoachPlanSection';
+import GoalEvolutionTimeline from '../components/goals/GoalEvolutionTimeline';
 import AchievementsGrid from '../components/goals/AchievementsGrid';
 import EditGoalsModal, { type UserTargets } from '../components/goals/EditGoalsModal';
+import type { GoalMilestone } from '../types/rider';
 
 const DEFAULT_TARGETS: UserTargets = {
-  weeklyDistanceKm: 50.0,
-  targetAvgSpeedKmh: 20.0,
-  monthlyDistanceKm: 150.0,
+  weeklyDistanceKm: 60.0,
+  targetAvgSpeedKmh: 18.0,
+  monthlyDistanceKm: 180.0,
   annualDistanceKm: 1000.0,
-  coachNotes: '保持85-95rpm高踏频，平路以53x21T为主，保护膝盖稳定提速',
+  coachNotes: '换档至46/17T（第3档），绿灯路段锁90rpm巡航23km/h，红灯停车挂轻档准备起步。',
 };
 
 export default function TrainingGoals() {
   const navigate = useNavigate();
   const [rides, setRides] = useState<any[]>([]);
   const [targets, setTargets] = useState<UserTargets>(DEFAULT_TARGETS);
+  const [milestones, setMilestones] = useState<GoalMilestone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingTargets, setIsEditingTargets] = useState(false);
 
@@ -36,12 +39,15 @@ export default function TrainingGoals() {
       if (goalsRes.goals) {
         const g = goalsRes.goals;
         setTargets({
-          weeklyDistanceKm: g.weekly_distance_km || 50.0,
-          targetAvgSpeedKmh: g.target_avg_speed_kmh || 20.0,
-          monthlyDistanceKm: g.monthly_distance_km || 150.0,
+          weeklyDistanceKm: g.weekly_distance_km || 60.0,
+          targetAvgSpeedKmh: g.target_avg_speed_kmh || 18.0,
+          monthlyDistanceKm: g.monthly_distance_km || 180.0,
           annualDistanceKm: g.annual_distance_km || 1000.0,
           coachNotes: g.coach_notes || '',
         });
+      }
+      if (goalsRes.milestones) {
+        setMilestones(goalsRes.milestones);
       }
     } catch (err) {
       console.error(err);
@@ -74,7 +80,7 @@ export default function TrainingGoals() {
     navigate(
       '/ai-coach?prompt=' +
         encodeURIComponent(
-          '请结合我近期的骑行表现与生理状况，帮我量身定制下阶段的周里程与巡航均速训练目标'
+          '请结合我近期的实战双均速与踩踏做功数据，帮我评估当前目标并量身定制下阶段的进阶课表'
         )
     );
   };
@@ -129,7 +135,13 @@ export default function TrainingGoals() {
                 onAskCoach={handleAskCoachForGoals}
               />
 
-              {/* 3. Milestones & Achievements Grid */}
+              {/* 3. Goal Evolution Milestones Timeline */}
+              <GoalEvolutionTimeline
+                milestones={milestones}
+                onAskCoach={handleAskCoachForGoals}
+              />
+
+              {/* 4. Milestones & Achievements Grid */}
               <AchievementsGrid achievements={realStats.achievements} />
             </>
           )}

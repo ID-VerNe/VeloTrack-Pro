@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { CornerDownLeft, Sparkles, Send } from 'lucide-react';
+import { CornerDownLeft, Send } from 'lucide-react';
 
 interface Props {
   input: string;

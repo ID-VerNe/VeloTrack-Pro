@@ -9,11 +9,16 @@ import {
   RefreshCw,
   Bike,
   RotateCcw,
-  ChevronRight
+  ChevronRight,
+  MapPin,
+  Calendar,
+  Clock,
+  Zap,
+  Mountain
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import RideCard from '../components/RideCard';
-import { detectCityForRide } from '../utils/geoUtils';
+import { detectCityForRide, extractCitiesFromRides } from '../utils/geoUtils';
 import { formatDuration, formatRideDate } from '../utils/cyclingCalculations';
 
 export default function ActivitiesList() {
@@ -35,6 +40,8 @@ export default function ActivitiesList() {
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, []);
+
+  const availableCities = useMemo(() => extractCitiesFromRides(rides), [rides]);
 
   const isFiltered = searchQuery.trim() !== '' || cityFilter !== 'all' || distanceFilter !== 'all' || sortBy !== 'date_desc';
 
@@ -136,18 +143,23 @@ export default function ActivitiesList() {
               />
             </div>
 
-            {/* City Filter */}
+            {/* Dynamic City Filter */}
             <div className="flex items-center space-x-1.5 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 px-1">城市:</span>
-              {['all', '深圳', '广州'].map((c) => (
+              <span className="text-[11px] font-bold text-slate-400 px-1 flex items-center">
+                <MapPin className="w-3 h-3 mr-0.5" /> 城市:
+              </span>
+              {availableCities.map((c) => (
                 <button
-                  key={c}
-                  onClick={() => setCityFilter(c)}
+                  key={c.id}
+                  onClick={() => setCityFilter(c.id)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    cityFilter === c ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                    cityFilter === c.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  {c === 'all' ? '全部' : c}
+                  <span>{c.name}</span>
+                  {c.id !== 'all' && (
+                    <span className="text-[10px] ml-1 opacity-70 font-mono">({c.count})</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -217,8 +229,24 @@ export default function ActivitiesList() {
               ))}
             </div>
           ) : (
-            /* High-density Structured Table View */
+            /* High-density Structured Table View with aligned Column Headers */
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+              {/* Header row */}
+              <div className="px-5 py-2.5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center space-x-4 flex-1 min-w-0">
+                  <div className="w-8 shrink-0 text-center">类型</div>
+                  <div className="flex-1 min-w-0">活动名称与日期</div>
+                </div>
+                <div className="flex items-center space-x-6 text-right tabular-nums">
+                  <div className="w-20">距离</div>
+                  <div className="w-20 hidden sm:block">停表均速</div>
+                  <div className="w-20 hidden md:block">累计爬升</div>
+                  <div className="w-20">运动耗时</div>
+                  <div className="w-6 text-center">进入</div>
+                </div>
+              </div>
+
+              {/* Data rows */}
               <div className="divide-y divide-slate-100">
                 {filteredRides.map((ride) => {
                   const distKm = ((ride.distance_meters || 0) / 1000).toFixed(1);
@@ -231,15 +259,15 @@ export default function ActivitiesList() {
                       key={ride.id}
                       to={`/ride/${ride.id}`}
                       state={{ from: '/rides' }}
-                      className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-all group"
+                      className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50/80 transition-all group"
                     >
                       <div className="flex items-center space-x-4 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                           <Bike className="w-4 h-4" />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1 pr-3">
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                            <span className="text-xs font-bold text-slate-900 group-hover:text-slate-950 transition-colors truncate">
                               {ride.title}
                             </span>
                             <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-semibold shrink-0">
@@ -252,23 +280,22 @@ export default function ActivitiesList() {
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-6 text-xs text-slate-700 tabular-nums">
-                        <div>
-                          <span className="text-slate-400 font-normal">距离: </span>
-                          <span className="font-bold text-slate-900">{distKm} km</span>
+                      <div className="flex items-center space-x-6 text-xs text-slate-700 tabular-nums text-right">
+                        <div className="w-20 font-bold text-slate-900">
+                          {distKm} <span className="text-[10px] font-normal text-slate-400">km</span>
                         </div>
-                        <div className="hidden sm:block">
-                          <span className="text-slate-400 font-normal">均速: </span>
-                          <span className="font-bold text-slate-900">{ride.avg_speed_kmh || 0} km/h</span>
+                        <div className="w-20 hidden sm:block font-bold text-slate-900">
+                          {ride.avg_speed_kmh || 0} <span className="text-[10px] font-normal text-slate-400">km/h</span>
                         </div>
-                        <div className="hidden md:block">
-                          <span className="text-slate-400 font-normal">爬升: </span>
-                          <span className="font-bold text-slate-900">{ride.total_ascent_meters || 0} m</span>
+                        <div className="w-20 hidden md:block font-bold text-slate-900">
+                          {ride.total_ascent_meters || 0} <span className="text-[10px] font-normal text-slate-400">m</span>
                         </div>
-                        <div className="text-slate-400 font-mono text-[11px] min-w-[60px] text-right">
+                        <div className="w-20 text-slate-500 font-mono text-[11px]">
                           {duration}
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-transform" />
+                        <div className="w-6 flex items-center justify-center">
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
                       </div>
                     </Link>
                   );
