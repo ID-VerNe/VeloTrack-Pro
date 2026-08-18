@@ -215,9 +215,9 @@ export function analyzeRideTelemetry(
   const telemetryPoints: ChartTelemetryPoint[] = [];
   const markAreas: any[] = [];
 
-  let maxSpeedFound = -1;
+  let maxSpeedFound = -Infinity;
   let maxSpeedPointIndex = 0;
-  let maxAltFound = -1;
+  let maxAltFound = -Infinity;
   let maxAltPointIndex = 0;
 
   // 速度→状态分类（两种模式共用）
@@ -226,12 +226,12 @@ export function analyzeRideTelemetry(
     statusLabel: string;
   } => {
     if (speed >= 21) {
-      return { status: 'cruising', statusLabel: `⚡ 稳态高速巡航 (${speed} km/h)` };
+      return { status: 'cruising', statusLabel: `高速巡航 (${speed} km/h)` };
     }
     if (speed < 15 && elevGain > 40) {
-      return { status: 'climbing', statusLabel: `⛰️ 爬坡/起步阶段 (${speed} km/h)` };
+      return { status: 'climbing', statusLabel: `爬坡/起步 (${speed} km/h)` };
     }
-    return { status: 'tempo', statusLabel: `🚲 稳态节奏骑行 (${speed} km/h)` };
+    return { status: 'tempo', statusLabel: `节奏骑行 (${speed} km/h)` };
   };
 
   const usableDetail =
@@ -302,7 +302,7 @@ export function analyzeRideTelemetry(
       if (speed < 2) {
         status = 'paused';
         const cluster = pauseClusters.find((pc) => Math.abs(pc.coordIndex - coordIdx) <= 6);
-        statusLabel = cluster ? `⏸️ ${cluster.title} (${cluster.durationMins}分)` : '⏸️ 停顿/等红灯';
+        statusLabel = cluster ? `${cluster.title} (${cluster.durationMins}分)` : '停顿等待';
       } else {
         ({ status, statusLabel } = classifySpeedState(speed));
       }

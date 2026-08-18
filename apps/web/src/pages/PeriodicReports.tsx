@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
-  BarChart3, 
   ChevronLeft, 
   ChevronRight, 
   RefreshCw 
@@ -130,24 +129,19 @@ export default function PeriodicReports() {
 
       <main className="flex-1 h-full flex flex-col bg-white overflow-hidden min-w-0">
         {/* Top Control Bar */}
-        <header className="h-16 px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white/90 backdrop-blur-md">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs">
-              <BarChart3 className="w-4 h-4 text-sky-400" />
-            </div>
-            <div>
-              <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-                周期负荷与体能表现报告
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                {periodTitle || '正在加载周期数据...'}
-              </p>
-            </div>
+        <header className="h-16 px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+          <div>
+            <h1 className="text-base font-semibold text-slate-900 leading-tight">
+              周期数据报告
+            </h1>
+            <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+              {periodTitle || '正在加载周期数据...'}
+            </p>
           </div>
 
           {/* Period Segmented Control & Navigation */}
-          <div className="flex items-center space-x-3">
-            <div className="bg-slate-100 p-1 rounded-xl flex space-x-1 text-xs font-bold">
+          <div className="flex items-center space-x-3 font-mono">
+            <div className="border border-slate-200 p-0.5 rounded flex space-x-0.5 text-xs">
               {(
                 [
                   { id: 'week', label: '周报' },
@@ -159,10 +153,10 @@ export default function PeriodicReports() {
                 <button
                   key={tab.id}
                   onClick={() => setPeriodType(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded transition-colors cursor-pointer ${
                     periodType === tab.id
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-slate-900 text-white font-medium'
+                      : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {tab.label}
@@ -174,23 +168,23 @@ export default function PeriodicReports() {
             {(() => {
               const isLatest = currentTimestamp >= latestActiveTimestamp;
               return (
-                <div className="flex items-center space-x-1 border border-slate-200 rounded-xl p-1 bg-white shadow-2xs">
+                <div className="flex items-center space-x-1 border border-slate-200 rounded p-0.5 bg-white">
                   <IconButton label="上一周期" size="sm" onClick={handlePrevPeriod}>
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </IconButton>
                   <button
                     onClick={() => setCurrentTimestamp(latestActiveTimestamp)}
-                    className={`px-2 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    className={`px-2 py-0.5 text-xs rounded transition-colors cursor-pointer ${
                       isLatest
-                        ? 'bg-sky-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        ? 'bg-slate-900 text-white font-medium'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                     title={isLatest ? '当前已是最新活跃周期' : '返回最新活跃周期'}
                   >
                     最新
                   </button>
                   <IconButton label="下一周期" size="sm" onClick={handleNextPeriod} disabled={isLatest}>
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </IconButton>
                 </div>
               );

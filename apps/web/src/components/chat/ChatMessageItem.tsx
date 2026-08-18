@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Copy, Check, RotateCcw, AlertCircle, Target, ArrowRight, Bike, CheckCircle2 } from 'lucide-react';
+import { User, Copy, Check, RotateCcw, AlertCircle, ArrowRight } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import type { ChatMessage } from '../../types/rider';
 
@@ -60,58 +60,52 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
       >
         {/* Role Avatar */}
         <div
-          className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold font-mono ${
+          className={`w-6 h-6 rounded flex items-center justify-center shrink-0 text-xs font-mono border ${
             message.role === 'user'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'bg-slate-800 text-slate-100 shadow-xs border border-slate-700'
+              ? 'border-slate-900 bg-slate-900 text-white'
+              : 'border-slate-200 bg-slate-50 text-slate-700 font-medium'
           }`}
         >
-          {message.role === 'user' ? <User className="w-3.5 h-3.5" /> : 'VT'}
+          {message.role === 'user' ? <User className="w-3 h-3" /> : 'VT'}
         </div>
 
         {/* Message Body */}
         <div className="flex-1 min-w-0 max-w-[92%] sm:max-w-[88%] space-y-2">
           {message.role === 'user' ? (
-            <div className="bg-slate-900 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-xs sm:text-sm font-medium leading-relaxed shadow-xs inline-block">
+            <div className="bg-slate-900 text-white rounded px-4 py-2.5 text-xs font-normal leading-relaxed inline-block">
               {message.content}
             </div>
           ) : message.isError ? (
-            <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-4 text-xs space-y-2">
-              <div className="flex items-center space-x-2 text-rose-700 font-bold">
+            <div className="bg-white border border-rose-200 rounded p-4 text-xs space-y-2 font-mono">
+              <div className="flex items-center space-x-2 text-rose-700 font-medium">
                 <AlertCircle className="w-4 h-4" />
                 <span>未能获取完整推演结果</span>
               </div>
-              <p className="text-slate-600">{message.content}</p>
+              <p className="text-slate-600 font-sans">{message.content}</p>
               <button
                 onClick={onRegenerate}
-                className="mt-2 px-3 py-1.5 bg-white hover:bg-slate-50 border border-rose-200 text-rose-700 rounded-lg font-bold text-xs shadow-xs cursor-pointer flex items-center space-x-1.5 active:scale-95"
+                className="mt-2 px-3 py-1 bg-white hover:bg-slate-50 border border-rose-200 text-rose-700 rounded text-xs cursor-pointer flex items-center space-x-1.5 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>重新推演</span>
               </button>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200/90 rounded-2xl rounded-tl-sm p-4.5 sm:p-5 shadow-xs space-y-3.5">
+            <div className="bg-white border border-slate-200/80 rounded p-5 space-y-4">
               {/* Prominent Action Banner for Goal Sync */}
               {isGoalAction && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-                  <div className="flex items-center space-x-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                      <Target className="w-3.5 h-3.5" />
+                <div className="bg-slate-50 border border-slate-200 rounded p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 text-xs">
+                      阶段训练目标与量化指标已写入生效
                     </div>
-                    <div className="min-w-0">
-                      <div className="font-bold text-emerald-950 flex items-center space-x-1.5 text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="truncate">阶段训练目标与量化指标已写入生效</span>
-                      </div>
-                      <p className="text-xs text-emerald-700 font-medium mt-0.5 truncate">
-                        已同步至系统目标看板，巡航配速与周程进度即时更新
-                      </p>
-                    </div>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+                      已同步至目标看板，周目标与巡航基准已更新
+                    </p>
                   </div>
                   <Link
                     to="/goals"
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-2xs transition-all flex items-center space-x-1 shrink-0 cursor-pointer active:scale-95 text-xs"
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer"
                   >
                     <span>查看目标进度</span>
                     <ArrowRight className="w-3 h-3" />
@@ -121,26 +115,20 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
 
               {/* Prominent Action Banner for Profile / Hardware Sync */}
               {isProfileAction && !isGoalAction && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
-                  <div className="flex items-center space-x-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                      <Bike className="w-3.5 h-3.5" />
+                <div className="bg-slate-50 border border-slate-200 rounded p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 text-xs">
+                      战车硬件参数与传动规格已成功更新
                     </div>
-                    <div className="min-w-0">
-                      <div className="font-bold text-slate-900 flex items-center space-x-1.5 text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-                        <span className="truncate">战车硬件参数与传动规格已成功更新</span>
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
-                        分立硬件与齿比参数已写入数据库，原配件记录已保留
-                      </p>
-                    </div>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+                      车辆参数与齿比配置已更新
+                    </p>
                   </div>
                   {onOpenProfile && (
                     <button
                       type="button"
                       onClick={onOpenProfile}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg shadow-2xs transition-all flex items-center space-x-1 shrink-0 cursor-pointer active:scale-95 text-xs"
+                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer"
                     >
                       <span>查看档案</span>
                       <ArrowRight className="w-3 h-3" />
@@ -155,21 +143,21 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
               </div>
 
               {/* Footer Controls */}
-              <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span className="text-xs font-medium text-slate-500 font-mono">
-                  已代入战车传动比 · 遥测数据校验就绪
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                <span>
+                  已匹配当前车辆齿比与踏频基准
                 </span>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <button
                     onClick={handleCopy}
-                    className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer flex items-center space-x-1 text-xs"
+                    className="hover:text-slate-900 transition-colors cursor-pointer flex items-center space-x-1"
                     title="复制推演内容"
                   >
                     {isCopied ? (
                       <>
-                        <Check className="w-3 h-3 text-emerald-600" />
-                        <span className="text-emerald-600 font-semibold">已复制</span>
+                        <Check className="w-3 h-3 text-slate-900" />
+                        <span className="text-slate-900 font-medium">已复制</span>
                       </>
                     ) : (
                       <>
@@ -182,7 +170,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                   <button
                     onClick={onRegenerate}
                     disabled={isLoading}
-                    className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer flex items-center space-x-1 text-xs disabled:opacity-50"
+                    className="hover:text-slate-900 transition-colors cursor-pointer flex items-center space-x-1 disabled:opacity-30"
                     title="重新推演此方案"
                   >
                     <RotateCcw className="w-3 h-3" />

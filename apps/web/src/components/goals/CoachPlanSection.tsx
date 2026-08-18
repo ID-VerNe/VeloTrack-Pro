@@ -1,5 +1,4 @@
 import React from 'react';
-import { CalendarRange, Sliders } from 'lucide-react';
 
 interface Props {
   coachNotes?: string;
@@ -45,39 +44,37 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
   return (
     <div className="space-y-4">
       {/* Tactical Guidance Callout Banner */}
-      <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-sm border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white rounded-lg p-5 border border-slate-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
-          <div className="flex items-center space-x-2">
-            <span className="bg-white/10 text-slate-200 font-bold text-xs uppercase tracking-wider px-2 py-0.5 rounded-md font-mono">
-              战术指导原则
+          <div className="flex items-center space-x-2 font-mono">
+            <span className="text-[10px] text-slate-400 uppercase tracking-widest">
+              指导原则
             </span>
-            <span className="text-slate-500 text-xs font-medium">大行 P8 传动比专属适配</span>
+            <span className="text-slate-400 text-[11px]">大行 P8 传动比适配</span>
           </div>
-          <p className="text-sm font-bold leading-relaxed pt-0.5 text-slate-100">
+          <p className="text-xs text-slate-800 leading-relaxed font-normal">
             "{coachNotes || '保持85-95rpm高踏频，平路以46x19T为主，保护膝盖稳定提速'}"
           </p>
         </div>
 
         <button
           onClick={onAskCoach}
-          className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0 flex items-center space-x-1.5"
+          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-mono rounded transition-colors cursor-pointer shrink-0 flex items-center space-x-1.5"
         >
-          <Sliders className="w-3.5 h-3.5 text-slate-700" />
           <span>进入决策舱调整</span>
         </button>
       </div>
 
       {/* 4-Week Progressive Workout Plan */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <CalendarRange className="w-4 h-4 text-slate-900" />
-            <h3 className="text-xs font-bold text-slate-900 tracking-tight">
-              4 周阶梯进阶训练课表 (目标 20km/h 定速巡航)
+      <div className="bg-white rounded-lg p-5 border border-slate-200/80 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-xs font-semibold text-slate-900">
+              4 周进阶课表 (目标 20km/h 定速巡航)
             </h3>
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            兼顾心肺负荷适应与关节做功保护
+          <span className="text-[11px] font-mono text-slate-400">
+            兼顾心肺负荷与膝关节保护
           </span>
         </div>
 
@@ -85,20 +82,20 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
           {weeklyPlans.map((plan) => (
             <div
               key={plan.week}
-              className="bg-slate-50 p-4 rounded-xl border border-slate-200/90 shadow-2xs space-y-2 flex flex-col justify-between"
+              className="bg-slate-50/50 p-4 rounded border border-slate-200/80 space-y-2 flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between text-xs font-bold text-slate-900 pb-1">
-                  <span className="text-slate-900 font-extrabold">{plan.week}</span>
-                  <span className="text-xs text-slate-500 font-semibold font-mono">{plan.target}</span>
+                <div className="flex items-center justify-between text-xs pb-1 font-mono">
+                  <span className="text-slate-900 font-semibold">{plan.week}</span>
+                  <span className="text-[11px] text-slate-400">{plan.target}</span>
                 </div>
-                <div className="text-xs font-bold text-slate-800">{plan.focus}</div>
-                <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-1.5 mt-2 font-medium space-y-0.5">
-                  <div className="text-xs text-slate-500 font-mono">{plan.zone}</div>
-                  <div className="font-semibold text-slate-800 text-xs">{plan.ratio}</div>
+                <div className="text-xs text-slate-800 font-medium">{plan.focus}</div>
+                <div className="text-xs text-slate-600 bg-white border border-slate-200 rounded p-2 mt-2 font-mono space-y-0.5">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wide">{plan.zone}</div>
+                  <div className="text-xs text-slate-800">{plan.ratio}</div>
                 </div>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium pt-1 border-t border-slate-200/60 mt-2">
+              <p className="text-[11px] text-slate-500 leading-relaxed pt-2 border-t border-slate-200/60 mt-2">
                 {plan.note}
               </p>
             </div>

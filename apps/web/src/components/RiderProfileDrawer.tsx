@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   X, 
-  SlidersHorizontal, 
-  BookmarkCheck,
   Check 
 } from 'lucide-react';
 import InterviewTab from './profile/InterviewTab';
@@ -113,30 +111,25 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
         aria-modal="true"
         aria-label="车手与战车档案舱"
         tabIndex={-1}
-        className="w-full max-w-[520px] bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-200 focus:outline-none"
+        className="w-full max-w-[540px] bg-white h-full flex flex-col border-l border-slate-200/80 animate-in slide-in-from-right duration-200 focus:outline-none"
       >
         {/* Top Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs font-bold text-sm font-mono">
-              {profile.name?.slice(0, 1) || 'V'}
+          <div>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm font-semibold text-slate-900 leading-tight">车手与战车档案舱</h2>
+              <span className="text-[10px] font-mono bg-slate-50 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded">
+                {profile.weight_kg} kg
+              </span>
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h2 className="text-sm font-bold text-slate-900 leading-tight">车手与战车档案舱</h2>
-                <span className="text-xs bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded font-mono">
-                  {profile.weight_kg} kg
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium truncate max-w-[280px] mt-0.5">
-                {profile.current_bike || '大行 P8'} · {profile.primary_goal || '巡航 20km/h'}
-              </p>
-            </div>
+            <p className="text-[11px] font-mono text-slate-400 truncate max-w-[320px] mt-0.5">
+              {profile.current_bike || '大行 P8'} · {profile.primary_goal || '巡航 20km/h'}
+            </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors cursor-pointer"
             aria-label="关闭"
           >
             <X className="w-4 h-4" />
@@ -144,26 +137,25 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
         </div>
 
         {/* Segmented Control Tabs */}
-        <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-100 shrink-0">
-          <div className="bg-slate-200/60 p-1 rounded-xl flex space-x-1 text-xs font-bold">
+        <div className="px-6 py-2.5 bg-white border-b border-slate-100 shrink-0 font-mono">
+          <div className="border border-slate-200 p-0.5 rounded flex space-x-0.5 text-xs">
             <button
               onClick={() => setActiveTab('manual')}
-              className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'manual'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-slate-900 text-white font-medium'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-700" />
               <span>档案与传动</span>
             </button>
 
             <button
               onClick={() => setActiveTab('interview')}
-              className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'interview'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-slate-900 text-white font-medium'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <span>快速配置向导</span>
@@ -171,15 +163,16 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
 
             <button
               onClick={() => setActiveTab('memories')}
-              className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'memories'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-slate-900 text-white font-medium'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <BookmarkCheck className="w-3.5 h-3.5 text-slate-700" />
               <span>习惯与身体备忘</span>
-              <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">
+              <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
+                activeTab === 'memories' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'
+              }`}>
                 {memories.length}
               </span>
             </button>
@@ -192,16 +185,16 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
             profile={profile}
             onChange={setProfile}
           />
-          <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end space-x-3 shrink-0">
+          <div className="p-4 border-t border-slate-100 bg-white flex items-center justify-end space-x-3 shrink-0 font-mono">
             {saveSuccess && (
-              <span className="text-xs font-bold text-emerald-600 flex items-center">
-                <Check className="w-4 h-4 mr-1" /> 已保存
+              <span className="text-xs text-slate-900 flex items-center font-medium">
+                <Check className="w-3.5 h-3.5 mr-1" /> 已保存
               </span>
             )}
             <button
               onClick={handleSaveProfile}
               disabled={isSaving}
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs"
+              className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded text-xs cursor-pointer transition-colors"
             >
               {isSaving ? '正在保存...' : '保存修改'}
             </button>

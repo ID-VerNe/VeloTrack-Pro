@@ -124,33 +124,33 @@ export default function ConsistencyHeatmap({ rides }: Props) {
   }, [rides]);
 
   const getCellColor = (level: number, isFuture: boolean) => {
-    if (level === 1) return 'bg-emerald-300';
-    if (level === 2) return 'bg-emerald-400';
-    if (level === 3) return 'bg-emerald-500';
-    if (level === 4) return 'bg-emerald-600';
-    if (isFuture) return 'bg-slate-100/60';
+    if (level === 1) return 'bg-slate-300';
+    if (level === 2) return 'bg-slate-500';
+    if (level === 3) return 'bg-slate-700';
+    if (level === 4) return 'bg-slate-900';
+    if (isFuture) return 'bg-slate-100/50';
     return 'bg-slate-100 hover:bg-slate-200';
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 select-none relative overflow-hidden">
+    <div className="bg-white rounded-lg border border-slate-200/80 p-6 select-none relative overflow-hidden space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <h3 className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
             年度骑行打卡日历
           </h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5 tabular-nums">
+          <p className="text-xs text-slate-600 font-mono mt-0.5 tabular-nums">
             {activeDaysCount} 天活跃骑行 • 全年累计 {totalYearDistanceKm} 公里
           </p>
         </div>
 
         {/* Interactive Year Selector Dropdown */}
-        <div className="relative flex items-center bg-slate-50 hover:bg-slate-100/80 px-2 py-1 rounded-lg border border-slate-200/80 shrink-0 transition-colors shadow-2xs">
+        <div className="relative flex items-center bg-white px-2 py-1 rounded border border-slate-200 shrink-0 transition-colors">
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="text-xs font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer pr-4 appearance-none"
+            className="text-xs font-mono font-medium text-slate-700 bg-transparent focus:outline-none cursor-pointer pr-4 appearance-none"
           >
             {availableYears.map((yr) => (
               <option key={yr} value={yr}>
@@ -158,14 +158,14 @@ export default function ConsistencyHeatmap({ rides }: Props) {
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3 h-3 text-slate-500 pointer-events-none absolute right-1.5" />
+          <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-1.5" />
         </div>
       </div>
 
       {/* 53-Week Calendar Year Grid with Zero Scrollbars */}
-      <div className="flex space-x-1.5 text-2xs text-slate-500">
+      <div className="flex space-x-2 text-[10px] font-mono text-slate-400">
         {/* Day of week labels */}
-        <div className="flex flex-col justify-between py-[1px] text-left font-medium w-3 shrink-0 leading-none select-none">
+        <div className="flex flex-col justify-between py-[1px] text-left font-normal w-3 shrink-0 leading-none select-none">
           <span>一</span>
           <span>三</span>
           <span>五</span>
@@ -182,10 +182,10 @@ export default function ConsistencyHeatmap({ rides }: Props) {
                     key={dIdx}
                     onMouseEnter={() => setHoveredDay(day)}
                     onMouseLeave={() => setHoveredDay(null)}
-                    className={`w-full aspect-square rounded-[1px] transition-all cursor-pointer ${getCellColor(
+                    className={`w-full aspect-square rounded-[1px] transition-colors cursor-pointer ${getCellColor(
                       day.level,
                       day.isFuture
-                    )} ${day.level > 0 ? 'ring-1 ring-emerald-600/50 shadow-sm' : ''}`}
+                    )}`}
                   />
                 ))}
               </div>
@@ -193,7 +193,7 @@ export default function ConsistencyHeatmap({ rides }: Props) {
           </div>
 
           {/* Month labels footer aligned precisely in Chinese */}
-          <div className="relative h-4 text-2xs text-slate-500 font-medium mt-1.5 select-none">
+          <div className="relative h-4 text-[10px] font-mono text-slate-400 font-normal mt-2 select-none">
             {months.map((m, i) => {
               const leftPercent = (m.weekIndex / 53) * 100;
               return (
@@ -212,7 +212,7 @@ export default function ConsistencyHeatmap({ rides }: Props) {
 
       {/* Floating Hover Tooltip */}
       {hoveredDay && (
-        <div className="absolute top-2 right-4 bg-slate-900 text-white text-xs font-medium px-2.5 py-1 rounded-lg shadow-lg pointer-events-none z-20">
+        <div className="absolute top-2 right-4 bg-slate-900 text-white text-xs font-mono px-2.5 py-1 rounded border border-slate-700 pointer-events-none z-20">
           {hoveredDay.dateStr}：
           {hoveredDay.distanceKm > 0
             ? `${hoveredDay.distanceKm} 公里 (${hoveredDay.count} 次骑行)`

@@ -34,19 +34,19 @@ export default function ChatComposer({
   }, [input]);
 
   return (
-    <div className="p-4 sm:p-5 bg-white border-t border-slate-200/80 shrink-0 shadow-xs">
+    <div className="p-4 sm:p-5 bg-white border-t border-slate-100 shrink-0">
       <div className="max-w-3xl mx-auto space-y-2.5">
         {/* Quick Suggestion Chips */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 font-mono">
-            推演会话:
+          <span className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest shrink-0">
+            快捷提示:
           </span>
           {suggestedPrompts.map((p, idx) => (
             <button
               key={idx}
               onClick={() => onSend(p)}
               disabled={isLoading}
-              className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-medium border border-slate-200 shadow-2xs shrink-0 transition-all active:scale-98 cursor-pointer disabled:opacity-50"
+              className="px-2.5 py-0.5 rounded bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs font-mono border border-slate-200 shrink-0 transition-colors cursor-pointer disabled:opacity-50"
             >
               {p}
             </button>
@@ -54,7 +54,7 @@ export default function ChatComposer({
         </div>
 
         {/* Textarea Composer */}
-        <div className="relative bg-white rounded-2xl border border-slate-300 shadow-card focus-within:border-slate-900 focus-within:ring-2 focus-within:ring-slate-900/10 transition-all p-3">
+        <div className="relative bg-white rounded-lg border border-slate-200/80 focus-within:border-slate-400 transition-colors p-3">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -71,14 +71,14 @@ export default function ChatComposer({
                 onSend();
               }
             }}
-            placeholder="输入训练诉求或齿比配速推演指令... (Enter 发送，Shift + Enter 换行)"
-            className="w-full px-1 py-1 bg-transparent text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none resize-none max-h-[180px]"
+            placeholder="输入训练诉求或齿比配速推演需求... (Enter 发送，Shift + Enter 换行)"
+            className="w-full px-1 py-1 bg-transparent text-xs sm:text-sm font-normal text-slate-800 placeholder-slate-400 focus:outline-none resize-none max-h-[180px]"
             disabled={isLoading}
           />
 
           {/* Bottom Toolbar inside Composer */}
           <div className="flex items-center justify-between pt-2 px-1 border-t border-slate-100">
-            <div className="flex items-center space-x-2 text-xs text-slate-500 font-mono">
+            <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-mono">
               <span>Enter 发送 · Shift+Enter 换行</span>
             </div>
 
@@ -86,7 +86,7 @@ export default function ChatComposer({
               type="button"
               onClick={() => onSend()}
               disabled={!input.trim() || isLoading}
-              className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed flex items-center space-x-1.5"
+              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded text-xs font-mono transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center space-x-1.5"
             >
               <Send className="w-3 h-3" />
               <span>推演执行</span>

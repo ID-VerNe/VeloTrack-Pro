@@ -10,22 +10,22 @@ interface Props {
 
 export default function BentoMetricCard({ value, unit, label, subLabel, className = '' }: Props) {
   return (
-    <div className={`bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all ${className}`}>
-      <div className="text-xs font-bold text-slate-500 tracking-tight">
+    <div className={`bg-white rounded-lg p-5 border border-slate-200/80 flex flex-col justify-between transition-colors ${className}`}>
+      <div className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
         {label}
       </div>
       
-      <div className="my-1.5 flex items-baseline gap-1 text-2xl font-black text-slate-900 tabular-nums">
+      <div className="my-2 flex items-baseline gap-1 text-2xl font-semibold font-mono text-slate-900 tabular-nums">
         <span>{value}</span>
         {unit && (
-          <span className="text-xs font-bold text-slate-500 whitespace-nowrap">
+          <span className="text-xs font-normal text-slate-400 whitespace-nowrap font-sans">
             {unit}
           </span>
         )}
       </div>
 
       {subLabel && (
-        <div className="text-2xs text-slate-500 font-medium leading-relaxed mt-0.5">
+        <div className="text-[11px] text-slate-400 font-mono leading-relaxed mt-0.5">
           {subLabel}
         </div>
       )}

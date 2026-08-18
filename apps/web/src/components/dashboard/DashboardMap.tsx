@@ -88,16 +88,14 @@ export default function DashboardMap({
           });
 
           // Style-specific styling
-          const isDark = currentMapStyle === 'dark';
           const isSat = currentMapStyle === 'satellite';
-          const isTerrain = currentMapStyle === 'terrain';
 
-          const glowColor = isDark ? '#38BDF8' : isSat ? '#0F172A' : '#6366F1';
-          const casingColor = isSat || isTerrain ? '#FFFFFF' : '#0F172A';
-          const coreColor = isDark ? '#38BDF8' : isSat ? '#2563EB' : isTerrain ? '#1E1B4B' : '#4F46E5';
+          const glowColor = isSat ? '#0F172A' : '#6366F1';
+          const casingColor = isSat ? '#FFFFFF' : '#0F172A';
+          const coreColor = isSat ? '#2563EB' : '#4F46E5';
 
           // Glow Base Layer
-          if (isDark || isSat) {
+          if (isSat) {
             map.addLayer({
               id: `route-glow-${ride.id}`,
               type: 'line',
@@ -105,15 +103,15 @@ export default function DashboardMap({
               layout: { 'line-join': 'round', 'line-cap': 'round' },
               paint: {
                 'line-color': glowColor,
-                'line-width': isDark ? 10 : 8,
-                'line-opacity': isDark ? 0.5 : 0.45,
+                'line-width': 8,
+                'line-opacity': 0.45,
                 'line-blur': 2.5,
               },
             });
           }
 
-          // Casing Layer for Satellite and Terrain to pop out
-          if (isSat || isTerrain) {
+          // Casing Layer for Satellite to pop out
+          if (isSat) {
             map.addLayer({
               id: `route-casing-${ride.id}`,
               type: 'line',
@@ -298,17 +296,15 @@ export default function DashboardMap({
             map.setPaintProperty(coreLayer, 'line-opacity', 0.2);
           }
         } else {
-          const isDark = currentMapStyle === 'dark';
           const isSat = currentMapStyle === 'satellite';
-          const isTerrain = currentMapStyle === 'terrain';
 
-          const glowColor = isDark ? '#38BDF8' : isSat ? '#0F172A' : '#6366F1';
-          const casingColor = isSat || isTerrain ? '#FFFFFF' : '#0F172A';
-          const coreColor = isDark ? '#38BDF8' : isSat ? '#2563EB' : isTerrain ? '#1E1B4B' : '#4F46E5';
+          const glowColor = isSat ? '#0F172A' : '#6366F1';
+          const casingColor = isSat ? '#FFFFFF' : '#0F172A';
+          const coreColor = isSat ? '#2563EB' : '#4F46E5';
 
           if (map.getLayer(glowLayer)) {
-            map.setPaintProperty(glowLayer, 'line-width', isDark ? 10 : 8);
-            map.setPaintProperty(glowLayer, 'line-opacity', isDark ? 0.5 : 0.45);
+            map.setPaintProperty(glowLayer, 'line-width', 8);
+            map.setPaintProperty(glowLayer, 'line-opacity', 0.45);
             map.setPaintProperty(glowLayer, 'line-color', glowColor);
           }
           if (map.getLayer(casingLayer)) {

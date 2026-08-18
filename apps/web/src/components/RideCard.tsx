@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Mountain, Bike, MapPin, Zap } from 'lucide-react';
 import polyline from '@mapbox/polyline';
 import { detectCityForRide } from '../utils/geoUtils';
 import { calculateDualSpeeds, formatFriendlyDuration } from '../utils/cyclingCalculations';
@@ -96,101 +95,85 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
       to={`/ride/${ride.id}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`block bg-white rounded-2xl p-3.5 transition-all group relative border ${
+      className={`block bg-white rounded-lg p-4 transition-all group relative border ${
         isHovered
-          ? 'border-blue-500 shadow-md ring-2 ring-blue-500/10 scale-[1.01]'
-          : 'border-slate-100 shadow-xs hover:border-blue-300 hover:shadow-md'
+          ? 'border-blue-500 bg-slate-50/50'
+          : 'border-slate-200/80 hover:border-slate-300'
       }`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <span className={`px-1.5 py-0.5 rounded text-xs font-extrabold tracking-wider uppercase text-white ${
-            isRoad ? 'bg-blue-600' : 'bg-[#4F46E5]'
-          }`}>
+      {/* Top Header Row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2 min-w-0">
+          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-slate-200 text-slate-700 bg-slate-50 shrink-0">
             {isRoad ? '公路' : '山地/骑行'}
           </span>
-          <span className="px-1.5 py-0.5 rounded text-xs font-bold text-slate-500 bg-slate-100 flex items-center">
-            <MapPin className="w-2.5 h-2.5 mr-0.5 text-slate-500" />
+          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider shrink-0">
             {cityName}
           </span>
-          <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-xs truncate max-w-[130px]">
+          <span className="h-2 w-[1px] bg-slate-200 shrink-0" />
+          <span className="font-medium text-slate-900 group-hover:text-slate-600 transition-colors text-xs truncate">
             {ride.title}
           </span>
         </div>
-        <span className="text-xs font-medium text-slate-500 shrink-0">{dateStr}</span>
+        <span className="text-[11px] font-mono text-slate-400 shrink-0 ml-2">{dateStr}</span>
       </div>
 
-      <div className="flex items-center justify-between">
+      {/* Main Telemetry & Route Preview */}
+      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
         {/* Metric details */}
-        <div className="flex items-center space-x-3.5 text-xs">
+        <div className="flex items-baseline space-x-4 text-xs font-mono">
           <div>
-            <div className="font-bold text-slate-900 text-xs tabular-nums flex items-baseline">
+            <div className="font-semibold text-slate-900 text-sm tabular-nums flex items-baseline">
               <span>{distanceKm}</span>
-              <span className="text-xs font-normal text-slate-500 ml-0.5">公里</span>
+              <span className="text-[10px] font-normal text-slate-400 ml-0.5 font-sans">公里</span>
             </div>
-            <div className="text-2xs text-slate-500 font-medium truncate max-w-[70px]">
+            <div className="text-[10px] text-slate-400 font-normal truncate max-w-[80px]">
               运动 {movingDurationStr}
             </div>
           </div>
 
           <div>
-            <div className="font-bold text-slate-900 text-xs tabular-nums flex items-center">
-              <Zap className="w-2.5 h-2.5 mr-0.5 text-blue-600 shrink-0" />
+            <div className="font-semibold text-slate-900 text-sm tabular-nums flex items-baseline">
               <span>{movingAvgSpeedKmh}</span>
-              <span className="text-xs font-normal text-slate-500 ml-0.5">km/h</span>
+              <span className="text-[10px] font-normal text-slate-400 ml-0.5">km/h</span>
             </div>
-            <div className="text-2xs text-slate-500 font-medium truncate">
+            <div className="text-[10px] text-slate-400 font-normal truncate">
               总均速 {elapsedAvgSpeedKmh}
             </div>
           </div>
 
-          <div className="flex items-center text-slate-700 font-semibold text-xs pt-0.5">
-            <Mountain className="w-3 h-3 mr-1 text-slate-500" />
-            <span>{ride.total_ascent_meters || 0}m</span>
+          <div className="space-y-0.5">
+            <div className="font-semibold text-slate-700 text-sm tabular-nums">
+              <span>{ride.total_ascent_meters || 0}m</span>
+            </div>
+            <div className="text-[10px] text-slate-400 font-normal">
+              爬升
+            </div>
           </div>
         </div>
 
         {/* Micro Map Preview */}
-        <div className={`w-[76px] h-[52px] rounded-xl border flex items-center justify-center relative shrink-0 overflow-hidden transition-all ${
-          isHovered ? 'bg-blue-50/90 border-blue-300 ring-2 ring-blue-500/20' : 'bg-slate-50/90 border-slate-200/70'
+        <div className={`w-[76px] h-[52px] rounded border flex items-center justify-center relative shrink-0 overflow-hidden transition-colors ${
+          isHovered ? 'bg-slate-100/90 border-slate-300' : 'bg-slate-50 border-slate-200/70'
         }`}>
-          <div
-            className="absolute inset-0 opacity-15"
-            style={{
-              backgroundImage:
-                'radial-gradient(#94A3B8 1px, transparent 1px), linear-gradient(0deg, rgba(226,232,240,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(226,232,240,0.5) 1px, transparent 1px)',
-              backgroundSize: '8px 8px, 16px 16px, 16px 16px',
-            }}
-          />
-
           {pathData ? (
             <svg viewBox="0 0 76 52" className="w-full h-full relative z-10" aria-label="骑行路线缩略图">
               <path
                 d={pathData}
                 fill="none"
-                stroke="rgba(79, 70, 229, 0.25)"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d={pathData}
-                fill="none"
-                stroke={isHovered ? '#0284C7' : '#4F46E5'}
-                strokeWidth="2.5"
+                stroke={isHovered ? '#0F172A' : '#475569'}
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               {startPt && (
-                <circle cx={startPt.x} cy={startPt.y} r="2.5" fill="#10B981" />
+                <circle cx={startPt.x} cy={startPt.y} r="2" fill="#10B981" />
               )}
               {endPt && (
-                <circle cx={endPt.x} cy={endPt.y} r="2.5" fill="#6366F1" />
+                <circle cx={endPt.x} cy={endPt.y} r="2" fill="#64748B" />
               )}
             </svg>
-          ) : (
-            <Bike className="w-4 h-4 text-slate-300" />
-          )}
+          ) : null}
         </div>
       </div>
     </Link>

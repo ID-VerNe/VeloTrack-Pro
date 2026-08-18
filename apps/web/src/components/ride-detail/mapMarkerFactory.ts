@@ -8,8 +8,8 @@ export function createStartMarker(coord: [number, number]): Marker {
   const startEl = document.createElement('div');
   startEl.className = 'relative flex items-center justify-center';
   startEl.innerHTML = `
-    <span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-emerald-400 opacity-60"></span>
-    <span class="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white shadow-md"></span>
+    <span class="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-slate-400 opacity-40"></span>
+    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-slate-900 border-2 border-white shadow-sm"></span>
   `;
   return new Marker({ element: startEl }).setLngLat(coord);
 }
@@ -19,10 +19,11 @@ export function createStartMarker(coord: [number, number]): Marker {
  */
 export function createFinishMarker(coord: [number, number]): Marker {
   const finishEl = document.createElement('div');
-  finishEl.className = 'relative flex items-center justify-center -translate-y-2';
+  finishEl.className = 'relative flex items-center justify-center -translate-y-1.5';
   finishEl.innerHTML = `
-    <div class="bg-slate-900 text-white p-1 rounded-md shadow-md border border-white flex items-center justify-center">
-      <span class="text-xs">🏁</span>
+    <div class="bg-slate-900 text-white px-1.5 py-0.5 rounded text-[10px] font-mono shadow-sm border border-white flex items-center space-x-1">
+      <span>🏁</span>
+      <span>END</span>
     </div>
   `;
   return new Marker({ element: finishEl }).setLngLat(coord);
@@ -40,9 +41,9 @@ export function createMilestoneMarker(
   const milestoneEl = document.createElement('div');
   milestoneEl.className = 'relative flex items-center justify-center cursor-pointer select-none';
   milestoneEl.innerHTML = `
-    <div class="px-1.5 py-0.5 rounded-full font-mono font-bold text-[10px] border flex items-center space-x-0.5 hover:scale-110 transition-transform ${milestoneClass}">
+    <div class="px-1.5 py-0.5 rounded font-mono font-medium text-[10px] border flex items-center space-x-0.5 transition-transform hover:scale-105 ${milestoneClass}">
       <span>${km}</span>
-      <span class="text-[7px] opacity-80">k</span>
+      <span class="text-[8px] opacity-70">km</span>
     </div>
   `;
   if (onClick) {
@@ -64,24 +65,23 @@ export function createPauseMarker(
 ): Marker {
   const pauseEl = document.createElement('div');
   pauseEl.className =
-    'relative flex items-center justify-center cursor-pointer group hover:scale-125 transition-transform';
+    'relative flex items-center justify-center cursor-pointer group hover:scale-110 transition-transform';
   pauseEl.innerHTML = `
-    <span class="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-rose-400 opacity-75"></span>
-    <div class="relative w-5 h-5 rounded-full bg-rose-600 text-white border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold">
-      ⏸️
+    <div class="relative w-4 h-4 rounded-full bg-slate-100 text-slate-700 border border-slate-300 shadow-sm flex items-center justify-center text-[9px] font-mono font-semibold">
+      P
     </div>
   `;
 
-  const pausePopup = new Popup({ offset: 12, className: 'pause-popup' }).setHTML(`
-    <div style="padding: 6px 8px; max-width: 220px; font-family: sans-serif;">
+  const pausePopup = new Popup({ offset: 10, className: 'pause-popup' }).setHTML(`
+    <div style="padding: 6px 8px; max-width: 220px; font-family: monospace;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-        <span style="font-weight: 800; font-size: 11px; color: #E11D48;">${cluster.title}</span>
-        <span style="font-weight: 800; font-size: 10px; background: #FFE4E6; color: #9F1239; padding: 1px 5px; border-radius: 4px;">${cluster.durationMins} 分钟</span>
+        <span style="font-weight: 600; font-size: 11px; color: #0F172A;">${cluster.title}</span>
+        <span style="font-size: 10px; background: #F1F5F9; color: #475569; padding: 1px 4px; border-radius: 2px;">${cluster.durationMins} 分钟</span>
       </div>
-      <div style="font-size: 9px; color: #64748B; margin-bottom: 4px;">
-        📍 距起点 ${cluster.distanceKm} km 处 · 历时第 ${cluster.timeOffsetMins} 分
+      <div style="font-size: 9px; color: #94A3B8; margin-bottom: 4px;">
+        距起点 ${cluster.distanceKm} km · 历时第 ${cluster.timeOffsetMins} 分
       </div>
-      <p style="font-size: 10px; color: #334155; line-height: 1.4; margin: 0;">
+      <p style="font-size: 10px; color: #475569; line-height: 1.4; margin: 0;">
         ${cluster.advice}
       </p>
     </div>
@@ -104,17 +104,18 @@ export function createScrubberMarker(): { marker: Marker; popup: Popup } {
   const scrubberEl = document.createElement('div');
   scrubberEl.className = 'relative flex items-center justify-center';
   scrubberEl.innerHTML = `
-    <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-indigo-400 opacity-75"></span>
-    <span class="relative inline-flex rounded-full h-4 w-4 bg-indigo-600 border-2 border-white shadow-lg"></span>
+    <span class="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-slate-400 opacity-40"></span>
+    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-slate-900 border-2 border-white shadow-sm"></span>
   `;
   const marker = new Marker({ element: scrubberEl });
 
   const popup = new Popup({
     closeButton: false,
     closeOnClick: false,
-    offset: 14,
+    offset: 12,
     className: 'scrubber-popup',
   });
 
   return { marker, popup };
 }
+

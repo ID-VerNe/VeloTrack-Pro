@@ -35,7 +35,7 @@ export default function Dashboard() {
     else if (hour < 13) timeGreeting = '中午好';
     else if (hour < 18) timeGreeting = '下午好';
     else timeGreeting = '晚上好';
-    return `${timeGreeting}，${riderName}！`;
+    return `${timeGreeting}，${riderName}`;
   }, [riderName]);
 
   useEffect(() => {
@@ -55,19 +55,18 @@ export default function Dashboard() {
       const matchCity = selectedCity === 'all' || detectCityForRide(r) === selectedCity;
       const matchSearch =
         !searchTerm.trim() ||
-        r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        detectCityForRide(r)?.toLowerCase().includes(searchTerm.toLowerCase());
+        (r.title && r.title.toLowerCase().includes(searchTerm.toLowerCase().trim()));
       return matchCity && matchSearch;
     });
   }, [rides, selectedCity, searchTerm]);
 
   return (
     <div className="h-screen w-screen bg-[#F8FAFC] font-sans flex text-slate-900 overflow-hidden select-none">
-      {/* 1. Global Left Navigation */}
+      {/* 1. Left Compact Navigation Sidebar */}
       <Sidebar />
 
-      {/* 2. Middle Interactive Map Viewport */}
-      <main className="flex-1 h-full relative bg-slate-100 overflow-hidden border-r border-slate-200">
+      {/* 2. Center Geospatial Map Canvas */}
+      <main className="flex-1 h-full relative overflow-hidden bg-slate-100 min-w-0">
         <DashboardControls
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -87,19 +86,19 @@ export default function Dashboard() {
       </main>
 
       {/* 3. Right Analytics & Feeds Bento Panel */}
-      <aside className="w-[420px] xl:w-[460px] h-full bg-white flex flex-col z-10 shadow-2xl shrink-0 border-l border-slate-100">
+      <aside className="w-[460px] xl:w-[480px] h-full bg-white flex flex-col z-10 shrink-0 border-l border-slate-200/80">
         {/* Top User Greeting Header */}
-        <div className="px-6 py-5 border-b border-slate-100/80 bg-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-base font-extrabold text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-base font-semibold text-slate-900 tracking-tight leading-tight">
               {greetingText}
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              已聚合 {rides.length} 条实战遥测轨迹 · 保持 85+ rpm 高踏频
+            <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+              已记录 {rides.length} 次骑行 · 目标踏频 85-95 rpm
             </p>
           </div>
 
-          <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-xs font-bold font-mono shadow-xs">
+          <div className="w-7 h-7 rounded border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 text-xs font-medium font-mono">
             {riderName.slice(0, 1) || 'V'}
           </div>
         </div>
@@ -115,24 +114,24 @@ export default function Dashboard() {
           {/* Filtered Activity Cards Feed */}
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                {selectedCity === 'all' ? '全部骑行动态' : `${selectedCity} 骑行动态`} ({filteredRides.length})
+              <h2 className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+                {selectedCity === 'all' ? '全部骑行记录' : `${selectedCity} 骑行记录`} ({filteredRides.length})
               </h2>
             </div>
 
             <div className="space-y-3">
               {isLoading ? (
-                <div className="p-8 text-center text-slate-500 text-xs font-medium" role="status">
-                  <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2 text-sky-600" />
+                <div className="p-8 text-center text-slate-400 text-xs font-mono" role="status">
+                  <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2 text-slate-600" />
                   正在加载骑行遥测数据...
                 </div>
               ) : loadError ? (
-                <div className="p-6 text-center bg-rose-50/60 rounded-2xl border border-rose-100 text-xs font-medium space-y-2" role="alert">
-                  <p className="text-rose-700">{loadError}</p>
+                <div className="p-6 text-center bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono space-y-2" role="alert">
+                  <p className="text-slate-700">{loadError}</p>
                   <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-slate-800 transition-all cursor-pointer active:scale-95"
+                    className="px-3.5 py-1.5 bg-slate-900 text-white rounded text-xs font-mono font-medium hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     重新加载
                   </button>
@@ -150,7 +149,7 @@ export default function Dashboard() {
                   ))}
 
                   {filteredRides.length === 0 && (
-                    <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 text-xs font-medium">
+                    <div className="p-8 text-center bg-slate-50/50 rounded-lg border border-slate-200 text-slate-400 text-xs font-mono">
                       没有匹配的骑行记录
                     </div>
                   )}

@@ -13,8 +13,10 @@ export default {
         },
         surface: 'var(--bg-surface)',
         border: {
+          hairline: 'var(--border-hairline)',
           subtle: 'var(--border-subtle)',
           default: 'var(--border-default)',
+          strong: 'var(--border-strong)',
         },
         text: {
           primary: 'var(--text-primary)',
@@ -34,17 +36,20 @@ export default {
       },
       borderRadius: {
         card: 'var(--radius-card)',
+        button: 'var(--radius-button)',
       },
       boxShadow: {
         card: 'var(--shadow-card)',
+        instrument: 'var(--shadow-instrument)',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
         tabular: ['var(--font-tabular)'],
       },
       fontSize: {
-        // 排版规范：辅助文本/单位/徽章下限 11px，主数字与正文下限 12px (text-xs)
-        '2xs': ['11px', { lineHeight: '1.2', letterSpacing: '0.01em' }],
+        micro: ['10px', { lineHeight: '1.4', letterSpacing: '0.06em' }],
+        '2xs': ['11px', { lineHeight: '1.2', letterSpacing: '0.02em' }],
       }
     },
   },

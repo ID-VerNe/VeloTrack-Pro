@@ -15,7 +15,7 @@ const MapStyleContext = createContext<MapStyleContextValue | null>(null);
 function readInitialStyle(): MapStyleKey {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'light' || saved === 'dark' || saved === 'satellite' || saved === 'terrain') {
+    if (saved === 'light' || saved === 'satellite') {
       return saved;
     }
   } catch {

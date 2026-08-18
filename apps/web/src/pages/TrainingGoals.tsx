@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Edit2, RefreshCw } from 'lucide-react';
+import { Edit2, RefreshCw } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { computeGoalStatsFromRides } from '../utils/goalCalculations';
 
@@ -96,26 +96,21 @@ export default function TrainingGoals() {
 
       <main className="flex-1 h-full flex flex-col bg-white overflow-hidden min-w-0">
         {/* Top Header */}
-        <header className="h-16 px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white/90 backdrop-blur-md">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs">
-              <Target className="w-4 h-4 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-base font-extrabold text-slate-900 leading-tight">
-                训练目标与进阶课表
-              </h1>
-              <p className="text-xs text-slate-500 font-medium">
-                以巡航 20km/h 与 50km 耐力为核心导向的科学量化目标
-              </p>
-            </div>
+        <header className="h-16 px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+          <div>
+            <h1 className="text-base font-semibold text-slate-900 leading-tight">
+              训练目标与进阶课表
+            </h1>
+            <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+              以巡航 20km/h 与 50km 耐力为核心导向的科学量化目标
+            </p>
           </div>
 
           <button
             onClick={() => setIsEditingTargets(true)}
-            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer flex items-center space-x-1.5"
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-800 text-xs font-mono rounded border border-slate-200 shadow-2xs transition-colors cursor-pointer flex items-center space-x-1.5"
           >
-            <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+            <Edit2 className="w-3.5 h-3.5 text-slate-400" />
             <span>调整目标参数</span>
           </button>
         </header>

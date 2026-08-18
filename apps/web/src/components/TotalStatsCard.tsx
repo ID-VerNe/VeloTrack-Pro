@@ -1,5 +1,4 @@
 import React from 'react';
-import { Bike, Clock } from 'lucide-react';
 
 interface Props {
   rides: any[];
@@ -21,53 +20,45 @@ export default function TotalStatsCard({ rides }: Props) {
     : dynamicDistance.toFixed(1);
 
   return (
-    <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-5 space-y-4">
-      <div className="flex items-start justify-between">
+    <div className="bg-white rounded-lg border border-slate-200/80 p-6 space-y-6">
+      {/* Primary Telemetry Header */}
+      <div className="flex items-start justify-between border-b border-slate-100 pb-5">
         <div>
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
+          <div className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
             累计遥测总里程
           </div>
 
-          <div className="text-4xl font-black text-slate-900 tracking-tight mt-1 tabular-nums flex items-baseline">
+          <div className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight mt-1 font-mono tabular-nums flex items-baseline">
             <span>{displayDistance}</span>
-            <span className="text-base font-bold ml-1.5 text-slate-500 font-sans">公里</span>
+            <span className="text-xs font-normal ml-1.5 text-slate-400 font-sans">公里</span>
           </div>
         </div>
 
-        <div className="text-right">
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+        <div className="text-right space-y-1">
+          <div className="text-xs font-mono font-medium text-slate-700 bg-slate-50 px-2.5 py-1 rounded border border-slate-200/60 inline-block tabular-nums">
             停表均速 {overallMovingAvgSpeed} km/h
-          </span>
-          <div className="text-xs text-slate-500 font-medium mt-1">
+          </div>
+          <div className="text-[11px] text-slate-400 font-mono tabular-nums">
             总均速 {overallElapsedAvgSpeed} km/h
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+      {/* Sub-metrics Hairline Grid */}
+      <div className="grid grid-cols-2 divide-x divide-slate-100">
         {/* Total Rides */}
-        <div className="flex items-center space-x-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
-            <Bike className="w-4 h-4 text-sky-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-black text-slate-900 leading-tight tabular-nums">
-              {rides.length} <span className="text-xs font-normal text-slate-500">次</span>
-            </div>
-            <div className="text-xs text-slate-500 font-medium truncate">总记录骑行</div>
+        <div className="pr-4 space-y-0.5">
+          <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">总记录骑行</div>
+          <div className="text-base font-semibold text-slate-900 font-mono tabular-nums">
+            {rides.length} <span className="text-xs font-normal text-slate-400 font-sans">次</span>
           </div>
         </div>
 
         {/* Total Time */}
-        <div className="flex items-center space-x-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
-            <Clock className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-black text-slate-900 leading-tight tabular-nums">
-              {dynamicHours} <span className="text-xs font-normal text-slate-500">小时</span>
-            </div>
-            <div className="text-xs text-slate-500 font-medium truncate">纯踩踏做功用时</div>
+        <div className="pl-4 space-y-0.5">
+          <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">纯踩踏做功用时</div>
+          <div className="text-base font-semibold text-slate-900 font-mono tabular-nums">
+            {dynamicHours} <span className="text-xs font-normal text-slate-400 font-sans">小时</span>
           </div>
         </div>
       </div>

@@ -58,3 +58,44 @@ ridesRouter.patch('/:id', async (c) => {
     return c.json({ error: err.message }, 500)
   }
 })
+
+// 删除单次骑行记录（级联清理 R2 逐点明细与 TCX 原文件）
+ridesRouter.delete('/:id', async (c) => {
+  const id = c.req.param('id')
+  try {
+    const ride = await c.env.DB.prepare(
+      'SELECT id, detail_points_r2_key, raw_tcx_r2_key FROM rides WHERE id = ?'
+    )
+      .bind(id)
+      .first<{ id: string; detail_points_r2_key: string | null; raw_tcx_r2_key: string | null }>()
+
+    if (!ride) {
+      return c.json({ error: 'Ride not found' }, 404)
+    }
+
+    // 清理 R2 关联对象（若存在）
+    if (ride.detail_points_r2_key && c.env.BUCKET) {
+      try {
+        await c.env.BUCKET.delete(ride.detail_points_r2_key)
+      } catch (e) {
+        console.error(`Failed to delete R2 detail points: ${ride.detail_points_r2_key}`, e)
+      }
+    }
+    if (ride.raw_tcx_r2_key && c.env.BUCKET) {
+      try {
+        await c.env.BUCKET.delete(ride.raw_tcx_r2_key)
+      } catch (e) {
+        console.error(`Failed to delete R2 raw tcx: ${ride.raw_tcx_r2_key}`, e)
+      }
+    }
+
+    // 删除数据库中的骑行主记录
+    await c.env.DB.prepare('DELETE FROM rides WHERE id = ?').bind(id).run()
+
+    return c.json({ success: true, id })
+  } catch (err: any) {
+    console.error(`Failed to delete ride ${id}:`, err)
+    return c.json({ error: err.message || 'Internal Server Error' }, 500)
+  }
+})
+

@@ -224,10 +224,37 @@ export default function RideDetail() {
     }, 6000);
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleUndoTitle = async () => {
     if (!previousTitle || !ride) return;
     await saveTitleToBackend(previousTitle);
     setPreviousTitle(null);
+  };
+
+  const handleDeleteRide = async () => {
+    if (!id) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/rides/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        if (location.state?.from) {
+          navigate(location.state.from, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || '删除失败，请稍后重试');
+      }
+    } catch (err: any) {
+      console.error('Failed to delete ride', err);
+      alert('网络错误，删除失败');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Map Scrubber Sync Handlers
@@ -411,9 +438,9 @@ export default function RideDetail() {
       />
 
       {/* 2. Right Analytical Bento Dashboard */}
-      <div className="w-[500px] xl:w-[540px] h-full bg-white border-l border-slate-200/80 flex flex-col z-10 shadow-2xl shrink-0 overflow-hidden">
+      <div className="w-[520px] xl:w-[560px] h-full bg-white border-l border-slate-200/80 flex flex-col z-10 shrink-0 overflow-hidden">
         {/* Top Sticky Header */}
-        <header className="px-6 py-4 border-b border-slate-100 bg-white/95 backdrop-blur-md shrink-0 shadow-2xs">
+        <header className="px-6 py-5 border-b border-slate-100 bg-white shrink-0">
           <RideTitleHeader
             title={ride.title}
             fromLabel={fromLabel}
@@ -425,6 +452,8 @@ export default function RideDetail() {
             onApplySuggestedTitle={handleApplySuggestedTitle}
             onCancelSuggestedTitle={() => setSuggestedTitle(null)}
             onUndoTitle={handleUndoTitle}
+            onDelete={handleDeleteRide}
+            isDeleting={isDeleting}
             isSuggestingTitle={isSuggestingTitle}
             suggestedTitle={suggestedTitle}
             previousTitle={previousTitle}
@@ -432,14 +461,14 @@ export default function RideDetail() {
         </header>
 
         {/* Scrollable Content Stream */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 [scrollbar-width:none]">
           {/* Bento Primary Metrics Grid */}
           <RideMetricsGrid ride={ride} calories={calories} />
 
           {/* 首次访问引导：图表与地图双向联动 */}
           {showLinkHint && (
-            <div className="flex items-start gap-2.5 px-4 py-3 bg-sky-50/80 border border-sky-100 rounded-2xl text-xs text-sky-800 font-medium leading-relaxed">
-              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-sky-500" />
+            <div className="flex items-start gap-2.5 px-4 py-3 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700 font-normal leading-relaxed">
+              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-slate-500" />
               <p className="flex-1">
                 左侧地图与图表双向联动：悬停图表可在地图上定位游标，拖选图表区间会自动缩放地图聚焦；点击地图里程碑或停靠点也会在图表中高亮对应位置。
               </p>
@@ -447,7 +476,7 @@ export default function RideDetail() {
                 type="button"
                 onClick={dismissLinkHint}
                 aria-label="关闭引导提示"
-                className="shrink-0 p-1 -m-1 rounded-lg text-sky-500 hover:text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer"
+                className="shrink-0 p-1 -m-1 rounded text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

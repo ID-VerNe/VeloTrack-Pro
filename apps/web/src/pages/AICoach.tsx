@@ -6,8 +6,6 @@ import {
   SlidersHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
-  CheckCircle2,
-  Target,
   X
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -183,19 +181,18 @@ export default function AICoach() {
 
         // Trigger prominent toast if goals or profile updated
         if (data.goalUpdated) {
-          const g = data.goalUpdated;
           setToast({
             type: 'goal',
-            title: '🎯 训练目标已自动同步至系统',
-            desc: `单周目标 ${g.weekly_distance_km || 50}km · 巡航均速 ${g.target_avg_speed_kmh || 16}km/h · 月度 ${g.monthly_distance_km || 170}km`,
+            title: '目标与周程指标已更新',
+            desc: '已同步至系统目标看板，周目标与巡航基准已生效。',
             link: '/goals',
           });
           setTimeout(() => setToast(null), 5000);
         } else if (data.profileUpdated) {
           setToast({
             type: 'profile',
-            title: '🚲 车手档案与硬件配置已更新',
-            desc: '分立硬件属性已成功保存至数据库并保留既有配件。',
+            title: '车手档案与硬件配置已更新',
+            desc: '车辆参数与齿比配置已更新。',
           });
           setTimeout(() => setToast(null), 5000);
         }
@@ -261,72 +258,69 @@ export default function AICoach() {
         <main className="flex-1 h-full flex flex-col bg-white overflow-hidden min-w-0 relative">
           {/* Floating Toast Notification */}
           {toast && (
-            <div className="absolute top-16 right-6 z-50 bg-slate-900/95 text-white p-3.5 rounded-2xl shadow-xl border border-white/10 backdrop-blur-md animate-in slide-in-from-top-3 duration-200 flex items-center space-x-3 max-w-md">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${toast.type === 'goal' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
-                {toast.type === 'goal' ? <Target className="w-4 h-4 text-white" /> : <CheckCircle2 className="w-4 h-4 text-white" />}
-              </div>
+            <div className="absolute top-16 right-6 z-50 bg-slate-900 text-white p-3.5 rounded border border-slate-800 shadow-lg animate-in slide-in-from-top-3 duration-200 flex items-center space-x-3 max-w-md font-mono">
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold leading-tight">{toast.title}</div>
-                <p className="text-xs text-slate-300 truncate mt-0.5">{toast.desc}</p>
+                <div className="text-xs font-medium leading-tight">{toast.title}</div>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">{toast.desc}</p>
               </div>
               {toast.link ? (
                 <Link
                   to={toast.link}
-                  className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition-all shrink-0"
+                  className="px-2.5 py-0.5 bg-white/10 hover:bg-white/20 text-white rounded text-xs transition-colors shrink-0"
                 >
                   查看
                 </Link>
               ) : (
                 <button
                   onClick={() => setIsProfileOpen(true)}
-                  className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer"
+                  className="px-2.5 py-0.5 bg-white/10 hover:bg-white/20 text-white rounded text-xs transition-colors shrink-0 cursor-pointer"
                 >
                   查看
                 </button>
               )}
-              <button onClick={() => setToast(null)} className="text-slate-500 hover:text-white p-1 cursor-pointer">
+              <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white p-1 cursor-pointer">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
 
           {/* Top Sticky Header */}
-          <header className="h-14 px-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white/90 backdrop-blur-md z-10">
+          <header className="h-14 px-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
             <div className="flex items-center space-x-3">
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded transition-colors cursor-pointer"
                 title={isSidebarOpen ? '收起历史列表' : '展开历史列表'}
               >
                 {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
               </button>
 
               <div className="flex items-center space-x-2">
-                <h1 className="text-sm font-bold text-slate-900">训练决策舱</h1>
-                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-semibold">
-                  {sessionId === 'coach_main' ? '主方案流' : '专项推演'}
+                <h1 className="text-xs font-semibold text-slate-900">训练推演助手</h1>
+                <span className="text-[10px] font-mono text-slate-400 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">
+                  {sessionId === 'coach_main' ? '主方案' : '专项推演'}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 font-mono">
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(true)}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200/80 transition-colors cursor-pointer flex items-center space-x-1.5 shadow-2xs"
+                className="px-2.5 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 text-xs border border-slate-200 transition-colors cursor-pointer flex items-center space-x-1.5 shadow-2xs"
               >
-                <SlidersHorizontal className="w-3 h-3 text-slate-600" />
+                <SlidersHorizontal className="w-3 h-3 text-slate-400" />
                 <span>车手档案 ({riderInfo.weight}kg)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleRequestDeleteSession(sessionId)}
-                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
                 title="清空当前推演会话"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </header>
