@@ -6,6 +6,7 @@ import {
   RefreshCw 
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import IconButton from '../components/common/IconButton';
 import { formatPeriodTitle } from '../utils/dateUtils';
 
 import PeriodSummaryCards from '../components/reports/PeriodSummaryCards';
@@ -138,7 +139,7 @@ export default function PeriodicReports() {
               <h1 className="text-base font-extrabold text-slate-900 leading-tight">
                 周期负荷与体能表现报告
               </h1>
-              <p className="text-xs text-slate-400 font-medium">
+              <p className="text-xs text-slate-500 font-medium">
                 {periodTitle || '正在加载周期数据...'}
               </p>
             </div>
@@ -174,36 +175,23 @@ export default function PeriodicReports() {
               const isLatest = currentTimestamp >= latestActiveTimestamp;
               return (
                 <div className="flex items-center space-x-1 border border-slate-200 rounded-xl p-1 bg-white shadow-2xs">
-                  <button
-                    onClick={handlePrevPeriod}
-                    className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    title="上一周期"
-                  >
+                  <IconButton label="上一周期" size="sm" onClick={handlePrevPeriod}>
                     <ChevronLeft className="w-4 h-4" />
-                  </button>
+                  </IconButton>
                   <button
                     onClick={() => setCurrentTimestamp(latestActiveTimestamp)}
-                    className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                    className={`px-2 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                       isLatest
-                        ? 'bg-slate-900 text-white shadow-2xs'
+                        ? 'bg-sky-600 text-white shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                     title={isLatest ? '当前已是最新活跃周期' : '返回最新活跃周期'}
                   >
                     最新
                   </button>
-                  <button
-                    onClick={handleNextPeriod}
-                    disabled={isLatest}
-                    className={`p-1 rounded-lg transition-colors ${
-                      isLatest
-                        ? 'text-slate-300 cursor-not-allowed'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer'
-                    }`}
-                    title={isLatest ? '已达最新周期' : '下一周期'}
-                  >
+                  <IconButton label="下一周期" size="sm" onClick={handleNextPeriod} disabled={isLatest}>
                     <ChevronRight className="w-4 h-4" />
-                  </button>
+                  </IconButton>
                 </div>
               );
             })()}
@@ -213,7 +201,7 @@ export default function PeriodicReports() {
         {/* Scrollable Report Content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6 [scrollbar-width:none]">
           {isLoading ? (
-            <div className="h-96 flex items-center justify-center text-slate-400 text-xs font-medium">
+            <div className="h-96 flex items-center justify-center text-slate-500 text-xs font-medium">
               <RefreshCw className="w-4 h-4 animate-spin mr-2 text-blue-600" />
               正在统计周期数据...
             </div>

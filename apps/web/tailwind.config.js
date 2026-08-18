@@ -41,6 +41,10 @@ export default {
       fontFamily: {
         sans: ['var(--font-sans)'],
         tabular: ['var(--font-tabular)'],
+      },
+      fontSize: {
+        // 排版规范：辅助文本/单位/徽章下限 11px，主数字与正文下限 12px (text-xs)
+        '2xs': ['11px', { lineHeight: '1.2', letterSpacing: '0.01em' }],
       }
     },
   },

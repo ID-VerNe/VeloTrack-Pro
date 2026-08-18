@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Send, RefreshCw, CheckCircle2, Bike, Cog, Disc } from 'lucide-react';
+import { User, Send, RefreshCw, CheckCircle2 } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import type { RiderProfile } from '../../types/rider';
 
@@ -85,36 +85,36 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
       {/* Compact HUD Status Bar */}
       <div className="px-6 py-3 bg-slate-50 border-b border-slate-100 shrink-0">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-bold text-slate-700 font-mono">已生效核心参数 HUD</span>
+          <span className="text-xs font-bold text-slate-700 font-mono">已生效核心参数 HUD</span>
           {recentlyUpdated.length > 0 ? (
-            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center animate-pulse shadow-2xs font-mono">
+            <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center animate-pulse shadow-2xs font-mono">
               <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
               已写入数据库: {recentlyUpdated.join(', ')}
             </span>
           ) : (
-            <span className="text-[10px] text-slate-400 font-medium">分立硬件局部精准维护</span>
+            <span className="text-xs text-slate-500 font-medium">分立硬件局部精准维护</span>
           )}
         </div>
 
         <div className="grid grid-cols-4 gap-2 text-center text-xs">
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-            <div className="text-slate-400 text-[10px] font-semibold">体重</div>
+            <div className="text-slate-500 text-xs font-semibold">体重</div>
             <div className="font-bold text-slate-900 truncate font-mono">{profile.weight_kg} kg</div>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-            <div className="text-slate-400 text-[10px] font-semibold">车型 / 车重</div>
+            <div className="text-slate-500 text-xs font-semibold">车型 / 车重</div>
             <div className="font-bold text-slate-900 truncate" title={`${profile.current_bike} (${profile.bike_weight_kg || 11.5}kg)`}>
               {profile.current_bike?.split(' ')[0] || '大行P8'} · {profile.bike_weight_kg || 11.5}kg
             </div>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-            <div className="text-slate-400 text-[10px] font-semibold">齿比 / 外胎</div>
-            <div className="font-bold text-slate-900 truncate text-[11px]" title={`${profile.gear_ratio || '46T/11-28T'} | ${profile.tires || '马牌2.0'}`}>
+            <div className="text-slate-500 text-xs font-semibold">齿比 / 外胎</div>
+            <div className="font-bold text-slate-900 truncate text-xs" title={`${profile.gear_ratio || '46T/11-28T'} | ${profile.tires || '马牌2.0'}`}>
               {profile.gear_ratio?.split(' ')[0] || '46T/11-28T'} · 马牌2.0
             </div>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-            <div className="text-slate-400 text-[10px] font-semibold">伤病状态</div>
+            <div className="text-slate-500 text-xs font-semibold">伤病状态</div>
             <div className="font-bold text-slate-700 truncate" title={profile.injuries_notes}>
               {profile.injuries_notes && !profile.injuries_notes.includes('无') ? '已登记' : '暂无伤病'}
             </div>
@@ -150,7 +150,7 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
               {m.role === 'assistant' && m.updatedFields && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center space-x-2 text-emerald-950 font-bold shadow-2xs">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <div className="flex-1 min-w-0 text-[11px]">
+                  <div className="flex-1 min-w-0 text-xs">
                     <span>✅ 数据已同步写入数据库：</span>
                     <span className="font-extrabold text-emerald-800 ml-1">
                       {Object.keys(m.updatedFields).join(', ')}
@@ -178,25 +178,25 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
         <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
           <button
             onClick={() => handleSend('我的车齿比改成了46T牙盘+11-28T 7速飞轮')}
-            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-[11px] font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
+            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
             ⚙️ 更新46T/11-28T齿比
           </button>
           <button
             onClick={() => handleSend('外胎保持马牌 contact urban 2.0 轮胎，胎压75-80psi')}
-            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-[11px] font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
+            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
             🛞 确认马牌2.0外胎
           </button>
           <button
             onClick={() => handleSend('我给车加装了平踏，整车重量11.5kg')}
-            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-[11px] font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
+            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
             🚲 更新车重与脚踏
           </button>
           <button
             onClick={() => handleSend('膝盖暂无伤病，保持85+rpm高踏频')}
-            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-[11px] font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
+            className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
             🩹 确认健康状态
           </button>

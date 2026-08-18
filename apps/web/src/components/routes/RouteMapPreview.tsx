@@ -113,7 +113,7 @@ export default function RouteMapPreview({ coordinates, routeName }: Props) {
   return (
     <div className="w-full h-48 sm:h-64 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
       <div ref={mapContainer} className="w-full h-full" />
-      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200/80 text-[11px] font-bold text-slate-700 shadow-xs flex items-center space-x-1.5">
+      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs flex items-center space-x-1.5">
         <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
         <span>{routeName} · 轨迹地图</span>
       </div>

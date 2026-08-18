@@ -1,10 +1,72 @@
-export async function ensureTables(db: D1Database) {
+// 模块级缓存：同一 Worker 实例（isolate）生命周期内只执行一次初始化，
+// 避免每个请求重复执行 20+ 条 DDL 往返（原实现每请求执行，延迟放大 100-500ms）
+let ensureTablesPromise: Promise<void> | null = null
+
+export function ensureTables(db: D1Database): Promise<void> {
+  if (!ensureTablesPromise) {
+    ensureTablesPromise = runEnsureTables(db).catch((err) => {
+      // 初始化失败时清空缓存，允许下一个请求重试，避免 isolate 永久坏态
+      ensureTablesPromise = null
+      throw err
+    })
+  }
+  return ensureTablesPromise
+}
+
+async function runEnsureTables(db: D1Database) {
+  // rides / privacy_zones 原本仅由 schema.sql 手动初始化，运行时空库（新部署 / 本地模拟）会缺失导致接口报错。
+  // 这里与 schema.sql 保持一致补建，保证任何环境冷启动即可用。
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS rides (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      start_time INTEGER NOT NULL,
+      end_time INTEGER NOT NULL,
+      elapsed_time_seconds INTEGER NOT NULL,
+      moving_time_seconds INTEGER NOT NULL,
+      distance_meters REAL NOT NULL,
+      max_speed_kmh REAL,
+      avg_speed_kmh REAL,
+      total_ascent_meters REAL,
+      total_descent_meters REAL,
+      max_altitude_meters REAL,
+      avg_heart_rate INTEGER,
+      max_heart_rate INTEGER,
+      avg_cadence INTEGER,
+      max_cadence INTEGER,
+      calories INTEGER,
+      hr_z1_seconds INTEGER DEFAULT 0,
+      hr_z2_seconds INTEGER DEFAULT 0,
+      hr_z3_seconds INTEGER DEFAULT 0,
+      hr_z4_seconds INTEGER DEFAULT 0,
+      hr_z5_seconds INTEGER DEFAULT 0,
+      start_lat REAL,
+      start_lng REAL,
+      summary_polyline TEXT,
+      detail_points_r2_key TEXT,
+      raw_tcx_r2_key TEXT,
+      is_commute INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL
+    )
+  `).run();
+  try { await db.prepare('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)').run() } catch {}
+
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS privacy_zones (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      radius_meters REAL DEFAULT 500
+    )
+  `).run();
+
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS ai_config (
       id INTEGER PRIMARY KEY DEFAULT 1 CHECK(id = 1),
-      base_url TEXT NOT NULL DEFAULT 'http://localhost:37183/v1',
+      base_url TEXT NOT NULL DEFAULT '',
       model_name TEXT NOT NULL DEFAULT 'deepseek-v4-flash',
-      api_key TEXT NOT NULL DEFAULT 'sk-fU0SuTBSzwvd6hVyVDE6cQkT3R7QFVAikpYaetvDOZs9gOJp',
+      api_key TEXT NOT NULL DEFAULT '',
       updated_at INTEGER NOT NULL DEFAULT (unixepoch())
     )
   `).run();
@@ -144,7 +206,7 @@ export async function ensureTables(db: D1Database) {
 
   await db.prepare(`
     INSERT OR IGNORE INTO ai_config (id, base_url, model_name, api_key)
-    VALUES (1, 'http://localhost:37183/v1', 'deepseek-v4-flash', 'sk-fU0SuTBSzwvd6hVyVDE6cQkT3R7QFVAikpYaetvDOZs9gOJp')
+    VALUES (1, '', 'deepseek-v4-flash', '')
   `).run();
 
   await db.prepare(`
@@ -191,10 +253,15 @@ export async function ensureTables(db: D1Database) {
     if (!countMilestones || countMilestones.count === 0) {
       await db.prepare(`
         INSERT INTO goal_milestones (weekly_distance_km, target_avg_speed_kmh, monthly_distance_km, primary_goal, rationale, source, created_at)
-        VALUES 
+        VALUES
           (50.0, 16.0, 150.0, '基础踏频与有氧基底建立', '初始建档目标：建立85-95rpm高踏频骑行习惯', 'coach', unixepoch() - 86400 * 7),
           (60.0, 18.0, 180.0, '绿灯路段巡航提速与 Zone2 稳态输出', '根据近期实战停表均速达标，主动上调单周里程至60km与巡航均速18km/h', 'coach', unixepoch())
       `).run();
     }
+  } catch {}
+
+  // rides 表核心查询索引（rides 由 schema.sql 手动初始化，表可能尚不存在，容错处理）
+  try {
+    await db.prepare('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)').run();
   } catch {}
 }

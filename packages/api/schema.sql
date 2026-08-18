@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS rides (
   is_commute INTEGER DEFAULT 0,              -- 是否为通勤
   created_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time);
 
 -- 隐私脱敏圆区 (在设置半径内的轨迹点自动隐藏)
 CREATE TABLE IF NOT EXISTS privacy_zones (
@@ -50,11 +51,12 @@ CREATE TABLE IF NOT EXISTS privacy_zones (
 );
 
 -- AI 模型配置表（单行约束）
+-- 注意：api_key 建议留空，由 Worker Secret（AI_API_KEY）提供；此处填写的 key 会被 GET /api/ai/config 脱敏回显
 CREATE TABLE IF NOT EXISTS ai_config (
   id INTEGER PRIMARY KEY DEFAULT 1 CHECK(id = 1),
-  base_url TEXT NOT NULL DEFAULT 'http://localhost:37183/v1',
+  base_url TEXT NOT NULL DEFAULT '',
   model_name TEXT NOT NULL DEFAULT 'deepseek-v4-flash',
-  api_key TEXT NOT NULL DEFAULT 'sk-fU0SuTBSzwvd6hVyVDE6cQkT3R7QFVAikpYaetvDOZs9gOJp',
+  api_key TEXT NOT NULL DEFAULT '',
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 

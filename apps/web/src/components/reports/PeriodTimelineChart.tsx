@@ -90,10 +90,10 @@ export default function PeriodTimelineChart({ timeline }: Props) {
   return (
     <div className="bg-slate-50/60 rounded-3xl p-6 border border-slate-100">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
           周期内里程与爬升走势拆解
         </h3>
-        <span className="text-[11px] text-slate-400 font-medium">按时间细分统计</span>
+        <span className="text-xs text-slate-500 font-medium">按时间细分统计</span>
       </div>
 
       <div className="h-56 w-full">

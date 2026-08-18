@@ -102,7 +102,7 @@ aiProfileRouter.post('/rider/interview/chat', async (c) => {
     const { message, history } = await c.req.json();
     if (!message) return c.json({ error: 'Message is required' }, 400);
 
-    const config = await getAIConfig(c.env.DB);
+    const config = await getAIConfig(c.env.DB, c.env);
     const currentProfile = await getRiderProfile(c.env.DB);
 
     const systemPrompt = `你是一名专业、严谨且温和的职业车队建档评估师。你的任务是通过与车手亲切问答，协助其建立并精准维护个人体能与战车硬件档案。

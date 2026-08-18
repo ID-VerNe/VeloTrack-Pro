@@ -10,36 +10,23 @@ import {
   Bike,
   RotateCcw,
   ChevronRight,
-  MapPin,
-  Calendar,
-  Clock,
-  Zap,
-  Mountain
+  MapPin
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import RideCard from '../components/RideCard';
 import { detectCityForRide, extractCitiesFromRides } from '../utils/geoUtils';
 import { formatDuration, formatRideDate } from '../utils/cyclingCalculations';
+import { useApi } from '../hooks/useApi';
 
 export default function ActivitiesList() {
-  const [rides, setRides] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // 统一取数：loading/error 由 useApi 托管，错误不再被静默吞掉
+  const { data: fetchedRides, isLoading, error } = useApi<any[]>('/api/rides', (json) => json.rides || []);
+  const rides = fetchedRides ?? [];
   const [searchQuery, setSearchQuery] = useState('');
   const [cityFilter, setCityFilter] = useState<string>('all');
   const [distanceFilter, setDistanceFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date_desc' | 'dist_desc' | 'speed_desc' | 'ascent_desc'>('date_desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetch('/api/rides')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.rides) setRides(data.rides);
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, []);
 
   const availableCities = useMemo(() => extractCitiesFromRides(rides), [rides]);
 
@@ -88,8 +75,8 @@ export default function ActivitiesList() {
               <Layers className="w-4 h-4 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-base font-extrabold text-slate-900 leading-tight">骑行活动档案库</h1>
-              <p className="text-xs text-slate-400 font-medium">共记录 {rides.length} 次骑行活动 · 已筛选 {filteredRides.length} 次</p>
+              <h1 className="text-base font-extrabold text-slate-900 leading-tight">骑行档案</h1>
+              <p className="text-xs text-slate-500 font-medium">共记录 {rides.length} 次骑行 · 已筛选 {filteredRides.length} 次</p>
             </div>
           </div>
 
@@ -133,10 +120,10 @@ export default function ActivitiesList() {
           <div className="flex flex-wrap items-center gap-3">
             {/* Search Input */}
             <div className="flex-1 min-w-[240px] relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="搜索骑行活动名称..."
+                placeholder="搜索骑行名称..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs"
@@ -145,7 +132,7 @@ export default function ActivitiesList() {
 
             {/* Dynamic City Filter */}
             <div className="flex items-center space-x-1.5 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 px-1 flex items-center">
+              <span className="text-xs font-bold text-slate-500 px-1 flex items-center">
                 <MapPin className="w-3 h-3 mr-0.5" /> 城市:
               </span>
               {availableCities.map((c) => (
@@ -153,12 +140,12 @@ export default function ActivitiesList() {
                   key={c.id}
                   onClick={() => setCityFilter(c.id)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    cityFilter === c.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                    cityFilter === c.id ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   <span>{c.name}</span>
                   {c.id !== 'all' && (
-                    <span className="text-[10px] ml-1 opacity-70 font-mono">({c.count})</span>
+                    <span className="text-xs ml-1 opacity-70 font-mono">({c.count})</span>
                   )}
                 </button>
               ))}
@@ -166,7 +153,7 @@ export default function ActivitiesList() {
 
             {/* Distance Filter */}
             <div className="flex items-center space-x-1.5 bg-white px-2 py-1 rounded-xl border border-slate-200 shadow-xs">
-              <span className="text-[11px] font-bold text-slate-400 px-1">里程:</span>
+              <span className="text-xs font-bold text-slate-500 px-1">里程:</span>
               {[
                 { id: 'all', label: '全部' },
                 { id: 'short', label: '<15km' },
@@ -177,7 +164,7 @@ export default function ActivitiesList() {
                   key={d.id}
                   onClick={() => setDistanceFilter(d.id)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    distanceFilter === d.id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                    distanceFilter === d.id ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   {d.label}
@@ -187,7 +174,7 @@ export default function ActivitiesList() {
 
             {/* Sort Dropdown */}
             <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs">
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
               <select
                 value={sortBy}
                 onChange={(e: any) => setSortBy(e.target.value)}
@@ -205,14 +192,24 @@ export default function ActivitiesList() {
         {/* Main Content Grid / List */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 [scrollbar-width:none]">
           {isLoading ? (
-            <div className="h-64 flex items-center justify-center text-slate-400 text-xs font-medium">
-              <RefreshCw className="w-5 h-5 animate-spin mr-2 text-blue-600" />
-              正在加载活动列表...
+            <div className="h-64 flex items-center justify-center text-slate-500 text-xs font-medium" role="status">
+              <RefreshCw className="w-5 h-5 animate-spin mr-2 text-sky-600" />
+              正在加载骑行列表...
+            </div>
+          ) : error ? (
+            <div className="h-64 flex flex-col items-center justify-center bg-rose-50/60 rounded-2xl border border-rose-100 text-xs font-medium space-y-3" role="alert">
+              <p className="text-rose-700">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-slate-800 transition-all cursor-pointer active:scale-95"
+              >
+                重新加载
+              </button>
             </div>
           ) : filteredRides.length === 0 ? (
-            <div className="text-center py-24 text-slate-400 text-xs font-medium space-y-3">
+            <div className="text-center py-24 text-slate-500 text-xs font-medium space-y-3">
               <Bike className="w-8 h-8 mx-auto text-slate-300" />
-              <p>未找到符合条件的骑行活动</p>
+              <p>未找到符合条件的骑行</p>
               {isFiltered && (
                 <button
                   onClick={handleResetFilters}
@@ -232,10 +229,10 @@ export default function ActivitiesList() {
             /* High-density Structured Table View with aligned Column Headers */
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
               {/* Header row */}
-              <div className="px-5 py-2.5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <div className="px-5 py-2.5 bg-slate-50/90 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                 <div className="flex items-center space-x-4 flex-1 min-w-0">
                   <div className="w-8 shrink-0 text-center">类型</div>
-                  <div className="flex-1 min-w-0">活动名称与日期</div>
+                  <div className="flex-1 min-w-0">骑行名称与日期</div>
                 </div>
                 <div className="flex items-center space-x-6 text-right tabular-nums">
                   <div className="w-20">距离</div>
@@ -270,11 +267,11 @@ export default function ActivitiesList() {
                             <span className="text-xs font-bold text-slate-900 group-hover:text-slate-950 transition-colors truncate">
                               {ride.title}
                             </span>
-                            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                            <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-semibold shrink-0">
                               {city}
                             </span>
                           </div>
-                          <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                          <div className="text-xs text-slate-500 font-mono mt-0.5">
                             {dateStr}
                           </div>
                         </div>
@@ -282,15 +279,15 @@ export default function ActivitiesList() {
 
                       <div className="flex items-center space-x-6 text-xs text-slate-700 tabular-nums text-right">
                         <div className="w-20 font-bold text-slate-900">
-                          {distKm} <span className="text-[10px] font-normal text-slate-400">km</span>
+                          {distKm} <span className="text-xs font-normal text-slate-500">km</span>
                         </div>
                         <div className="w-20 hidden sm:block font-bold text-slate-900">
-                          {ride.avg_speed_kmh || 0} <span className="text-[10px] font-normal text-slate-400">km/h</span>
+                          {ride.avg_speed_kmh || 0} <span className="text-xs font-normal text-slate-500">km/h</span>
                         </div>
                         <div className="w-20 hidden md:block font-bold text-slate-900">
-                          {ride.total_ascent_meters || 0} <span className="text-[10px] font-normal text-slate-400">m</span>
+                          {ride.total_ascent_meters || 0} <span className="text-xs font-normal text-slate-500">m</span>
                         </div>
-                        <div className="w-20 text-slate-500 font-mono text-[11px]">
+                        <div className="w-20 text-slate-500 font-mono text-xs">
                           {duration}
                         </div>
                         <div className="w-6 flex items-center justify-center">

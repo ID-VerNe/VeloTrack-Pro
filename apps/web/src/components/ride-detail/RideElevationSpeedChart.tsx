@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Zap, PauseCircle, Gauge, Mountain, Flame, RotateCcw } from 'lucide-react';
-import { analyzeRideTelemetry, type ChartTelemetryPoint } from '../../utils/telemetrySegments';
+import { analyzeRideTelemetry, type ChartTelemetryPoint, type RideDetailPoint } from '../../utils/telemetrySegments';
 
 interface Props {
   ride: any;
   routeCoordinates?: [number, number][];
+  detailPoints?: RideDetailPoint[] | null;
   externalHoverIndex?: number | null;
   onHoverScrub?: (point: ChartTelemetryPoint) => void;
   onLeaveScrub?: () => void;
@@ -16,6 +17,7 @@ interface Props {
 export default function RideElevationSpeedChart({
   ride,
   routeCoordinates = [],
+  detailPoints = null,
   externalHoverIndex,
   onHoverScrub,
   onLeaveScrub,
@@ -25,9 +27,9 @@ export default function RideElevationSpeedChart({
   const echartsInstanceRef = useRef<any>(null);
   const [isZoomed, setIsZoomed] = React.useState(false);
 
-  const { chartData, telemetryPoints, stats, markAreas, keyPeakIndices } = useMemo(() => {
-    return analyzeRideTelemetry(ride, routeCoordinates);
-  }, [ride, routeCoordinates]);
+  const { chartData, telemetryPoints, stats, markAreas, keyPeakIndices, isRealData } = useMemo(() => {
+    return analyzeRideTelemetry(ride, routeCoordinates, detailPoints);
+  }, [ride, routeCoordinates, detailPoints]);
 
   // Sync external hover index from map
   useEffect(() => {
@@ -207,23 +209,39 @@ export default function RideElevationSpeedChart({
             <span>速度、海拔与微观路段剖面</span>
           </h3>
           <div className="flex items-center space-x-2">
+            {/* 数据源标注：实测=码表逐点记录；示意=基于汇总值估算，避免误导 */}
+            {isRealData ? (
+              <span
+                className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold"
+                title="海拔与速度曲线来自码表逐点实测记录"
+              >
+                实测逐点数据
+              </span>
+            ) : (
+              <span
+                className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold"
+                title="此骑行无逐点明细（旧数据），海拔曲线为基于总爬升/最高海拔的示意拟合，速度为由 GPS 位移推算的估算值"
+              >
+                示意曲线 · 非实测
+              </span>
+            )}
             {isZoomed && (
               <button
                 onClick={handleResetZoom}
-                className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center space-x-1 transition-all cursor-pointer"
+                className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center space-x-1 transition-all cursor-pointer"
               >
                 <RotateCcw className="w-2.5 h-2.5" />
                 <span>复原全貌</span>
               </button>
             )}
-            <span className="text-[11px] text-slate-400 font-mono">
+            <span className="text-xs text-slate-500 font-mono">
               总历时 {stats.elapsedMins} 分钟 · 滚轮可缩放
             </span>
           </div>
         </div>
 
         {/* Micro-segmentation summary badges */}
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
           <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center space-x-1">
             <Zap className="w-3 h-3 text-blue-600" />
             <span>踩踏做功: {stats.movingMins} min ({stats.movingRatioPct}%)</span>
@@ -238,8 +256,8 @@ export default function RideElevationSpeedChart({
         </div>
 
         {/* Quick-Jump Key Feature Capsules */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px] font-bold">
-          <span className="text-slate-400 text-[9px] font-medium mr-0.5">特征极值快速定位:</span>
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs font-bold">
+          <span className="text-slate-500 text-2xs font-medium mr-0.5">特征极值快速定位:</span>
           {keyPeakIndices && (
             <>
               <button

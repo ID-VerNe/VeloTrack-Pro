@@ -39,14 +39,14 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
             <Target className="w-3.5 h-3.5 text-slate-900" />
             <span className="text-slate-700">单周里程目标</span>
           </div>
-          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-800 font-mono">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-800 font-mono">
             {weeklyPct}%
           </span>
         </div>
 
         <div className="text-2xl font-black text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.thisWeekDistanceKm}</span>
-          <span className="text-xs font-semibold text-slate-400 ml-1">
+          <span className="text-xs font-semibold text-slate-500 ml-1">
             / {targets.weeklyDistanceKm} km
           </span>
         </div>
@@ -66,14 +66,14 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
             <TrendingUp className="w-3.5 h-3.5 text-sky-600" />
             <span className="text-slate-700">目标巡航均速</span>
           </div>
-          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-800 font-mono">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-sky-50 text-sky-800 font-mono">
             达成 {speedPct}%
           </span>
         </div>
 
         <div className="text-2xl font-black text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.bestAvgSpeedKmh}</span>
-          <span className="text-xs font-semibold text-slate-400 ml-1">
+          <span className="text-xs font-semibold text-slate-500 ml-1">
             / {targets.targetAvgSpeedKmh} km/h
           </span>
         </div>
@@ -93,14 +93,14 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
             <Calendar className="w-3.5 h-3.5 text-emerald-600" />
             <span className="text-slate-700">月度总跑量</span>
           </div>
-          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-mono">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-mono">
             {monthlyPct}%
           </span>
         </div>
 
         <div className="text-2xl font-black text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.thisMonthDistanceKm}</span>
-          <span className="text-xs font-semibold text-slate-400 ml-1">
+          <span className="text-xs font-semibold text-slate-500 ml-1">
             / {targets.monthlyDistanceKm} km
           </span>
         </div>
@@ -120,14 +120,14 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
             <Trophy className="w-3.5 h-3.5 text-amber-600" />
             <span className="text-slate-700">年度累计里程</span>
           </div>
-          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 font-mono">
+          <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 font-mono">
             {annualPct}%
           </span>
         </div>
 
         <div className="text-2xl font-black text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.totalDistanceKm}</span>
-          <span className="text-xs font-semibold text-slate-400 ml-1">
+          <span className="text-xs font-semibold text-slate-500 ml-1">
             / {targets.annualDistanceKm} km
           </span>
         </div>

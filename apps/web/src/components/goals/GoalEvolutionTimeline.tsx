@@ -4,10 +4,9 @@ import type { GoalMilestone } from '../../types/rider';
 
 interface Props {
   milestones: GoalMilestone[];
-  onAskCoach: () => void;
 }
 
-export default function GoalEvolutionTimeline({ milestones, onAskCoach }: Props) {
+export default function GoalEvolutionTimeline({ milestones }: Props) {
   if (!milestones || milestones.length === 0) {
     return null;
   }
@@ -22,7 +21,7 @@ export default function GoalEvolutionTimeline({ milestones, onAskCoach }: Props)
             阶段目标演进记录 (Goal Milestones)
           </h3>
         </div>
-        <span className="text-[11px] text-slate-400 font-medium">
+        <span className="text-xs text-slate-500 font-medium">
           记录系统根据实战做功与均速表现调优的历史快照
         </span>
       </div>
@@ -62,19 +61,19 @@ export default function GoalEvolutionTimeline({ milestones, onAskCoach }: Props)
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/60">
                   <div className="flex items-center space-x-2">
-                    <span className="text-[11px] font-mono font-bold text-slate-500">
+                    <span className="text-xs font-mono font-bold text-slate-500">
                       {dateStr}
                     </span>
 
                     {isLatest && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white flex items-center space-x-1 shadow-2xs font-mono">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white flex items-center space-x-1 shadow-2xs font-mono">
                         <CheckCircle2 className="w-2.5 h-2.5" />
                         <span>当前生效中</span>
                       </span>
                     )}
 
                     <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center space-x-1 ${
+                      className={`text-2xs font-bold px-1.5 py-0.5 rounded flex items-center space-x-1 ${
                         isCoach
                           ? 'bg-slate-200 text-slate-800'
                           : 'bg-slate-100 text-slate-600'
@@ -104,7 +103,7 @@ export default function GoalEvolutionTimeline({ milestones, onAskCoach }: Props)
                 )}
 
                 {/* Rationale Note */}
-                <p className="pt-1 text-[11px] text-slate-600 leading-relaxed font-medium">
+                <p className="pt-1 text-xs text-slate-600 leading-relaxed font-medium">
                   <span className="font-bold text-slate-700">演进依据：</span>
                   {ms.rationale || '根据近期实战停表均速与体能负荷表现调整'}
                 </p>

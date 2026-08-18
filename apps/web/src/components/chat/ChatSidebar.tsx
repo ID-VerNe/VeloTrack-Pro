@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Trash2, MessageSquare, SlidersHorizontal } from 'lucide-react';
 import type { SessionSummary } from '../../types/rider';
+import IconButton from '../common/IconButton';
 
 interface Props {
   isOpen: boolean;
@@ -60,7 +61,7 @@ export default function ChatSidebar({
         >
           <div className="flex items-center space-x-2">
             <Plus className="w-4 h-4 text-slate-900 group-hover:scale-110 transition-transform" />
-            <span>开启新专项推演</span>
+            <span>开启新推演会话</span>
           </div>
         </button>
       </div>
@@ -71,7 +72,7 @@ export default function ChatSidebar({
           if (list.length === 0) return null;
           return (
             <div key={groupTitle} className="space-y-1">
-              <div className="px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="px-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
                 {groupTitle}
               </div>
               {list.map((s) => {
@@ -79,30 +80,41 @@ export default function ChatSidebar({
                 return (
                   <div
                     key={s.session_id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isCurrent}
                     onClick={() => onSelectSession(s.session_id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectSession(s.session_id);
+                      }
+                    }}
                     className={`group flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                       isCurrent
-                        ? 'bg-slate-900 text-white font-bold shadow-xs'
+                        ? 'bg-sky-600 text-white font-bold shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                     }`}
                   >
                     <div className="flex items-center space-x-2 min-w-0 flex-1">
-                      <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? 'text-sky-400' : 'text-slate-400'}`} />
+                      <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? 'text-sky-400' : 'text-slate-500'}`} />
                       <span className="truncate">
-                        {s.first_question || (s.session_id === 'coach_main' ? '全域诊断主方案' : '专项推演')}
+                        {s.first_question || (s.session_id === 'coach_main' ? '全域诊断主会话' : '推演会话')}
                       </span>
                     </div>
 
-                    <button
+                    <IconButton
+                      label="删除该会话"
+                      size="xs"
+                      danger
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteSession(s.session_id);
                       }}
-                      className={`text-slate-400 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded cursor-pointer ${isCurrent ? 'hover:text-rose-300' : ''}`}
-                      title="删除该推演"
+                      className={`opacity-0 group-hover:opacity-100 focus-visible:opacity-100 ${isCurrent ? 'hover:text-rose-300' : ''}`}
                     >
                       <Trash2 className="w-3 h-3" />
-                    </button>
+                    </IconButton>
                   </div>
                 );
               })}
@@ -111,7 +123,7 @@ export default function ChatSidebar({
         })}
 
         {sessions.length === 0 && (
-          <div className="text-center py-10 text-slate-400 text-xs font-medium">
+          <div className="text-center py-10 text-slate-500 text-xs font-medium">
             暂无历史推演
           </div>
         )}
@@ -119,20 +131,22 @@ export default function ChatSidebar({
 
       {/* Bottom Profile Status Bar */}
       <div className="p-3 border-t border-slate-200/70 bg-slate-100/50">
-        <div 
+        <button
+          type="button"
           onClick={onOpenProfile}
-          className="flex items-center justify-between p-2 rounded-xl hover:bg-white transition-all cursor-pointer border border-transparent hover:border-slate-200 shadow-2xs"
+          aria-label={`打开骑手档案（${riderBike} · ${riderWeight}kg）`}
+          className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white transition-all cursor-pointer border border-transparent hover:border-slate-200 shadow-2xs"
         >
           <div className="flex items-center space-x-2 min-w-0">
-            <div className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold font-mono">
+            <div className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center text-xs font-bold font-mono">
               V
             </div>
-            <div className="truncate text-[11px] font-bold text-slate-700">
+            <div className="truncate text-xs font-bold text-slate-700">
               {riderBike} · {riderWeight}kg
             </div>
           </div>
-          <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-        </div>
+          <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+        </button>
       </div>
     </aside>
   );

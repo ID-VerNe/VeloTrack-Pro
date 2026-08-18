@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, RefreshCw, Layers } from 'lucide-react';
+import { Activity, RefreshCw } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 
 interface Props {
@@ -20,7 +20,7 @@ export default function PeriodInsightCard({ insight, isLoading, onGenerate }: Pr
             <h3 className="text-sm font-bold text-slate-900 leading-tight">
               周期负荷与生物力学诊断
             </h3>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
               结合战车传动比、做功功率与踏频一致性的综合表现诊断
             </p>
           </div>
@@ -37,17 +37,17 @@ export default function PeriodInsightCard({ insight, isLoading, onGenerate }: Pr
       </div>
 
       {isLoading ? (
-        <div className="py-10 flex flex-col items-center justify-center text-slate-400 text-xs space-y-2 bg-slate-50 rounded-xl border border-slate-100">
+        <div className="py-10 flex flex-col items-center justify-center text-slate-500 text-xs space-y-2 bg-slate-50 rounded-xl border border-slate-100">
           <RefreshCw className="w-5 h-5 text-slate-600 animate-spin" />
           <p className="font-semibold text-slate-700">正在计算周期做功负荷与踏频分布数据...</p>
-          <p className="text-[11px] text-slate-400">评估负荷疲劳比、膝关节受力与下一阶段阶梯课表</p>
+          <p className="text-xs text-slate-500">评估负荷疲劳比、膝关节受力与下一阶段阶梯课表</p>
         </div>
       ) : insight ? (
         <div className="markdown-body pt-1">
           <MarkdownRenderer content={insight} />
         </div>
       ) : (
-        <div className="py-8 text-center text-slate-400 text-xs font-medium bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+        <div className="py-8 text-center text-slate-500 text-xs font-medium bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
           点击右上角「开始周期诊断」，系统将自动计算本周期踏频达成率与负荷疲劳比。
         </div>
       )}

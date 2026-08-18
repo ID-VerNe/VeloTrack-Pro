@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { CornerDownLeft, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 interface Props {
   input: string;
@@ -38,8 +38,8 @@ export default function ChatComposer({
       <div className="max-w-3xl mx-auto space-y-2.5">
         {/* Quick Suggestion Chips */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 font-mono">
-            专项推演:
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 font-mono">
+            推演会话:
           </span>
           {suggestedPrompts.map((p, idx) => (
             <button
@@ -78,7 +78,7 @@ export default function ChatComposer({
 
           {/* Bottom Toolbar inside Composer */}
           <div className="flex items-center justify-between pt-2 px-1 border-t border-slate-100">
-            <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-mono">
+            <div className="flex items-center space-x-2 text-xs text-slate-500 font-mono">
               <span>Enter 发送 · Shift+Enter 换行</span>
             </div>
 

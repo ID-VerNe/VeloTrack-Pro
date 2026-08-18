@@ -86,7 +86,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
           <BookmarkCheck className="w-4 h-4 text-slate-700 shrink-0" />
           <span>车手习惯与身体备忘</span>
         </div>
-        <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">
+        <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
           记录你平时随手提到的膝盖状况、齿比改件或骑行偏好。制定课表和推演配速时，都会先照着这些习惯来。
         </p>
       </div>
@@ -97,7 +97,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
           onClick={() => setSelectedFilter('all')}
           className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             selectedFilter === 'all'
-              ? 'bg-slate-900 text-white shadow-xs'
+              ? 'bg-sky-600 text-white shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
           }`}
         >
@@ -152,18 +152,18 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
             >
               <div className="space-y-1.5 min-w-0 flex-1">
                 <div className="flex items-center space-x-2">
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border flex items-center space-x-1 ${meta.color}`}>
+                  <span className={`text-xs font-extrabold px-2 py-0.5 rounded-md border flex items-center space-x-1 ${meta.color}`}>
                     <Icon className="w-2.5 h-2.5" />
                     <span>{meta.shortLabel}</span>
                   </span>
 
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded font-mono ${
+                  <span className={`text-2xs font-bold px-1.5 py-0.2 rounded font-mono ${
                     isCoachExtracted ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-slate-100 text-slate-600'
                   }`}>
                     {isCoachExtracted ? '实战沟通沉淀' : '手动设定'}
                   </span>
 
-                  <span className="text-[10px] text-slate-400 font-mono ml-auto">
+                  <span className="text-xs text-slate-500 font-mono ml-auto">
                     {new Date((mem.created_at || Date.now() / 1000) * 1000).toLocaleDateString('zh-CN')}
                   </span>
                 </div>
@@ -177,13 +177,13 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
                 <div className="flex items-center space-x-1.5 shrink-0 bg-rose-50 border border-rose-200 rounded-xl p-1 animate-in fade-in">
                   <button
                     onClick={() => handleConfirmDelete(mem.id)}
-                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
+                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
                   >
                     确认
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(null)}
-                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-[10px] font-medium border border-slate-200 transition-all cursor-pointer"
+                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium border border-slate-200 transition-all cursor-pointer"
                   >
                     取消
                   </button>
@@ -191,7 +191,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
               ) : (
                 <button
                   onClick={() => setConfirmDeleteId(mem.id)}
-                  className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg cursor-pointer shrink-0"
+                  className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg cursor-pointer shrink-0"
                   title="删除该条备忘"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -202,7 +202,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
         })}
 
         {filteredMemories.length === 0 && (
-          <div className="text-center py-10 text-slate-400 text-xs font-medium bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+          <div className="text-center py-10 text-slate-500 text-xs font-medium bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
             该分类下暂无备忘条目。平时推演时聊到的身体感受或改件习惯，都会自动整理到这里。
           </div>
         )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bike, Clock, Zap } from 'lucide-react';
+import { Bike, Clock } from 'lucide-react';
 
 interface Props {
   rides: any[];
@@ -24,7 +24,7 @@ export default function TotalStatsCard({ rides }: Props) {
     <div className="bg-white rounded-2xl shadow-xs border border-slate-200 p-5 space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
             累计遥测总里程
           </div>
 
@@ -35,10 +35,10 @@ export default function TotalStatsCard({ rides }: Props) {
         </div>
 
         <div className="text-right">
-          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
             停表均速 {overallMovingAvgSpeed} km/h
           </span>
-          <div className="text-[10px] text-slate-400 font-medium mt-1">
+          <div className="text-xs text-slate-500 font-medium mt-1">
             总均速 {overallElapsedAvgSpeed} km/h
           </div>
         </div>
@@ -52,9 +52,9 @@ export default function TotalStatsCard({ rides }: Props) {
           </div>
           <div className="min-w-0">
             <div className="text-sm font-black text-slate-900 leading-tight tabular-nums">
-              {rides.length} <span className="text-[10px] font-normal text-slate-500">次</span>
+              {rides.length} <span className="text-xs font-normal text-slate-500">次</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-medium truncate">总记录活动</div>
+            <div className="text-xs text-slate-500 font-medium truncate">总记录骑行</div>
           </div>
         </div>
 
@@ -65,9 +65,9 @@ export default function TotalStatsCard({ rides }: Props) {
           </div>
           <div className="min-w-0">
             <div className="text-sm font-black text-slate-900 leading-tight tabular-nums">
-              {dynamicHours} <span className="text-[10px] font-normal text-slate-500">小时</span>
+              {dynamicHours} <span className="text-xs font-normal text-slate-500">小时</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-medium truncate">纯踩踏做功用时</div>
+            <div className="text-xs text-slate-500 font-medium truncate">纯踩踏做功用时</div>
           </div>
         </div>
       </div>

@@ -25,10 +25,12 @@ export default function TrainingGoals() {
   const [targets, setTargets] = useState<UserTargets>(DEFAULT_TARGETS);
   const [milestones, setMilestones] = useState<GoalMilestone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isEditingTargets, setIsEditingTargets] = useState(false);
 
   const fetchData = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const [ridesRes, goalsRes] = await Promise.all([
         fetch('/api/rides').then((r) => r.json()),
@@ -51,6 +53,7 @@ export default function TrainingGoals() {
       }
     } catch (err) {
       console.error(err);
+      setLoadError('训练目标数据加载失败，请检查后端服务');
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +105,7 @@ export default function TrainingGoals() {
               <h1 className="text-base font-extrabold text-slate-900 leading-tight">
                 训练目标与进阶课表
               </h1>
-              <p className="text-xs text-slate-400 font-medium">
+              <p className="text-xs text-slate-500 font-medium">
                 以巡航 20km/h 与 50km 耐力为核心导向的科学量化目标
               </p>
             </div>
@@ -120,9 +123,19 @@ export default function TrainingGoals() {
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6 [scrollbar-width:none]">
           {isLoading ? (
-            <div className="h-96 flex items-center justify-center text-slate-400 text-xs font-medium">
-              <RefreshCw className="w-4 h-4 animate-spin mr-2 text-blue-600" />
+            <div className="h-96 flex items-center justify-center text-slate-500 text-xs font-medium" role="status">
+              <RefreshCw className="w-4 h-4 animate-spin mr-2 text-sky-600" />
               正在同步训练目标与达成数据...
+            </div>
+          ) : loadError ? (
+            <div className="h-96 flex flex-col items-center justify-center bg-rose-50/60 rounded-2xl border border-rose-100 text-xs font-medium space-y-3" role="alert">
+              <p className="text-rose-700">{loadError}</p>
+              <button
+                onClick={fetchData}
+                className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-slate-800 transition-all cursor-pointer active:scale-95"
+              >
+                重新加载
+              </button>
             </div>
           ) : (
             <>
@@ -138,7 +151,6 @@ export default function TrainingGoals() {
               {/* 3. Goal Evolution Milestones Timeline */}
               <GoalEvolutionTimeline
                 milestones={milestones}
-                onAskCoach={handleAskCoachForGoals}
               />
 
               {/* 4. Milestones & Achievements Grid */}

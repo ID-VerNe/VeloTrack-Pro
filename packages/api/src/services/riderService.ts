@@ -196,7 +196,14 @@ export async function getTrainingGoals(db: D1Database): Promise<TrainingGoalsDat
 export async function updateTrainingGoals(db: D1Database, data: Partial<TrainingGoalsData>) {
   await ensureTables(db);
   const cur = await getTrainingGoals(db);
-  const merged = { ...cur, ...data };
+  // 显式合并：未提供的字段回落为当前值，避免 undefined 传入 D1 bind 报 D1_TYPE_ERROR
+  const merged = {
+    weekly_distance_km: data.weekly_distance_km !== undefined ? Number(data.weekly_distance_km) : cur.weekly_distance_km,
+    target_avg_speed_kmh: data.target_avg_speed_kmh !== undefined ? Number(data.target_avg_speed_kmh) : cur.target_avg_speed_kmh,
+    monthly_distance_km: data.monthly_distance_km !== undefined ? Number(data.monthly_distance_km) : cur.monthly_distance_km,
+    annual_distance_km: data.annual_distance_km !== undefined ? Number(data.annual_distance_km) : cur.annual_distance_km,
+    coach_notes: data.coach_notes !== undefined ? data.coach_notes : cur.coach_notes,
+  };
 
   await db.prepare(`
     UPDATE training_goals SET

@@ -164,7 +164,7 @@ export default function RoutesExplorer() {
             </div>
             <div>
               <h1 className="text-base font-extrabold text-slate-900 leading-tight">城市探索路线库</h1>
-              <p className="text-xs text-slate-400 font-medium">精选大湾区经典骑行路线 · 包含战车齿比与膝盖防护建议</p>
+              <p className="text-xs text-slate-500 font-medium">精选大湾区经典骑行路线 · 包含战车齿比与膝盖防护建议</p>
             </div>
           </div>
 
@@ -187,7 +187,7 @@ export default function RoutesExplorer() {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Route List (40%) */}
           <div className="w-full lg:w-[420px] border-r border-slate-100 p-6 overflow-y-auto space-y-3.5 shrink-0 [scrollbar-width:none]">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
               精选路段推荐 ({filteredRoutes.length})
             </div>
 
@@ -196,15 +196,25 @@ export default function RoutesExplorer() {
               return (
                 <div
                   key={route.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-label={`选择路线 ${route.name}，${route.distanceKm} 公里`}
                   onClick={() => setSelectedRoute(route)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedRoute(route);
+                    }
+                  }}
                   className={`p-4.5 rounded-2xl border transition-all cursor-pointer space-y-2.5 ${
                     isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                      ? 'bg-sky-600 text-white border-sky-600 shadow-md'
                       : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80 text-slate-900'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border font-mono ${
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md border font-mono ${
                       isSelected
                         ? 'bg-slate-800 text-slate-200 border-slate-700'
                         : 'bg-white text-slate-700 border-slate-200'
@@ -225,11 +235,11 @@ export default function RoutesExplorer() {
                     </p>
                   </div>
 
-                  <div className={`flex items-center justify-between pt-2 border-t text-[11px] ${
-                    isSelected ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'
+                  <div className={`flex items-center justify-between pt-2 border-t text-xs ${
+                    isSelected ? 'border-slate-800 text-slate-500' : 'border-slate-200 text-slate-500'
                   }`}>
                     <span className="flex items-center">
-                      <Mountain className="w-3 h-3 mr-1 text-slate-400" />
+                      <Mountain className="w-3 h-3 mr-1 text-slate-500" />
                       爬升 {route.ascentM}m
                     </span>
                     <span className={`font-bold flex items-center group ${isSelected ? 'text-sky-400' : 'text-slate-900'}`}>
@@ -253,10 +263,10 @@ export default function RoutesExplorer() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center space-x-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[11px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-xs font-bold">
                     {selectedRoute.city}
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold border border-slate-200">
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">
                     {selectedRoute.difficulty}
                   </span>
                 </div>
@@ -274,26 +284,26 @@ export default function RoutesExplorer() {
               >
                 <SlidersHorizontal className="w-4 h-4 text-sky-400" />
                 <span>代入决策舱推演此路线</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-500" />
               </button>
             </div>
 
             {/* 3. Quick Metrics */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                <div className="text-[11px] font-semibold text-slate-400">标准单圈里程</div>
+                <div className="text-xs font-semibold text-slate-500">标准单圈里程</div>
                 <div className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
                   {selectedRoute.distanceKm} <span className="text-xs font-normal text-slate-500">km</span>
                 </div>
               </div>
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                <div className="text-[11px] font-semibold text-slate-400">累计爬升</div>
+                <div className="text-xs font-semibold text-slate-500">累计爬升</div>
                 <div className="text-2xl font-black text-slate-900 mt-1 tabular-nums">
                   {selectedRoute.ascentM} <span className="text-xs font-normal text-slate-500">m</span>
                 </div>
               </div>
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                <div className="text-[11px] font-semibold text-slate-400">适宜战车车型</div>
+                <div className="text-xs font-semibold text-slate-500">适宜战车车型</div>
                 <div className="text-xs font-bold text-slate-900 mt-2 truncate">
                   {selectedRoute.suitableBike}
                 </div>

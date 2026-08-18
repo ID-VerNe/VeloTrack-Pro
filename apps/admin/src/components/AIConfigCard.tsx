@@ -1,23 +1,30 @@
 import { useState, useEffect } from 'react';
 import { Sliders, Check, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAdminToken } from '../utils/apiClient';
 
 export function AIConfigCard() {
   const [isOpen, setIsOpen] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('http://localhost:37183/v1');
+  const [baseUrl, setBaseUrl] = useState('');
   const [modelName, setModelName] = useState('deepseek-v4-flash');
-  const [apiKey, setApiKey] = useState('sk-fU0SuTBSzwvd6hVyVDE6cQkT3R7QFVAikpYaetvDOZs9gOJp');
+  // 修复：移除硬编码的真实 API Key 初始值（密钥只应由用户输入或后端脱敏回显）
+  const [apiKey, setApiKey] = useState('');
 
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
-    fetch('/api/ai/config')
+    const headers: Record<string, string> = {};
+    const token = getAdminToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch('/api/ai/config', { headers })
       .then((res) => res.json())
       .then((data) => {
         if (data.config) {
-          setBaseUrl(data.config.base_url || 'http://localhost:37183/v1');
+          setBaseUrl(data.config.base_url || '');
           setModelName(data.config.model_name || 'deepseek-v4-flash');
+          // 后端返回的是脱敏值（如 sk-***xxxx），仅用于展示"已配置"状态
           setApiKey(data.config.api_key || '');
         }
       })
@@ -28,10 +35,14 @@ export function AIConfigCard() {
     setTestStatus('testing');
     setTestMessage('');
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const token = getAdminToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch('/api/ai/test-connection', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base_url: baseUrl, model_name: modelName, api_key: apiKey }),
+        headers,
+        // 后端统一使用已保存的密钥，不再把输入框内容（可能是脱敏回显值）回传
+        body: JSON.stringify({ base_url: baseUrl, model_name: modelName }),
       });
       const data = await res.json();
       if (data.success) {
@@ -49,17 +60,28 @@ export function AIConfigCard() {
 
   const handleSave = async () => {
     setSaveStatus('saving');
+    setSaveError('');
     try {
-      await fetch('/api/ai/config', {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const token = getAdminToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/ai/config', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ base_url: baseUrl, model_name: modelName, api_key: apiKey }),
       });
+      // 修复：原先不检查 res.ok，保存失败也显示"已保存"
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setSaveStatus('idle');
+      setSaveStatus('error');
+      setSaveError(err.message || '保存失败');
+      setTimeout(() => setSaveStatus('idle'), 3500);
     }
   };
 
@@ -136,6 +158,12 @@ export function AIConfigCard() {
           </div>
 
           {/* Action Bar */}
+          {saveStatus === 'error' && (
+            <div className="flex items-center space-x-1.5 text-[11px] font-semibold text-rose-500">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>保存失败：{saveError}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center space-x-2">
               <button

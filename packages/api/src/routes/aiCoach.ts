@@ -78,16 +78,19 @@ aiCoachRouter.post('/coach/:session/chat', async (c) => {
     const { message } = await c.req.json();
     if (!message) return c.json({ error: 'Message is required' }, 400);
 
-    const config = await getAIConfig(c.env.DB);
+    const config = await getAIConfig(c.env.DB, c.env);
     const riderContext = await getRiderContextPrompt(c.env.DB);
 
+    // 取"最近"30 条消息：先按时间倒序取最新，再反转为正序。
+    // 修复：原 ORDER BY ASC LIMIT 30 取的是最早 30 条，长会话中模型永远看不到近期上下文
     const historyRows = await c.env.DB.prepare(`
       SELECT role, content, tool_calls, tool_call_id, name
       FROM ai_messages
       WHERE session_id = ?
-      ORDER BY created_at ASC
+      ORDER BY created_at DESC, id DESC
       LIMIT 30
     `).bind(sessionId).all<any>();
+    (historyRows.results || []).reverse();
 
     const eliteCoachSystemPrompt = `你是由世界顶级自行车职业车队运动表现总监、运动生物力学专家联合调校的 **VeloTrack 专属私人骑行教练**。
 

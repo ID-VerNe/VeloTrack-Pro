@@ -56,7 +56,7 @@ aiInsightsRouter.get('/rides/:id/insight', async (c) => {
     const hrResult = calculateHeartRateZones({
       maxHr: profile.max_hr || 188,
       restingHr: profile.resting_hr || 55,
-      currentAvgHr: ride.avg_hr,
+      currentAvgHr: ride.avg_heart_rate, // 修复：原写法引用了不存在的 avg_hr 字段，导致心率评估静默失效
     });
 
     const sevenDaysAgo = ride.start_time - 7 * 24 * 3600 * 1000;
@@ -89,7 +89,7 @@ aiInsightsRouter.get('/rides/:id/insight', async (c) => {
       }
     }
 
-    const config = await getAIConfig(c.env.DB);
+    const config = await getAIConfig(c.env.DB, c.env);
     const riderContext = await getRiderContextPrompt(c.env.DB);
 
     const systemPrompt = `你是由世界顶级自行车职业车队运动生理学家与专业教练联合调校的 VeloTrack 专属训练顾问。
@@ -133,8 +133,8 @@ ${riderContext}
     ], { temperature: 0.3, max_tokens: 3000 });
 
     if (!res.ok) {
-      const errText = await res.text();
-      return c.json({ error: `AI service error: ${errText}` }, 502);
+      const errText = (await res.text()).slice(0, 300); // 截断，防泄露上游细节
+      return c.json({ error: `AI service error: HTTP ${res.status}: ${errText}` }, 502);
     }
 
     const data: any = await res.json();
@@ -167,6 +167,60 @@ ${riderContext}
     `).bind(rideId, contentHash, insight).run();
 
     return c.json({ insight, cached: false });
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500);
+  }
+});
+
+// 2. AI 智能命名：根据骑行数据生成标题
+// 补齐此前前端调用但后端缺失的 POST /api/ai/rides/suggest-title（原先固定 404，功能整体失效）
+aiInsightsRouter.post('/rides/suggest-title', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { start_time, distance_km, avg_speed_kmh, total_ascent_meters, city } = body;
+
+    if (!Number.isFinite(Number(start_time)) || Number(start_time) <= 0) {
+      return c.json({ error: 'start_time 必须是有效时间戳' }, 400);
+    }
+
+    const config = await getAIConfig(c.env.DB, c.env);
+
+    const dateStr = new Date(Number(start_time)).toLocaleDateString('zh-CN', {
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'long',
+    });
+
+    const res = await callAICompletion(config, [
+      {
+        role: 'system',
+        content: '你是骑行活动的命名助手。根据骑行数据生成一个简洁的中文标题，不超过 16 个字，直接输出标题本身，不要引号、不要解释、不要 emoji。',
+      },
+      {
+        role: 'user',
+        content: JSON.stringify({
+          日期: dateStr,
+          城市: typeof city === 'string' && city ? city : undefined,
+          里程公里: Number(distance_km) || 0,
+          均速kmh: Number(avg_speed_kmh) || 0,
+          爬升米: Number(total_ascent_meters) || 0,
+        }),
+      },
+    ], { temperature: 0.7, max_tokens: 100 });
+
+    if (!res.ok) {
+      const errText = (await res.text()).slice(0, 300);
+      return c.json({ error: `AI service error: HTTP ${res.status}: ${errText}` }, 502);
+    }
+
+    const data: any = await res.json();
+    // 清理模型可能输出的引号与首尾空白
+    const title = String(data.choices?.[0]?.message?.content || '')
+      .trim()
+      .replace(/^["'“”]+|["'“”]+$/g, '')
+      .slice(0, 30);
+
+    return c.json({ title: title || '' });
   } catch (err: any) {
     return c.json({ error: err.message }, 500);
   }

@@ -23,10 +23,10 @@ export default function PeriodRidesTable({ rides }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          本周期骑行活动记录 ({rides.length})
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          本周期骑行记录 ({rides.length})
         </h3>
-        <span className="text-[11px] text-slate-400 font-medium">点击活动卡片可进入详情</span>
+        <span className="text-xs text-slate-500 font-medium">点击骑行卡片可进入详情</span>
       </div>
 
       {rides.length > 0 ? (
@@ -47,7 +47,7 @@ export default function PeriodRidesTable({ rides }: Props) {
                   <span className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[200px]">
                     {ride.title}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-xs text-slate-500 font-medium">
                     {new Date(ride.start_time).toLocaleDateString('zh-CN', {
                       month: 'numeric',
                       day: 'numeric',
@@ -57,24 +57,24 @@ export default function PeriodRidesTable({ rides }: Props) {
 
                 <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-slate-100">
                   <div>
-                    <div className="text-[10px] text-slate-400 font-medium">里程</div>
+                    <div className="text-xs text-slate-500 font-medium">里程</div>
                     <div className="font-extrabold text-slate-900 tabular-nums">
                       {ride.distance_km} km
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-400 font-medium">运动做功</div>
+                    <div className="text-xs text-slate-500 font-medium">运动做功</div>
                     <div className="font-extrabold text-slate-900 tabular-nums">
                       {formatDuration(movingSec)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-400 font-medium">停表均速</div>
+                    <div className="text-xs text-slate-500 font-medium">停表均速</div>
                     <div className="font-extrabold text-slate-900 tabular-nums">
-                      {movingSpeed} <span className="text-[9px] font-normal text-slate-400">km/h</span>
+                      {movingSpeed} <span className="text-2xs font-normal text-slate-500">km/h</span>
                     </div>
                     {elapsedSpeed && elapsedSpeed !== movingSpeed && (
-                      <div className="text-[9px] text-slate-400 font-medium truncate">
+                      <div className="text-2xs text-slate-500 font-medium truncate">
                         总均速 {elapsedSpeed}
                       </div>
                     )}
@@ -85,7 +85,7 @@ export default function PeriodRidesTable({ rides }: Props) {
           })}
         </div>
       ) : (
-        <div className="py-8 text-center text-slate-400 text-xs font-medium bg-slate-50/40 rounded-2xl border border-dashed border-slate-200">
+        <div className="py-8 text-center text-slate-500 text-xs font-medium bg-slate-50/40 rounded-2xl border border-dashed border-slate-200">
           该周期内暂无骑行记录
         </div>
       )}

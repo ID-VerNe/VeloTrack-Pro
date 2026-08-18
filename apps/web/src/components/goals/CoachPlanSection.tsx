@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarRange, Sliders, ChevronRight, Gauge } from 'lucide-react';
+import { CalendarRange, Sliders } from 'lucide-react';
 
 interface Props {
   coachNotes?: string;
@@ -48,10 +48,10 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
       <div className="bg-slate-900 rounded-2xl p-5 text-white shadow-sm border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           <div className="flex items-center space-x-2">
-            <span className="bg-white/10 text-slate-200 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md font-mono">
+            <span className="bg-white/10 text-slate-200 font-bold text-xs uppercase tracking-wider px-2 py-0.5 rounded-md font-mono">
               战术指导原则
             </span>
-            <span className="text-slate-400 text-xs font-medium">大行 P8 传动比专属适配</span>
+            <span className="text-slate-500 text-xs font-medium">大行 P8 传动比专属适配</span>
           </div>
           <p className="text-sm font-bold leading-relaxed pt-0.5 text-slate-100">
             "{coachNotes || '保持85-95rpm高踏频，平路以46x19T为主，保护膝盖稳定提速'}"
@@ -76,7 +76,7 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
               4 周阶梯进阶训练课表 (目标 20km/h 定速巡航)
             </h3>
           </div>
-          <span className="text-[11px] text-slate-400 font-medium">
+          <span className="text-xs text-slate-500 font-medium">
             兼顾心肺负荷适应与关节做功保护
           </span>
         </div>
@@ -90,15 +90,15 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
               <div>
                 <div className="flex items-center justify-between text-xs font-bold text-slate-900 pb-1">
                   <span className="text-slate-900 font-extrabold">{plan.week}</span>
-                  <span className="text-[10px] text-slate-500 font-semibold font-mono">{plan.target}</span>
+                  <span className="text-xs text-slate-500 font-semibold font-mono">{plan.target}</span>
                 </div>
                 <div className="text-xs font-bold text-slate-800">{plan.focus}</div>
-                <div className="text-[11px] text-slate-700 bg-white border border-slate-200 rounded-lg p-1.5 mt-2 font-medium space-y-0.5">
-                  <div className="text-[10px] text-slate-400 font-mono">{plan.zone}</div>
-                  <div className="font-semibold text-slate-800 text-[11px]">{plan.ratio}</div>
+                <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-1.5 mt-2 font-medium space-y-0.5">
+                  <div className="text-xs text-slate-500 font-mono">{plan.zone}</div>
+                  <div className="font-semibold text-slate-800 text-xs">{plan.ratio}</div>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-500 leading-relaxed font-medium pt-1 border-t border-slate-200/60 mt-2">
+              <p className="text-xs text-slate-500 leading-relaxed font-medium pt-1 border-t border-slate-200/60 mt-2">
                 {plan.note}
               </p>
             </div>

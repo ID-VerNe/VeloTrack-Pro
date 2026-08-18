@@ -7,11 +7,13 @@ import PeriodicReports from './pages/PeriodicReports';
 import ActivitiesList from './pages/ActivitiesList';
 import RoutesExplorer from './pages/RoutesExplorer';
 import TrainingGoals from './pages/TrainingGoals';
+import { MapStyleProvider } from './contexts/MapStyleContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <MapStyleProvider>
+      <BrowserRouter>
+        <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/reports" element={<PeriodicReports />} />
         <Route path="/rides" element={<ActivitiesList />} />
@@ -19,8 +21,9 @@ function App() {
         <Route path="/goals" element={<TrainingGoals />} />
         <Route path="/ai-coach" element={<AICoach />} />
         <Route path="/ride/:id" element={<RideDetail />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </MapStyleProvider>
   );
 }
 

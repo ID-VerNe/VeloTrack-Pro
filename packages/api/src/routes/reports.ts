@@ -29,7 +29,13 @@ reportsRouter.post('/insight', async (c) => {
     const body = await c.req.json();
     const { period_type, summary, rides_count } = body;
 
-    const config = await getAIConfig(c.env.DB);
+    // 请求体校验：summary 缺失时直接 400，避免后文字段访问抛 TypeError 变成 500
+    if (!period_type || !summary || typeof summary !== 'object' ||
+        !Number.isFinite(Number(summary.total_distance_km))) {
+      return c.json({ error: '请求体必须包含 period_type 与有效的 summary（含 total_distance_km 等统计字段）' }, 400);
+    }
+
+    const config = await getAIConfig(c.env.DB, c.env);
     const riderContext = await getRiderContextPrompt(c.env.DB);
 
     const typeNames: Record<string, string> = {
@@ -77,8 +83,8 @@ ${riderContext}
     ], { temperature: 0.3, max_tokens: 3000 });
 
     if (!res.ok) {
-      const errText = await res.text();
-      return c.json({ error: `AI service error: ${errText}` }, 502);
+      const errText = (await res.text()).slice(0, 300); // 截断，防泄露上游细节
+      return c.json({ error: `AI service error: HTTP ${res.status}: ${errText}` }, 502);
     }
 
     const data: any = await res.json();

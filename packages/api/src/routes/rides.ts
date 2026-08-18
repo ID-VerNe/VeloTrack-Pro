@@ -11,16 +11,31 @@ ridesRouter.get('/', async (c) => {
   return c.json({ rides: results })
 })
 
-// 获取单次骑行详细数据
+// 获取单次骑行详细数据（含 R2 逐点明细，用于详情页真实海拔/速度曲线渲染）
 ridesRouter.get('/:id', async (c) => {
   const id = c.req.param('id')
   const ride = await c.env.DB.prepare('SELECT * FROM rides WHERE id = ?').bind(id).first()
-  
+
   if (!ride) {
     return c.json({ error: 'Ride not found' }, 404)
   }
-  
-  return c.json({ ride })
+
+  // 读取 R2 逐点明细；读取失败时静默降级（前端退化为示意曲线），不阻断详情页
+  let detailPoints: unknown = null
+  const detailKey = (ride as any).detail_points_r2_key
+  if (detailKey) {
+    try {
+      const obj = await c.env.BUCKET.get(detailKey)
+      if (obj) {
+        const detail = await obj.json<{ v: number; points: unknown[] }>()
+        detailPoints = Array.isArray(detail?.points) ? detail.points : null
+      }
+    } catch (err) {
+      console.error(`Failed to read detail points from R2: ${detailKey}`, err)
+    }
+  }
+
+  return c.json({ ride, detailPoints })
 })
 
 // 更新单次骑行信息（例如修改标题/重命名）

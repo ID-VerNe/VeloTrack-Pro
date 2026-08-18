@@ -8,6 +8,9 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
+    /* 修复：显式开启严格模式（原先遗漏 strict，整个 admin 包以非严格模式编译，隐式 any 等错误全部被放行） */
+    "strict": true,
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

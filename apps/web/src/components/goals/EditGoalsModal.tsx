@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Target } from 'lucide-react';
+import { useDialog } from '../../hooks/useDialog';
 
 export interface UserTargets {
   weeklyDistanceKm: number;
@@ -24,6 +25,8 @@ export default function EditGoalsModal({
 }: Props) {
   const [form, setForm] = useState<UserTargets>(initialValues);
   const [isSaving, setIsSaving] = useState(false);
+  // 弹层无障碍：焦点陷阱 + Esc 关闭 + 关闭后焦点返还
+  const dialogRef = useDialog(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +49,14 @@ export default function EditGoalsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 animate-in fade-in select-none">
-      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="设定科学训练目标"
+        tabIndex={-1}
+        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 focus:outline-none"
+      >
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Target className="w-5 h-5 text-blue-600" />
@@ -54,7 +64,7 @@ export default function EditGoalsModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -63,7 +73,7 @@ export default function EditGoalsModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 单周目标里程 (km)
               </label>
               <input
@@ -78,7 +88,7 @@ export default function EditGoalsModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 目标平路巡航均速 (km/h)
               </label>
               <input
@@ -95,7 +105,7 @@ export default function EditGoalsModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 单月目标里程 (km)
               </label>
               <input
@@ -110,7 +120,7 @@ export default function EditGoalsModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                 全年度目标里程 (km)
               </label>
               <input
@@ -126,7 +136,7 @@ export default function EditGoalsModal({
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
               战术备忘与齿比说明
             </label>
             <textarea

@@ -104,7 +104,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         <span className="truncate">阶段训练目标与量化指标已写入生效</span>
                       </div>
-                      <p className="text-[11px] text-emerald-700 font-medium mt-0.5 truncate">
+                      <p className="text-xs text-emerald-700 font-medium mt-0.5 truncate">
                         已同步至系统目标看板，巡航配速与周程进度即时更新
                       </p>
                     </div>
@@ -131,7 +131,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                         <CheckCircle2 className="w-3.5 h-3.5 text-slate-700 shrink-0" />
                         <span className="truncate">战车硬件参数与传动规格已成功更新</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
+                      <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
                         分立硬件与齿比参数已写入数据库，原配件记录已保留
                       </p>
                     </div>
@@ -155,15 +155,15 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
               </div>
 
               {/* Footer Controls */}
-              <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                <span className="text-[11px] font-medium text-slate-400 font-mono">
+              <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span className="text-xs font-medium text-slate-500 font-mono">
                   已代入战车传动比 · 遥测数据校验就绪
                 </span>
 
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={handleCopy}
-                    className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer flex items-center space-x-1 text-[11px]"
+                    className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer flex items-center space-x-1 text-xs"
                     title="复制推演内容"
                   >
                     {isCopied ? (
@@ -182,7 +182,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                   <button
                     onClick={onRegenerate}
                     disabled={isLoading}
-                    className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer flex items-center space-x-1 text-[11px] disabled:opacity-50"
+                    className="p-1 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer flex items-center space-x-1 text-xs disabled:opacity-50"
                     title="重新推演此方案"
                   >
                     <RotateCcw className="w-3 h-3" />

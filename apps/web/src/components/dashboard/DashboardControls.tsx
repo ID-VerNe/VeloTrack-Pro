@@ -3,11 +3,11 @@ import {
   Search, 
   X, 
   MapPin, 
-  Layers as MapStyleIcon, 
   ListFilter 
 } from 'lucide-react';
 import type { CityInfo } from '../../utils/geoUtils';
 import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
+import IconButton from '../common/IconButton';
 
 interface Props {
   searchTerm: string;
@@ -74,12 +74,14 @@ export default function DashboardControls({
             className="w-full pl-8 pr-7 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-xs font-semibold text-slate-800 placeholder-slate-400 border border-slate-200/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
           {searchTerm && (
-            <button
+            <IconButton
+              label="清空搜索词"
+              size="sm"
               onClick={() => onSearchChange('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+              className="absolute right-1 top-1/2 -translate-y-1/2"
             >
               <X className="w-3 h-3" />
-            </button>
+            </IconButton>
           )}
         </div>
 
@@ -93,14 +95,14 @@ export default function DashboardControls({
                 onClick={() => onCitySelect(city.id)}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 ${
                   isSelected
-                    ? 'bg-slate-900 text-white shadow-xs'
+                    ? 'bg-sky-600 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 {city.id !== 'all' && <MapPin className="w-3 h-3 text-slate-400" />}
                 <span>{city.name}</span>
                 <span
-                  className={`text-[10px] font-mono ml-0.5 px-1 py-0.2 rounded-full ${
+                  className={`text-xs font-mono ml-0.5 px-1 py-0.2 rounded-full ${
                     isSelected ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500'
                   }`}
                 >
@@ -137,7 +139,7 @@ export default function DashboardControls({
                     }}
                     className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       isCurrent
-                        ? 'bg-slate-900 text-white shadow-xs'
+                        ? 'bg-sky-600 text-white shadow-xs'
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -145,7 +147,7 @@ export default function DashboardControls({
                       <span>{MAP_STYLES[key].icon}</span>
                       <span>{MAP_STYLES[key].name}</span>
                     </span>
-                    {isCurrent && <span className="text-[10px]">●</span>}
+                    {isCurrent && <span className="text-xs">●</span>}
                   </button>
                 );
               })}
@@ -165,37 +167,37 @@ export default function DashboardControls({
 
           {isLegendOpen && (
             <div className="absolute right-0 mt-1.5 w-48 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-xl border border-slate-800 p-3 space-y-2 text-xs font-medium z-20">
-              <div className="font-bold text-slate-300 text-[11px] uppercase tracking-wider pb-1 border-b border-slate-800">
+              <div className="font-bold text-slate-300 text-xs uppercase tracking-wider pb-1 border-b border-slate-800">
                 动力学速度谱系
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-                    <span className="text-slate-300 text-[11px]">&lt; 12 km/h</span>
+                    <span className="text-slate-300 text-xs">&lt; 12 km/h</span>
                   </span>
-                  <span className="text-slate-400 text-[10px]">停顿/低速</span>
+                  <span className="text-slate-400 text-xs">停顿/低速</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
-                    <span className="text-slate-300 text-[11px]">12 - 18 km/h</span>
+                    <span className="text-slate-300 text-xs">12 - 18 km/h</span>
                   </span>
-                  <span className="text-slate-400 text-[10px]">起步/爬坡</span>
+                  <span className="text-slate-400 text-xs">起步/爬坡</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
-                    <span className="text-emerald-400 text-[11px] font-bold">18 - 24 km/h</span>
+                    <span className="text-emerald-400 text-xs font-bold">18 - 24 km/h</span>
                   </span>
-                  <span className="text-emerald-400 text-[10px] font-bold">巡航甜点</span>
+                  <span className="text-emerald-400 text-xs font-bold">巡航甜点</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
-                    <span className="text-blue-400 text-[11px] font-bold">&gt; 24 km/h</span>
+                    <span className="text-blue-400 text-xs font-bold">&gt; 24 km/h</span>
                   </span>
-                  <span className="text-blue-400 text-[10px] font-bold">冲刺提拉</span>
+                  <span className="text-blue-400 text-xs font-bold">冲刺提拉</span>
                 </div>
               </div>
             </div>

@@ -26,7 +26,7 @@ export default function RideInsightCard({
             <h3 className="text-xs font-bold text-slate-900 leading-tight">
               动力学与体能负荷复盘
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
               结合战车传动比、爬升做功与踏频分布的生理诊断
             </p>
           </div>
@@ -34,7 +34,7 @@ export default function RideInsightCard({
 
         <div className="flex items-center space-x-2">
           {isCached && !isLoading && (
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-mono">
+            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-mono">
               已存档
             </span>
           )}
@@ -51,17 +51,17 @@ export default function RideInsightCard({
       </div>
 
       {isLoading ? (
-        <div className="py-8 flex flex-col items-center justify-center text-slate-400 text-xs space-y-2 bg-slate-50 rounded-xl border border-slate-100">
+        <div className="py-8 flex flex-col items-center justify-center text-slate-500 text-xs space-y-2 bg-slate-50 rounded-xl border border-slate-100">
           <RefreshCw className="w-4 h-4 text-slate-600 animate-spin" />
           <p className="font-semibold text-slate-700">正在计算做功负荷与生物力学指标...</p>
-          <p className="text-[11px] text-slate-400">分析踏频节奏、膝关节受力与下一阶段进阶建议</p>
+          <p className="text-xs text-slate-500">分析踏频节奏、膝关节受力与下一阶段进阶建议</p>
         </div>
       ) : insight ? (
         <div className="markdown-body">
           <MarkdownRenderer content={insight} />
         </div>
       ) : (
-        <div className="py-6 text-center text-slate-400 text-xs font-medium bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+        <div className="py-6 text-center text-slate-500 text-xs font-medium bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
           点击右上角「重新诊断」获取动力学与生理复盘报告
         </div>
       )}

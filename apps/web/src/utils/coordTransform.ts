@@ -5,7 +5,7 @@
 
 const PI = Math.PI;
 const A = 6378245.0;
-const EE = 0.00669342162296594323;
+const EE = 0.006693421622965943;
 
 function transformLat(lng: number, lat: number): number {
   let ret = -100.0 + 2.0 * lng + 3.0 * lat + 0.2 * lat * lat + 0.1 * lng * lat + 0.2 * Math.sqrt(Math.abs(lng));

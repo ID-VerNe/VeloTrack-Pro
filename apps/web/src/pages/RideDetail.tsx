@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import polyline from '@mapbox/polyline';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Lightbulb, X } from 'lucide-react';
 import { Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
 import { exportRideAsGPX } from '../utils/gpxExport';
 import { calculateCyclingCalories } from '../utils/cyclingCalculations';
-import { type ChartTelemetryPoint, type PauseCluster } from '../utils/telemetrySegments';
+import { type ChartTelemetryPoint, type PauseCluster, type RideDetailPoint } from '../utils/telemetrySegments';
 
 import RideDetailMap from '../components/ride-detail/RideDetailMap';
 import RideTitleHeader from '../components/ride-detail/RideTitleHeader';
@@ -21,6 +21,9 @@ export default function RideDetail() {
 
   const [ride, setRide] = useState<any>(null);
   const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  // R2 逐点实测明细（海拔/速度/时间），缺失时图表降级为示意模式
+  const [detailPoints, setDetailPoints] = useState<RideDetailPoint[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [riderWeight, setRiderWeight] = useState<number>(75.0);
 
@@ -33,6 +36,19 @@ export default function RideDetail() {
   const [isReversed, setIsReversed] = useState<boolean>(() => {
     return localStorage.getItem(`velotrack_ride_${id}_reversed`) === 'true';
   });
+
+  // 联动引导：仅首次访问展示，关闭后写入 localStorage 不再打扰
+  const [showLinkHint, setShowLinkHint] = useState<boolean>(() => {
+    return localStorage.getItem('velotrack_link_hint_dismissed') !== 'true';
+  });
+  const dismissLinkHint = useCallback(() => {
+    setShowLinkHint(false);
+    try {
+      localStorage.setItem('velotrack_link_hint_dismissed', 'true');
+    } catch {
+      /* 忽略持久化失败 */
+    }
+  }, []);
 
   const handleToggleReverse = useCallback(() => {
     setIsReversed((prev) => {
@@ -66,7 +82,11 @@ export default function RideDetail() {
   const scrubberMarkerRef = useRef<Marker | null>(null);
   const scrubberPopupRef = useRef<Popup | null>(null);
 
-  const fromLabel = location.state?.from === '/history' ? '返回历史' : '返回仪表盘';
+  // 返回按钮文案与实际来源匹配：骑行列表 → 返回骑行列表；历史 → 返回历史；其余 → 返回仪表盘
+  const fromLabel =
+    location.state?.from === '/rides' ? '返回骑行列表'
+    : location.state?.from === '/history' ? '返回历史'
+    : '返回仪表盘';
 
   const handleGoBack = () => {
     if (location.state?.from) {
@@ -78,7 +98,7 @@ export default function RideDetail() {
 
   // Fetch Rider Profile Weight
   useEffect(() => {
-    fetch('/api/profile')
+    fetch('/api/ai/rider/profile')
       .then((res) => res.json())
       .then((data) => {
         if (data.profile?.weight_kg) {
@@ -89,21 +109,32 @@ export default function RideDetail() {
   }, []);
 
   // Fetch Ride Details
+  // 修复：原先请求失败/404 只 console.error，UI 永远停在"正在加载"转圈。现在区分错误态并支持重试
   const loadData = useCallback(async () => {
     if (!id) return;
+    setLoadError(null);
     try {
       const res = await fetch(`/api/rides/${id}`);
+      if (!res.ok) {
+        setLoadError(res.status === 404 ? '骑行记录不存在或已被删除' : `加载失败（HTTP ${res.status}）`);
+        return;
+      }
       const data = await res.json();
       if (data.ride) {
         setRide(data.ride);
+        // R2 逐点明细（实测海拔/速度/时间），缺失时图表降级为示意模式
+        setDetailPoints(Array.isArray(data.detailPoints) ? data.detailPoints : null);
         if (data.ride.summary_polyline) {
           const rawCoords = polyline.decode(data.ride.summary_polyline);
           const formatted: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
           setRouteCoordinates(formatted);
         }
+      } else {
+        setLoadError('骑行数据格式异常');
       }
     } catch (err) {
       console.error('Failed to load ride detail', err);
+      setLoadError('网络异常，无法加载骑行详情');
     }
   }, [id]);
 
@@ -118,8 +149,8 @@ export default function RideDetail() {
       setAiLoading(true);
       try {
         const url = forceRegenerate
-          ? `/api/rides/${id}/insight?regenerate=true`
-          : `/api/rides/${id}/insight`;
+          ? `/api/ai/rides/${id}/insight?force=true`
+          : `/api/ai/rides/${id}/insight`;
         const res = await fetch(url);
         const data = await res.json();
         if (data.insight) {
@@ -143,12 +174,14 @@ export default function RideDetail() {
   const saveTitleToBackend = async (newTitle: string) => {
     if (!id || !newTitle.trim()) return;
     try {
-      await fetch(`/api/rides/${id}/title`, {
-        method: 'PUT',
+      const res = await fetch(`/api/rides/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle.trim() }),
       });
-      setRide((prev: any) => (prev ? { ...prev, title: newTitle.trim() } : prev));
+      if (res.ok) {
+        setRide((prev: any) => (prev ? { ...prev, title: newTitle.trim() } : prev));
+      }
     } catch (err) {
       console.error('Failed to update title', err);
     }
@@ -158,10 +191,20 @@ export default function RideDetail() {
     if (!id || !ride) return;
     setIsSuggestingTitle(true);
     try {
-      const res = await fetch(`/api/rides/${id}/title/suggest`, { method: 'POST' });
+      const distKm = Number(((ride.distance_meters || 0) / 1000).toFixed(1));
+      const res = await fetch('/api/ai/rides/suggest-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          start_time: ride.start_time,
+          distance_km: distKm,
+          avg_speed_kmh: ride.avg_speed_kmh || 0,
+          total_ascent_meters: ride.total_ascent_meters || 0,
+        }),
+      });
       const data = await res.json();
-      if (data.suggested_title) {
-        setSuggestedTitle(data.suggested_title);
+      if (data.title && !data.title.includes('undefined')) {
+        setSuggestedTitle(data.title);
       }
     } catch (err) {
       console.error('Failed to polish title with AI', err);
@@ -310,9 +353,31 @@ export default function RideDetail() {
     [ride]
   );
 
+  if (loadError) {
+    return (
+      <div className="h-screen w-screen bg-[#F8FAFC] flex flex-col items-center justify-center text-slate-500 font-medium space-y-4">
+        <div className="text-slate-600 text-sm">{loadError}</div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => loadData()}
+            className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            重试
+          </button>
+          <button
+            onClick={handleGoBack}
+            className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+          >
+            {fromLabel}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!ride) {
     return (
-      <div className="h-screen w-screen bg-[#F8FAFC] flex items-center justify-center text-slate-400 font-medium">
+      <div className="h-screen w-screen bg-[#F8FAFC] flex items-center justify-center text-slate-500 font-medium">
         <RefreshCw className="w-5 h-5 animate-spin mr-2 text-blue-600" />
         正在加载骑行详情数据...
       </div>
@@ -334,6 +399,7 @@ export default function RideDetail() {
       <RideDetailMap
         ride={ride}
         routeCoordinates={effectiveRouteCoordinates}
+        detailPoints={detailPoints}
         isReversed={isReversed}
         focusedRange={focusedRange}
         onToggleReverse={handleToggleReverse}
@@ -370,10 +436,29 @@ export default function RideDetail() {
           {/* Bento Primary Metrics Grid */}
           <RideMetricsGrid ride={ride} calories={calories} />
 
+          {/* 首次访问引导：图表与地图双向联动 */}
+          {showLinkHint && (
+            <div className="flex items-start gap-2.5 px-4 py-3 bg-sky-50/80 border border-sky-100 rounded-2xl text-xs text-sky-800 font-medium leading-relaxed">
+              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-sky-500" />
+              <p className="flex-1">
+                左侧地图与图表双向联动：悬停图表可在地图上定位游标，拖选图表区间会自动缩放地图聚焦；点击地图里程碑或停靠点也会在图表中高亮对应位置。
+              </p>
+              <button
+                type="button"
+                onClick={dismissLinkHint}
+                aria-label="关闭引导提示"
+                className="shrink-0 p-1 -m-1 rounded-lg text-sky-500 hover:text-sky-700 hover:bg-sky-100 transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Interactive Elevation & Speed Profile with Micro-segmentation */}
           <RideElevationSpeedChart
             ride={ride}
             routeCoordinates={effectiveRouteCoordinates}
+            detailPoints={detailPoints}
             externalHoverIndex={mapHoveredIndex}
             onHoverScrub={handleChartHover}
             onLeaveScrub={handleChartLeave}

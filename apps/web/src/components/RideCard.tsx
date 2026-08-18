@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Mountain, Clock, Bike, MapPin, Zap } from 'lucide-react';
+import { Mountain, Bike, MapPin, Zap } from 'lucide-react';
 import polyline from '@mapbox/polyline';
 import { detectCityForRide } from '../utils/geoUtils';
 import { calculateDualSpeeds, formatFriendlyDuration } from '../utils/cyclingCalculations';
@@ -19,7 +19,6 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
     movingAvgSpeedKmh,
     elapsedAvgSpeedKmh,
     movingTimeSeconds,
-    pausedTimeSeconds,
   } = calculateDualSpeeds(
     ride.distance_meters,
     ride.moving_time_seconds,
@@ -27,7 +26,6 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
   );
 
   const movingDurationStr = formatFriendlyDuration(movingTimeSeconds);
-  const pausedMins = Math.round(pausedTimeSeconds / 60);
 
   const cityName = useMemo(() => detectCityForRide(ride), [ride]);
 
@@ -106,20 +104,20 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
-          <span className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold tracking-wider uppercase text-white ${
+          <span className={`px-1.5 py-0.5 rounded text-xs font-extrabold tracking-wider uppercase text-white ${
             isRoad ? 'bg-blue-600' : 'bg-[#4F46E5]'
           }`}>
             {isRoad ? '公路' : '山地/骑行'}
           </span>
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-500 bg-slate-100 flex items-center">
-            <MapPin className="w-2.5 h-2.5 mr-0.5 text-slate-400" />
+          <span className="px-1.5 py-0.5 rounded text-xs font-bold text-slate-500 bg-slate-100 flex items-center">
+            <MapPin className="w-2.5 h-2.5 mr-0.5 text-slate-500" />
             {cityName}
           </span>
           <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-xs truncate max-w-[130px]">
             {ride.title}
           </span>
         </div>
-        <span className="text-[11px] font-medium text-slate-400 shrink-0">{dateStr}</span>
+        <span className="text-xs font-medium text-slate-500 shrink-0">{dateStr}</span>
       </div>
 
       <div className="flex items-center justify-between">
@@ -128,9 +126,9 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
           <div>
             <div className="font-bold text-slate-900 text-xs tabular-nums flex items-baseline">
               <span>{distanceKm}</span>
-              <span className="text-[10px] font-normal text-slate-500 ml-0.5">公里</span>
+              <span className="text-xs font-normal text-slate-500 ml-0.5">公里</span>
             </div>
-            <div className="text-[9px] text-slate-400 font-medium truncate max-w-[70px]">
+            <div className="text-2xs text-slate-500 font-medium truncate max-w-[70px]">
               运动 {movingDurationStr}
             </div>
           </div>
@@ -139,15 +137,15 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
             <div className="font-bold text-slate-900 text-xs tabular-nums flex items-center">
               <Zap className="w-2.5 h-2.5 mr-0.5 text-blue-600 shrink-0" />
               <span>{movingAvgSpeedKmh}</span>
-              <span className="text-[10px] font-normal text-slate-500 ml-0.5">km/h</span>
+              <span className="text-xs font-normal text-slate-500 ml-0.5">km/h</span>
             </div>
-            <div className="text-[9px] text-slate-400 font-medium truncate">
+            <div className="text-2xs text-slate-500 font-medium truncate">
               总均速 {elapsedAvgSpeedKmh}
             </div>
           </div>
 
-          <div className="flex items-center text-slate-700 font-semibold text-[11px] pt-0.5">
-            <Mountain className="w-3 h-3 mr-1 text-slate-400" />
+          <div className="flex items-center text-slate-700 font-semibold text-xs pt-0.5">
+            <Mountain className="w-3 h-3 mr-1 text-slate-500" />
             <span>{ride.total_ascent_meters || 0}m</span>
           </div>
         </div>

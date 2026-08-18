@@ -3,13 +3,13 @@ import {
   X, 
   SlidersHorizontal, 
   BookmarkCheck,
-  RefreshCw, 
   Check 
 } from 'lucide-react';
 import InterviewTab from './profile/InterviewTab';
 import ManualProfileTab from './profile/ManualProfileTab';
 import MemoriesTab from './profile/MemoriesTab';
 import type { RiderProfile, RiderMemory } from '../types/rider';
+import { useDialog } from '../hooks/useDialog';
 
 interface Props {
   isOpen: boolean;
@@ -17,6 +17,8 @@ interface Props {
 }
 
 export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
+  // 弹层无障碍：焦点陷阱 + Esc 关闭 + 关闭后焦点返还
+  const dialogRef = useDialog(isOpen, onClose);
   const [activeTab, setActiveTab] = useState<'manual' | 'interview' | 'memories'>('manual');
   const [profile, setProfile] = useState<RiderProfile>({
     name: 'VerNe Yuu',
@@ -36,13 +38,11 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
     primary_goal: '',
   });
   const [memories, setMemories] = useState<RiderMemory[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Silent update that NEVER unmounts tabs or resets chat
-  const fetchProfileAndMemories = useCallback(async (isInitial = false) => {
-    if (isInitial) setIsInitialLoading(true);
+  const fetchProfileAndMemories = useCallback(async () => {
     try {
       const res = await fetch('/api/ai/rider/profile');
       const data = await res.json();
@@ -50,14 +50,12 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
       if (data.memories) setMemories(data.memories);
     } catch (err) {
       console.error('Failed to load profile:', err);
-    } finally {
-      if (isInitial) setIsInitialLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (isOpen) {
-      fetchProfileAndMemories(true);
+      fetchProfileAndMemories();
     }
   }, [isOpen, fetchProfileAndMemories]);
 
@@ -94,7 +92,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
       }),
     });
     if (res.ok) {
-      await fetchProfileAndMemories(false);
+      await fetchProfileAndMemories();
     }
   };
 
@@ -109,7 +107,14 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-xs transition-opacity animate-in fade-in select-none">
-      <div className="w-full max-w-[520px] bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-200">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="车手与战车档案舱"
+        tabIndex={-1}
+        className="w-full max-w-[520px] bg-white h-full shadow-2xl flex flex-col border-l border-slate-200 animate-in slide-in-from-right duration-200 focus:outline-none"
+      >
         {/* Top Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center space-x-3">
@@ -119,11 +124,11 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
             <div>
               <div className="flex items-center space-x-2">
                 <h2 className="text-sm font-bold text-slate-900 leading-tight">车手与战车档案舱</h2>
-                <span className="text-[10px] bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded font-mono">
+                <span className="text-xs bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded font-mono">
                   {profile.weight_kg} kg
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium truncate max-w-[280px] mt-0.5">
+              <p className="text-xs text-slate-500 font-medium truncate max-w-[280px] mt-0.5">
                 {profile.current_bike || '大行 P8'} · {profile.primary_goal || '巡航 20km/h'}
               </p>
             </div>
@@ -131,7 +136,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
 
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             aria-label="关闭"
           >
             <X className="w-4 h-4" />
@@ -174,7 +179,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
             >
               <BookmarkCheck className="w-3.5 h-3.5 text-slate-700" />
               <span>习惯与身体备忘</span>
-              <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">
+              <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-mono">
                 {memories.length}
               </span>
             </button>
@@ -207,7 +212,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
         <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'interview' ? 'flex' : 'hidden'}`}>
           <InterviewTab
             profile={profile}
-            onProfileUpdated={() => fetchProfileAndMemories(false)}
+            onProfileUpdated={() => fetchProfileAndMemories()}
           />
         </div>
 

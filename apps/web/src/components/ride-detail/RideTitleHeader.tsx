@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import IconButton from '../common/IconButton';
 import { 
   ArrowLeft, 
   Edit2, 
@@ -140,13 +141,9 @@ export default function RideTitleHeader({
               {title}
             </h1>
             <div className="flex items-center space-x-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={handleStartEdit}
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition-colors cursor-pointer"
-                title="手动重命名"
-              >
+              <IconButton label="手动重命名" size="sm" onClick={handleStartEdit}>
                 <Edit2 className="w-3.5 h-3.5" />
-              </button>
+              </IconButton>
 
               <button
                 onClick={onAIPolishTitle}
@@ -166,7 +163,7 @@ export default function RideTitleHeader({
       {suggestedTitle && (
         <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="flex items-center space-x-2 text-xs">
-            <span className="bg-slate-900 text-white font-bold px-1.5 py-0.5 rounded text-[10px] font-mono">
+            <span className="bg-slate-900 text-white font-bold px-1.5 py-0.5 rounded text-xs font-mono">
               规范命名建议
             </span>
             <span className="font-bold text-slate-900">「{suggestedTitle}」</span>

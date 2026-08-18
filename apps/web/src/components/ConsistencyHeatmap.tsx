@@ -112,8 +112,9 @@ export default function ConsistencyHeatmap({ rides }: Props) {
 
   const availableYears = useMemo(() => {
     const yearsSet = new Set<number>();
+    // 修复：原先硬编码 add(2026)，跨年后日历仍残留过时年份选项。
+    // 年份列表完全由"当前年份 + 数据中出现的年份"推导
     yearsSet.add(new Date().getFullYear());
-    yearsSet.add(2026);
     rides.forEach((r) => {
       if (r.start_time) {
         yearsSet.add(new Date(r.start_time).getFullYear());
@@ -136,7 +137,7 @@ export default function ConsistencyHeatmap({ rides }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             年度骑行打卡日历
           </h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5 tabular-nums">
@@ -157,12 +158,12 @@ export default function ConsistencyHeatmap({ rides }: Props) {
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-1.5" />
+          <ChevronDown className="w-3 h-3 text-slate-500 pointer-events-none absolute right-1.5" />
         </div>
       </div>
 
       {/* 53-Week Calendar Year Grid with Zero Scrollbars */}
-      <div className="flex space-x-1.5 text-[9px] text-slate-400">
+      <div className="flex space-x-1.5 text-2xs text-slate-500">
         {/* Day of week labels */}
         <div className="flex flex-col justify-between py-[1px] text-left font-medium w-3 shrink-0 leading-none select-none">
           <span>一</span>
@@ -192,7 +193,7 @@ export default function ConsistencyHeatmap({ rides }: Props) {
           </div>
 
           {/* Month labels footer aligned precisely in Chinese */}
-          <div className="relative h-4 text-[9px] text-slate-400 font-medium mt-1.5 select-none">
+          <div className="relative h-4 text-2xs text-slate-500 font-medium mt-1.5 select-none">
             {months.map((m, i) => {
               const leftPercent = (m.weekIndex / 53) * 100;
               return (
@@ -211,7 +212,7 @@ export default function ConsistencyHeatmap({ rides }: Props) {
 
       {/* Floating Hover Tooltip */}
       {hoveredDay && (
-        <div className="absolute top-2 right-4 bg-slate-900 text-white text-[11px] font-medium px-2.5 py-1 rounded-lg shadow-lg pointer-events-none z-20">
+        <div className="absolute top-2 right-4 bg-slate-900 text-white text-xs font-medium px-2.5 py-1 rounded-lg shadow-lg pointer-events-none z-20">
           {hoveredDay.dateStr}：
           {hoveredDay.distanceKm > 0
             ? `${hoveredDay.distanceKm} 公里 (${hoveredDay.count} 次骑行)`

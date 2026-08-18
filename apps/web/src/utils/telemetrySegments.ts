@@ -1,7 +1,12 @@
 /**
  * 自行车真实运动学遥测微观分析与轨迹数据映射引擎
- * 100% 基于真实 GPS 经纬度点位、步长位移、真实总耗时与纯做功时间，
- * 真实还原瞬时速度剖面、起伏海拔与真实停顿路口位置，杜绝任何人工合成的假正弦波。
+ *
+ * 两种渲染模式：
+ * 1. 实测模式（优先）：admin 上传时逐点明细（海拔/速度/时间/心率）存入 R2，
+ *    rides API 返回 detailPoints，本引擎直接用实测值渲染海拔与速度曲线。
+ * 2. 示意模式（降级）：旧数据无明细时，基于 GPS 位移推算速度、
+ *    以正弦曲线拟合海拔形状（仅用总爬升/最高海拔两个汇总值），
+ *    前端必须标注"示意"字样，不得冒充实测。
  */
 
 export interface PauseCluster {
@@ -28,6 +33,20 @@ export interface ChartTelemetryPoint {
   distanceKm: number;
   status: 'cruising' | 'paused' | 'climbing' | 'tempo' | 'normal';
   statusLabel: string;
+}
+
+/**
+ * R2 逐点明细（与 admin 端 DetailPoint 格式对齐，短字段名减小存储体积）。
+ * t=时间戳ms, la/ln=坐标（隐私圈内点缺省）, al=海拔m, hr=心率, cd=踏频, sp=瞬时速度km/h
+ */
+export interface RideDetailPoint {
+  t: number;
+  la?: number;
+  ln?: number;
+  al?: number;
+  hr?: number;
+  cd?: number;
+  sp?: number;
 }
 
 // 辅助计算两经纬度点之间的球面距离 (米)
@@ -76,7 +95,11 @@ export function findClosestTelemetryIndex(
   return { coordIndex: closestCoordIdx, chartIndex, distanceMeters: minDistance };
 }
 
-export function analyzeRideTelemetry(ride: any, routeCoordinates: [number, number][]) {
+export function analyzeRideTelemetry(
+  ride: any,
+  routeCoordinates: [number, number][],
+  detailPoints?: RideDetailPoint[] | null
+) {
   const totalElapsedSecs = ride?.elapsed_time_seconds || ride?.moving_time_seconds || 3600;
   const movingSecs = ride?.moving_time_seconds || totalElapsedSecs;
   const totalPausedSecs = Math.max(0, totalElapsedSecs - movingSecs);
@@ -185,109 +208,216 @@ export function analyzeRideTelemetry(ride: any, routeCoordinates: [number, numbe
     });
   }
 
-  // 5. 沿真实时间轴与轨迹采样生成动态自适应图表数据点 (30 ~ 120 点自适应)
-  const numChartPoints = Math.min(120, Math.max(30, numCoords > 0 ? numCoords : 45));
+  // 5. 生成图表数据点：优先实测明细（R2 detailPoints），降级为示意合成
   const timeLabels: string[] = [];
   const speedPoints: number[] = [];
   const altPoints: number[] = [];
   const telemetryPoints: ChartTelemetryPoint[] = [];
   const markAreas: any[] = [];
 
-  // 计算平均有效步长，用于速度换算比例归一化
-  const movingSteps = stepDistances.filter((d) => d >= 3.2);
-  const avgMovingStep =
-    movingSteps.length > 0
-      ? movingSteps.reduce((a, b) => a + b, 0) / movingSteps.length
-      : 15;
-
-  const pauseCoordSet = new Set(pauseClusters.map((pc) => pc.coordIndex));
-
   let maxSpeedFound = -1;
   let maxSpeedPointIndex = 0;
   let maxAltFound = -1;
   let maxAltPointIndex = 0;
 
-  for (let s = 0; s < numChartPoints; s++) {
-    const progress = numChartPoints > 1 ? s / (numChartPoints - 1) : 0;
-    const coordIdx = Math.min(numCoords - 1, Math.floor(progress * Math.max(1, numCoords - 1)));
-    const currentDist = Number(((cumulativeDistances[coordIdx] || 0) / 1000).toFixed(2));
-
-    const timeSec = Math.round(progress * totalElapsedSecs);
-    const m = Math.floor(timeSec / 60);
-    const sec = timeSec % 60;
-    const timeStr = `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-    timeLabels.push(timeStr);
-
-    // 计算当前局部位移速度
-    let rawStepDist = 0;
-    if (stepDistances.length > 0) {
-      const wStart = Math.max(0, coordIdx - 2);
-      const wEnd = Math.min(stepDistances.length - 1, coordIdx + 2);
-      let wSum = 0;
-      for (let k = wStart; k <= wEnd; k++) wSum += stepDistances[k];
-      rawStepDist = wSum / (wEnd - wStart + 1);
+  // 速度→状态分类（两种模式共用）
+  const classifySpeedState = (speed: number): {
+    status: ChartTelemetryPoint['status'];
+    statusLabel: string;
+  } => {
+    if (speed >= 21) {
+      return { status: 'cruising', statusLabel: `⚡ 稳态高速巡航 (${speed} km/h)` };
     }
+    if (speed < 15 && elevGain > 40) {
+      return { status: 'climbing', statusLabel: `⛰️ 爬坡/起步阶段 (${speed} km/h)` };
+    }
+    return { status: 'tempo', statusLabel: `🚲 稳态节奏骑行 (${speed} km/h)` };
+  };
 
-    const isNearPause =
-      rawStepDist < 3.2 ||
-      Array.from(pauseCoordSet).some((pIdx) => Math.abs(pIdx - coordIdx) <= 3);
+  const usableDetail =
+    Array.isArray(detailPoints) && detailPoints.length >= 2 ? detailPoints : null;
 
-    let speed = 0.0;
-    let status: 'cruising' | 'paused' | 'climbing' | 'tempo' | 'normal' = 'normal';
-    let statusLabel = '正常骑行';
+  let numChartPoints: number;
 
-    if (isNearPause && totalPausedSecs >= 60) {
-      speed = 0.0;
-      status = 'paused';
-      const cluster = pauseClusters.find((pc) => Math.abs(pc.coordIndex - coordIdx) <= 6);
-      statusLabel = cluster ? `⏸️ ${cluster.title} (${cluster.durationMins}分)` : '⏸️ 停顿/等红灯';
-    } else {
-      // 真实速度映射：按实际 GPS 位移与停表均速线性校准
-      const normalizedSpeed = (rawStepDist / Math.max(1, avgMovingStep)) * movingAvgSpeedKmh;
-      speed = Number(Math.max(6.0, Math.min(maxSpeedKmh, normalizedSpeed)).toFixed(1));
+  if (usableDetail) {
+    // ===== 实测模式：海拔/速度/时间全部来自码表记录的逐点明细 =====
+    numChartPoints = usableDetail.length;
+    const t0 = usableDetail[0].t;
+    let lastValidAlt: number | null = null;
+    let lastCoord: [number, number] | null = null;
+    let lastSpeed: number | null = null;
+    let cumDist = 0;
 
-      if (speed >= 21) {
-        status = 'cruising';
-        statusLabel = `⚡ 稳态高速巡航 (${speed} km/h)`;
-      } else if (speed < 15 && elevGain > 40) {
-        status = 'climbing';
-        statusLabel = `⛰️ 爬坡/起步阶段 (${speed} km/h)`;
-      } else {
-        status = 'tempo';
-        statusLabel = `🚲 稳态节奏骑行 (${speed} km/h)`;
+    for (let s = 0; s < numChartPoints; s++) {
+      const dp = usableDetail[s];
+      const progress = numChartPoints > 1 ? s / (numChartPoints - 1) : 0;
+      const coordIdx = Math.min(numCoords - 1, Math.floor(progress * Math.max(1, numCoords - 1)));
+
+      // 累计距离：基于明细自身坐标（隐私圈内无坐标段距离不增长）
+      if (dp.la !== undefined && dp.ln !== undefined) {
+        const cur: [number, number] = [dp.la, dp.ln];
+        if (lastCoord) cumDist += computeDistanceMeters(lastCoord, cur);
+        lastCoord = cur;
       }
+      const currentDist = Number((cumDist / 1000).toFixed(2));
+
+      // 时间标签：相对骑行走点的实测时间
+      const relSec = Math.max(0, Math.round((dp.t - t0) / 1000));
+      const timeStr = `${String(Math.floor(relSec / 60)).padStart(2, '0')}:${String(relSec % 60).padStart(2, '0')}`;
+      timeLabels.push(timeStr);
+
+      // 速度：优先实测 sp；缺失时用相邻点位移/时差推算；再缺则沿用前值
+      let speed = dp.sp;
+      if (speed === undefined || !Number.isFinite(speed)) {
+        const next = usableDetail[s + 1];
+        if (
+          next &&
+          next.t > dp.t &&
+          dp.la !== undefined && dp.ln !== undefined &&
+          next.la !== undefined && next.ln !== undefined
+        ) {
+          const d = computeDistanceMeters([dp.la, dp.ln], [next.la, next.ln]);
+          speed = (d / ((next.t - dp.t) / 1000)) * 3.6;
+        } else if (lastSpeed !== null) {
+          speed = lastSpeed;
+        } else {
+          speed = 0;
+        }
+      }
+      speed = Number(Math.max(0, speed).toFixed(1));
+      lastSpeed = speed;
+
+      // 海拔：实测 al；缺失段沿用前一个有效值
+      let alt: number;
+      if (dp.al !== undefined && Number.isFinite(dp.al)) {
+        alt = dp.al;
+        lastValidAlt = dp.al;
+      } else {
+        alt = lastValidAlt ?? 0;
+      }
+
+      // 实测低速即为真实停顿，无需位移推断
+      let status: ChartTelemetryPoint['status'];
+      let statusLabel: string;
+      if (speed < 2) {
+        status = 'paused';
+        const cluster = pauseClusters.find((pc) => Math.abs(pc.coordIndex - coordIdx) <= 6);
+        statusLabel = cluster ? `⏸️ ${cluster.title} (${cluster.durationMins}分)` : '⏸️ 停顿/等红灯';
+      } else {
+        ({ status, statusLabel } = classifySpeedState(speed));
+      }
+
+      speedPoints.push(speed);
+      altPoints.push(alt);
+
+      if (speed > maxSpeedFound) {
+        maxSpeedFound = speed;
+        maxSpeedPointIndex = s;
+      }
+      if (alt > maxAltFound) {
+        maxAltFound = alt;
+        maxAltPointIndex = s;
+      }
+
+      telemetryPoints.push({
+        index: s,
+        totalPoints: numChartPoints,
+        progress,
+        coordIndex: coordIdx,
+        coord: routeCoordinates[coordIdx] || routeCoordinates[0],
+        timeLabel: timeStr,
+        speed,
+        altitude: alt,
+        distanceKm: currentDist,
+        status,
+        statusLabel,
+      });
     }
+  } else {
+    // ===== 示意模式（降级）：旧数据无逐点明细时的估算渲染，前端须标注"示意" =====
+    numChartPoints = Math.min(120, Math.max(30, numCoords > 0 ? numCoords : 45));
 
-    // 真实海拔曲线映射：从起点平稳过渡并结合总爬升高度
-    const altProgress = Math.sin(progress * Math.PI);
-    const baseAlt = Math.max(3, maxAltMeters - elevGain * 0.7);
-    const alt = Number((baseAlt + altProgress * elevGain * 0.65).toFixed(0));
+    // 计算平均有效步长，用于速度换算比例归一化
+    const movingSteps = stepDistances.filter((d) => d >= 3.2);
+    const avgMovingStep =
+      movingSteps.length > 0
+        ? movingSteps.reduce((a, b) => a + b, 0) / movingSteps.length
+        : 15;
 
-    speedPoints.push(speed);
-    altPoints.push(alt);
+    const pauseCoordSet = new Set(pauseClusters.map((pc) => pc.coordIndex));
 
-    if (speed > maxSpeedFound) {
-      maxSpeedFound = speed;
-      maxSpeedPointIndex = s;
+    for (let s = 0; s < numChartPoints; s++) {
+      const progress = numChartPoints > 1 ? s / (numChartPoints - 1) : 0;
+      const coordIdx = Math.min(numCoords - 1, Math.floor(progress * Math.max(1, numCoords - 1)));
+      const currentDist = Number(((cumulativeDistances[coordIdx] || 0) / 1000).toFixed(2));
+
+      const timeSec = Math.round(progress * totalElapsedSecs);
+      const m = Math.floor(timeSec / 60);
+      const sec = timeSec % 60;
+      const timeStr = `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      timeLabels.push(timeStr);
+
+      // 计算当前局部位移速度
+      let rawStepDist = 0;
+      if (stepDistances.length > 0) {
+        const wStart = Math.max(0, coordIdx - 2);
+        const wEnd = Math.min(stepDistances.length - 1, coordIdx + 2);
+        let wSum = 0;
+        for (let k = wStart; k <= wEnd; k++) wSum += stepDistances[k];
+        rawStepDist = wSum / (wEnd - wStart + 1);
+      }
+
+      const isNearPause =
+        rawStepDist < 3.2 ||
+        Array.from(pauseCoordSet).some((pIdx) => Math.abs(pIdx - coordIdx) <= 3);
+
+      let speed = 0.0;
+      let status: 'cruising' | 'paused' | 'climbing' | 'tempo' | 'normal' = 'normal';
+      let statusLabel = '正常骑行';
+
+      if (isNearPause && totalPausedSecs >= 60) {
+        speed = 0.0;
+        status = 'paused';
+        const cluster = pauseClusters.find((pc) => Math.abs(pc.coordIndex - coordIdx) <= 6);
+        statusLabel = cluster ? `⏸️ ${cluster.title} (${cluster.durationMins}分)` : '⏸️ 停顿/等红灯';
+      } else {
+        // 速度估算：按实际 GPS 位移与停表均速线性校准（非码表实测值）
+        const normalizedSpeed = (rawStepDist / Math.max(1, avgMovingStep)) * movingAvgSpeedKmh;
+        speed = Number(Math.max(6.0, Math.min(maxSpeedKmh, normalizedSpeed)).toFixed(1));
+        ({ status, statusLabel } = classifySpeedState(speed));
+      }
+
+      // 海拔示意曲线：仅用最高海拔+总爬升两个汇总值拟合的拱形，非实测
+      const altProgress = Math.sin(progress * Math.PI);
+      const baseAlt = Math.max(3, maxAltMeters - elevGain * 0.7);
+      const alt = Number((baseAlt + altProgress * elevGain * 0.65).toFixed(0));
+
+      speedPoints.push(speed);
+      altPoints.push(alt);
+
+      if (speed > maxSpeedFound) {
+        maxSpeedFound = speed;
+        maxSpeedPointIndex = s;
+      }
+      if (alt > maxAltFound) {
+        maxAltFound = alt;
+        maxAltPointIndex = s;
+      }
+
+      telemetryPoints.push({
+        index: s,
+        totalPoints: numChartPoints,
+        progress,
+        coordIndex: coordIdx,
+        coord: routeCoordinates[coordIdx] || routeCoordinates[0],
+        timeLabel: timeStr,
+        speed,
+        altitude: alt,
+        distanceKm: currentDist,
+        status,
+        statusLabel,
+      });
     }
-    if (alt > maxAltFound) {
-      maxAltFound = alt;
-      maxAltPointIndex = s;
-    }
-
-    telemetryPoints.push({
-      index: s,
-      totalPoints: numChartPoints,
-      progress,
-      coordIndex: coordIdx,
-      coord: routeCoordinates[coordIdx] || routeCoordinates[0],
-      timeLabel: timeStr,
-      speed,
-      altitude: alt,
-      distanceKm: currentDist,
-      status,
-      statusLabel,
-    });
   }
 
   // 6. 为每个真实检测到的停顿点生成柔和的 MarkArea 背景条带（不显示重叠文字）
@@ -319,6 +449,7 @@ export function analyzeRideTelemetry(ride: any, routeCoordinates: [number, numbe
   return {
     pauseClusters,
     telemetryPoints,
+    isRealData: !!usableDetail,
     chartData: { timeLabels, speedPoints, altPoints, numPoints: numChartPoints },
     markAreas,
     stepDistances,

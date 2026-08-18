@@ -20,6 +20,11 @@ export const LIGHT_MAP_STYLE: any = {
       source: 'amap-light',
       minzoom: 0,
       maxzoom: 18,
+      paint: {
+        // 底图降噪：降低饱和度让彩色道路/林地退后，骑行轨迹成为唯一视觉焦点（与 terrain 底图同一手法）
+        'raster-saturation': -0.35,
+        'raster-contrast': 0.05,
+      },
     },
   ],
 };

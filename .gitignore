@@ -6,9 +6,12 @@ node_modules
 dist
 dist-ssr
 *.tsbuildinfo
+coverage
+.vite
 
 # Cloudflare / Wrangler
 .wrangler
+.dev.vars
 
 # Logs
 *.log
@@ -16,6 +19,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Playwright E2E artifacts
+e2e/playwright-report/
+e2e/test-results/
+e2e/.browsers/
 
 # Local env
 *.local

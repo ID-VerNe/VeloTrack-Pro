@@ -62,7 +62,9 @@ export function aggregateActivityData(options: ActivityAggregationOptions): Pars
     explicitCalories = 0,
     cumulativeClimbMeters = 0,
     cumulativeDecreaseMeters = 0,
-    userMaxHr = 190,
+    // 修复：原先默认 190，与后端 AI 分析链路（cyclingPhysicsEngine/aiInsights）的
+    // 默认最大心率 188 矛盾，导致上传时本地算的 HR 区间与云端复盘不一致
+    userMaxHr = 188,
   } = options;
 
   if (!points || points.length === 0) {

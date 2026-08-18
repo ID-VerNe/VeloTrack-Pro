@@ -1,27 +1,20 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Shield } from 'lucide-react';
 import type { PrivacyZone } from '../utils/privacyScrubber';
 
 interface PrivacyZoneListProps {
   zones: PrivacyZone[];
+  /** 当前激活（参与脱敏）的圈 id 集合，由父组件管理 */
+  activeZoneIds: Set<string>;
+  onToggleZone: (id: string) => void;
 }
 
-export function PrivacyZoneList({ zones }: PrivacyZoneListProps) {
-  const [activeZoneIds, setActiveZoneIds] = useState<Set<string>>(
-    new Set(zones.map((z) => z.id))
-  );
-
-  const toggleZone = (id: string) => {
-    setActiveZoneIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
+export function PrivacyZoneList({ zones, activeZoneIds, onToggleZone }: PrivacyZoneListProps) {
+  // 修复：原实现 activeZoneIds 初始值只在首次渲染取值，而 zones 是异步拉取的（首渲染为空），
+  // 导致拉取成功后所有开关永远显示"停用"。现在由父组件持有状态并在 zones 变化时同步。
+  useEffect(() => {
+    // 仅用于提醒父组件同步（实际同步逻辑在父组件的 useEffect 中）
+  }, [zones]);
 
   return (
     <div className="bg-slate-50/70 rounded-3xl p-6 border border-slate-200/80">
@@ -36,7 +29,7 @@ export function PrivacyZoneList({ zones }: PrivacyZoneListProps) {
       </div>
 
       <p className="text-xs text-slate-400 font-medium leading-relaxed mb-4">
-        在骑行起点与终点自动抹去敏感区域坐标，保护家与公司住址的真实位置隐私。
+        在隐私圈内的轨迹点、穿越圈的连线段以及圈内起点坐标都会在上传前被本地擦除，保护家与公司住址的真实位置隐私。
       </p>
 
       <div className="space-y-3">
@@ -67,7 +60,7 @@ export function PrivacyZoneList({ zones }: PrivacyZoneListProps) {
                 {/* Interactive Status Indicator / Switch */}
                 <button
                   type="button"
-                  onClick={() => toggleZone(zone.id)}
+                  onClick={() => onToggleZone(zone.id)}
                   className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
                     isActive ? 'bg-blue-600' : 'bg-slate-300'
                   }`}

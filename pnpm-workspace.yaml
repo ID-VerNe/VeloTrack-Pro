@@ -1,7 +1,12 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'e2e'
 allowBuilds:
-  esbuild: set this to true or false
-  sharp: set this to true or false
   workerd: set this to true or false
+# 修复：原先 allowBuilds 下是 "set this to true or false" 占位文本（无效配置，postinstall 被静默跳过）。
+# pnpm v11 起构建脚本白名单统一收敛到 pnpm-workspace.yaml 的 onlyBuiltDependencies
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd

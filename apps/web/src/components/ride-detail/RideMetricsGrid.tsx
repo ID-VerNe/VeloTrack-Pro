@@ -36,16 +36,16 @@ export default function RideMetricsGrid({ ride, calories }: Props) {
         subLabel={`总历时 ${elapsedDurationFriendly} · 踩踏做功 ${movingDurationFriendly}`}
       />
       <BentoMetricCard
-        label="停表骑行均速"
+        label="停表均速"
         value={movingAvgSpeedKmh}
         unit="km/h"
-        subLabel={`纯踩踏做功均速 · 最高 ${ride?.max_speed_kmh || 0} km/h`}
+        subLabel={`仅计踩踏做功阶段 · 最高 ${ride?.max_speed_kmh || 0} km/h`}
       />
       <BentoMetricCard
-        label="门到门综合均速"
+        label="总均速"
         value={elapsedAvgSpeedKmh}
         unit="km/h"
-        subLabel={`全历时总均速 · 停顿 ${pausedMins}分 (${pausedRatio}%)`}
+        subLabel={`含停顿全历时 · 停顿 ${pausedMins}分 (${pausedRatio}%)`}
       />
       <BentoMetricCard
         label="累计爬升 / 能量"

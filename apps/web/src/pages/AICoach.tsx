@@ -134,7 +134,10 @@ export default function AICoach() {
     }
   };
 
-  const handleSend = async (textToSend?: string) => {
+  const hasTriggeredPromptRef = useRef(false);
+  const initialPrompt = searchParams.get('prompt');
+
+  const handleSend = useCallback(async (textToSend?: string) => {
     const query = textToSend || input;
     if (!query.trim() || isLoading) return;
 
@@ -199,7 +202,7 @@ export default function AICoach() {
       }
       await loadSessionsList();
       await fetchRiderInfo();
-    } catch (err: any) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -212,7 +215,14 @@ export default function AICoach() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading, sessionId]);
+
+  useEffect(() => {
+    if (initialPrompt && !hasTriggeredPromptRef.current && !isLoading) {
+      hasTriggeredPromptRef.current = true;
+      handleSend(initialPrompt);
+    }
+  }, [initialPrompt, isLoading, handleSend]);
 
   const handleRegenerate = async () => {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
@@ -257,7 +267,7 @@ export default function AICoach() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold leading-tight">{toast.title}</div>
-                <p className="text-[11px] text-slate-300 truncate mt-0.5">{toast.desc}</p>
+                <p className="text-xs text-slate-300 truncate mt-0.5">{toast.desc}</p>
               </div>
               {toast.link ? (
                 <Link
@@ -274,7 +284,7 @@ export default function AICoach() {
                   查看
                 </button>
               )}
-              <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white p-1 cursor-pointer">
+              <button onClick={() => setToast(null)} className="text-slate-500 hover:text-white p-1 cursor-pointer">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -286,7 +296,7 @@ export default function AICoach() {
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                 title={isSidebarOpen ? '收起历史列表' : '展开历史列表'}
               >
                 {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
@@ -294,7 +304,7 @@ export default function AICoach() {
 
               <div className="flex items-center space-x-2">
                 <h1 className="text-sm font-bold text-slate-900">训练决策舱</h1>
-                <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-semibold">
+                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md font-semibold">
                   {sessionId === 'coach_main' ? '主方案流' : '专项推演'}
                 </span>
               </div>
@@ -313,8 +323,8 @@ export default function AICoach() {
               <button
                 type="button"
                 onClick={() => handleRequestDeleteSession(sessionId)}
-                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                title="清空当前推演记录"
+                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                title="清空当前推演会话"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -379,13 +389,13 @@ export default function AICoach() {
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900">清空对话记录</h3>
+                <h3 className="text-sm font-bold text-slate-900">清空推演会话</h3>
                 <p className="text-xs text-slate-500 mt-0.5">确定要清空该推演会话的历史记录吗？</p>
               </div>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-              清空后该专项推演的历史消息将被清除，但已沉淀的车手档案与目标记忆不会受到影响。
+              清空后该推演会话的历史消息将被清除，但已沉淀的车手档案与目标记忆不会受到影响。
             </p>
 
             <div className="flex items-center justify-end space-x-2 pt-2">

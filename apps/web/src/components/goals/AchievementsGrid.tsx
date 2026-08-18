@@ -16,7 +16,7 @@ export default function AchievementsGrid({ achievements }: Props) {
             个人里程碑与实战勋章
           </h3>
         </div>
-        <span className="text-[11px] text-slate-400 font-medium">真实骑行数据达成验证</span>
+        <span className="text-xs text-slate-500 font-medium">真实骑行数据达成验证</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -34,12 +34,12 @@ export default function AchievementsGrid({ achievements }: Props) {
                 {ach.icon}
               </div>
               {ach.unlocked ? (
-                <span className="flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                <span className="flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
                   <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
                   {ach.date}
                 </span>
               ) : (
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                   {ach.date}
                 </span>
               )}
@@ -47,7 +47,7 @@ export default function AchievementsGrid({ achievements }: Props) {
 
             <div>
               <div className="text-xs font-bold text-slate-900">{ach.title}</div>
-              <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{ach.desc}</p>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{ach.desc}</p>
             </div>
           </div>
         ))}

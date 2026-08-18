@@ -2,18 +2,31 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map as MapLibreMap, LngLatBounds, Marker, Popup } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Plus, Minus, Maximize2, Flame, ArrowLeftRight } from 'lucide-react';
+
 import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
+import { MAP_STYLE_VISUALS } from '../../utils/mapVisualConfigs';
 import { adaptCoordinatesToMapStyle } from '../../utils/coordTransform';
+import { useMapStyle } from '../../contexts/MapStyleContext';
 import {
   analyzeRideTelemetry,
   computeDistanceMeters,
   findClosestTelemetryIndex,
   type PauseCluster,
+  type RideDetailPoint,
 } from '../../utils/telemetrySegments';
+import {
+  createStartMarker,
+  createFinishMarker,
+  createMilestoneMarker,
+  createPauseMarker,
+  createScrubberMarker,
+} from './mapMarkerFactory';
 
 interface Props {
   ride: any;
   routeCoordinates: [number, number][];
+  /** R2 逐点实测明细（海拔/速度/时间），缺失时降级为示意分析 */
+  detailPoints?: RideDetailPoint[] | null;
   isReversed?: boolean;
   focusedRange?: { startProgress: number; endProgress: number } | null;
   onToggleReverse?: () => void;
@@ -24,64 +37,10 @@ interface Props {
   onSelectPauseCluster?: (cluster: PauseCluster) => void;
 }
 
-interface StyleVisualConfig {
-  glowColor?: string;
-  glowWidth?: number;
-  glowOpacity?: number;
-  glowBlur?: number;
-  casingColor: string;
-  casingWidth: number;
-  casingOpacity: number;
-  innerWidth: number;
-  milestoneClass: string;
-}
-
-const MAP_STYLE_VISUALS: Record<MapStyleKey, StyleVisualConfig> = {
-  light: {
-    casingColor: '#0F172A',
-    casingWidth: 7,
-    casingOpacity: 0.88,
-    innerWidth: 4.5,
-    milestoneClass: 'bg-slate-900/90 text-white border-white/90 shadow-md',
-  },
-  dark: {
-    glowColor: '#38BDF8',
-    glowWidth: 12,
-    glowOpacity: 0.55,
-    glowBlur: 4.0,
-    casingColor: '#0284C7',
-    casingWidth: 7,
-    casingOpacity: 0.9,
-    innerWidth: 4.5,
-    milestoneClass: 'bg-slate-900/95 text-cyan-300 border-cyan-500/60 shadow-lg shadow-cyan-950/40',
-  },
-  satellite: {
-    glowColor: '#0F172A',
-    glowWidth: 9.5,
-    glowOpacity: 0.65,
-    glowBlur: 2.5,
-    casingColor: '#FFFFFF',
-    casingWidth: 7.5,
-    casingOpacity: 0.98,
-    innerWidth: 4.5,
-    milestoneClass: 'bg-white/95 text-slate-950 border-slate-900/40 shadow-xl font-black',
-  },
-  terrain: {
-    glowColor: '#0F172A',
-    glowWidth: 11,
-    glowOpacity: 0.75,
-    glowBlur: 2.0,
-    casingColor: '#0F172A',
-    casingWidth: 8.5,
-    casingOpacity: 0.98,
-    innerWidth: 5.5,
-    milestoneClass: 'bg-slate-900 text-white border border-white/90 shadow-xl font-bold',
-  },
-};
-
 export default function RideDetailMap({
   ride,
   routeCoordinates,
+  detailPoints = null,
   isReversed,
   focusedRange,
   onToggleReverse,
@@ -97,8 +56,9 @@ export default function RideDetailMap({
   const scrubberPopupRef = useRef<Popup | null>(null);
   const customMarkersRef = useRef<Marker[]>([]);
 
-  const [activeStyle, setActiveStyle] = useState<MapStyleKey>('light');
-  const [showHeatmapLegend, setShowHeatmapLegend] = useState(true);
+  // 底图偏好全局共享：与仪表盘联动，localStorage 持久化
+  const { mapStyle: activeStyle, setMapStyle: setActiveStyle } = useMapStyle();
+  const [showHeatmapLegend] = useState(true);
 
   // Build segmented GeoJSON with velocity colors and milestones
   const buildRouteLayers = useCallback(
@@ -106,18 +66,17 @@ export default function RideDetailMap({
       if (!routeCoordinates || routeCoordinates.length === 0) return;
 
       const visual = MAP_STYLE_VISUALS[styleKey] || MAP_STYLE_VISUALS.light;
-
-      // Adapt coordinates according to base map projection (GCJ-02 for AMap, WGS-84 for OpenTopoMap/Carto)
       const adaptedCoords = adaptCoordinatesToMapStyle(routeCoordinates, styleKey);
 
-      // Clear existing markers
+      // Clear existing custom markers
       customMarkersRef.current.forEach((m) => m.remove());
       customMarkersRef.current = [];
 
       // Perform dynamic telemetry & pause cluster analysis
       const { pauseClusters, stats, stepDistances, telemetryPoints } = analyzeRideTelemetry(
         ride,
-        routeCoordinates
+        routeCoordinates,
+        detailPoints
       );
 
       const movingSteps = stepDistances.filter((d) => d >= 3.2);
@@ -155,7 +114,7 @@ export default function RideDetailMap({
           speedKmh = Number(Math.max(6.0, Math.min(stats.maxSpeedKmh, normalizedSpeed)).toFixed(1));
 
           if (speedKmh >= 23) {
-            segmentColor = '#2563EB'; // Royal Blue (High-speed Sprint)
+            segmentColor = '#2563EB'; // Royal Blue (Sprint)
             segmentStatus = 'sprint';
           } else if (speedKmh >= 17) {
             segmentColor = '#10B981'; // Emerald Cruising
@@ -184,20 +143,12 @@ export default function RideDetailMap({
         const accumulatedKm = accumulatedMeters / 1000;
         if (accumulatedKm >= nextMilestoneKm && nextMilestoneKm < accumulatedMeters / 1000 + 5) {
           const currentKmVal = nextMilestoneKm;
-          const milestoneEl = document.createElement('div');
-          milestoneEl.className =
-            'relative flex items-center justify-center cursor-pointer select-none';
-          milestoneEl.innerHTML = `
-            <div class="px-1.5 py-0.5 rounded-full font-mono font-bold text-[9px] border flex items-center space-x-0.5 hover:scale-110 transition-transform ${visual.milestoneClass}">
-              <span>${currentKmVal}</span>
-              <span class="text-[7px] opacity-80">k</span>
-            </div>
-          `;
-          milestoneEl.addEventListener('click', (e) => {
-            e.stopPropagation();
-            onSelectMilestone?.(currentKmVal);
-          });
-          const mMarker = new Marker({ element: milestoneEl }).setLngLat(p2).addTo(map);
+          const mMarker = createMilestoneMarker(
+            currentKmVal,
+            p2,
+            visual.milestoneClass,
+            onSelectMilestone
+          ).addTo(map);
           customMarkersRef.current.push(mMarker);
           nextMilestoneKm += 5;
         }
@@ -302,69 +253,23 @@ export default function RideDetailMap({
       });
 
       // Start Marker
-      const startCoord = adaptedCoords[0];
-      const startEl = document.createElement('div');
-      startEl.className = 'relative flex items-center justify-center';
-      startEl.innerHTML = `
-        <span class="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-emerald-400 opacity-60"></span>
-        <span class="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white shadow-md"></span>
-      `;
-      const sMarker = new Marker({ element: startEl }).setLngLat(startCoord).addTo(map);
+      const sMarker = createStartMarker(adaptedCoords[0]).addTo(map);
       customMarkersRef.current.push(sMarker);
 
       // Finish Marker
       if (adaptedCoords.length > 1) {
-        const finishCoord = adaptedCoords[adaptedCoords.length - 1];
-        const finishEl = document.createElement('div');
-        finishEl.className = 'relative flex items-center justify-center -translate-y-2';
-        finishEl.innerHTML = `
-          <div class="bg-slate-900 text-white p-1 rounded-md shadow-md border border-white flex items-center justify-center">
-            <span class="text-xs">🏁</span>
-          </div>
-        `;
-        const fMarker = new Marker({ element: finishEl }).setLngLat(finishCoord).addTo(map);
+        const fMarker = createFinishMarker(adaptedCoords[adaptedCoords.length - 1]).addTo(map);
         customMarkersRef.current.push(fMarker);
       }
 
       // Dynamic Pause Clusters
       pauseClusters.forEach((cluster) => {
         const targetAdaptedCoord = adaptedCoords[cluster.coordIndex] || adaptedCoords[0];
-
-        const pauseEl = document.createElement('div');
-        pauseEl.className =
-          'relative flex items-center justify-center cursor-pointer group hover:scale-125 transition-transform';
-        pauseEl.innerHTML = `
-          <span class="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-rose-400 opacity-75"></span>
-          <div class="relative w-5 h-5 rounded-full bg-rose-600 text-white border-2 border-white shadow-lg flex items-center justify-center text-[10px] font-bold">
-            ⏸️
-          </div>
-        `;
-
-        const pausePopup = new Popup({ offset: 12, className: 'pause-popup' }).setHTML(`
-          <div style="padding: 6px 8px; max-width: 220px; font-family: sans-serif;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-weight: 800; font-size: 11px; color: #E11D48;">${cluster.title}</span>
-              <span style="font-weight: 800; font-size: 10px; background: #FFE4E6; color: #9F1239; padding: 1px 5px; border-radius: 4px;">${cluster.durationMins} 分钟</span>
-            </div>
-            <div style="font-size: 9px; color: #64748B; margin-bottom: 4px;">
-              📍 距起点 ${cluster.distanceKm} km 处 · 历时第 ${cluster.timeOffsetMins} 分
-            </div>
-            <p style="font-size: 10px; color: #334155; line-height: 1.4; margin: 0;">
-              ${cluster.advice}
-            </p>
-          </div>
-        `);
-
-        pauseEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          onSelectPauseCluster?.(cluster);
-        });
-
-        const pMarker = new Marker({ element: pauseEl })
-          .setLngLat(targetAdaptedCoord)
-          .setPopup(pausePopup)
-          .addTo(map);
-
+        const pMarker = createPauseMarker(
+          cluster,
+          targetAdaptedCoord,
+          onSelectPauseCluster
+        ).addTo(map);
         customMarkersRef.current.push(pMarker);
       });
     },
@@ -407,21 +312,8 @@ export default function RideDetailMap({
       map.fitBounds(bounds, { padding: 60, duration: 800 });
 
       // Scrubber Marker for ECharts scrub synchronization
-      const scrubberEl = document.createElement('div');
-      scrubberEl.className = 'relative flex items-center justify-center';
-      scrubberEl.innerHTML = `
-        <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-blue-400 opacity-75"></span>
-        <span class="relative inline-flex rounded-full h-4 w-4 bg-blue-600 border-2 border-white shadow-lg"></span>
-      `;
-      const scrubberMarker = new Marker({ element: scrubberEl });
+      const { marker: scrubberMarker, popup } = createScrubberMarker();
       scrubberMarkerRef.current = scrubberMarker;
-
-      const popup = new Popup({
-        closeButton: false,
-        closeOnClick: false,
-        offset: 14,
-        className: 'scrubber-popup',
-      });
       scrubberPopupRef.current = popup;
 
       if (onMapReady) {
@@ -483,21 +375,31 @@ export default function RideDetailMap({
   };
 
   return (
-    <div className="flex-1 h-full relative bg-slate-100 overflow-hidden">
-      <div ref={mapContainer} className="w-full h-full" />
+    <div className="w-full h-full relative overflow-hidden bg-slate-100 min-w-0">
+      <div
+        ref={mapContainer}
+        className="w-full h-full"
+        style={{ filter: 'contrast(96%) brightness(102%) saturate(95%)' }}
+      />
 
-      {/* Top Floating Map Style Switcher Capsule & Direction Controls */}
-      <div className="absolute top-4 left-4 z-20 flex items-center space-x-1 p-1 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/80">
-        {(['light', 'dark', 'satellite', 'terrain'] as MapStyleKey[]).map((key) => {
-          const item = MAP_STYLES[key];
-          const isActive = activeStyle === key;
+      {/* Top Floating Map Style Switcher & Reversal Controls */}
+      <div className="absolute top-4 left-4 z-20 flex items-center space-x-1.5 bg-white/90 backdrop-blur-md p-1 rounded-2xl shadow-lg border border-slate-200/80">
+        {(
+          [
+            { id: 'light', name: '浅色', icon: '☀️' },
+            { id: 'dark', name: '夜航', icon: '🌙' },
+            { id: 'satellite', name: '卫星', icon: '🛰️' },
+            { id: 'terrain', name: '地形', icon: '⛰️' },
+          ] as const
+        ).map((item) => {
+          const isActive = activeStyle === item.id;
           return (
             <button
-              key={key}
-              onClick={() => handleStyleChange(key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+              key={item.id}
+              onClick={() => handleStyleChange(item.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-slate-900 text-white shadow-xs'
+                  ? 'bg-sky-600 text-white shadow-xs'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
@@ -528,7 +430,7 @@ export default function RideDetailMap({
 
       {/* Speed Gradient Color Heatmap Legend */}
       {showHeatmapLegend && (
-        <div className="absolute bottom-6 left-4 z-20 bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2.5 rounded-2xl shadow-lg border border-slate-800 flex items-center space-x-3 text-[11px] font-bold">
+        <div className="absolute bottom-6 left-4 z-20 bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2.5 rounded-2xl shadow-lg border border-slate-800 flex items-center space-x-3 text-xs font-bold">
           <div className="flex items-center space-x-1.5 text-slate-300">
             <Flame className="w-3.5 h-3.5 text-amber-400" />
             <span>速度谱系:</span>

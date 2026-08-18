@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HeartPulse, Bike, AlertTriangle, Target, Plus, Trash2, Sliders, Cog, Disc } from 'lucide-react';
 import type { RiderProfile } from '../../types/rider';
+import IconButton from '../common/IconButton';
 
 interface Props {
   profile: RiderProfile;
@@ -55,7 +56,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">车手昵称</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">车手昵称</label>
             <input
               type="text"
               value={profile.name || ''}
@@ -64,7 +65,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">体重 (kg，用于卡路里与功率)</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">体重 (kg，用于卡路里与功率)</label>
             <input
               type="number"
               step="0.5"
@@ -77,7 +78,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
 
         <div className="grid grid-cols-3 gap-2.5">
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-1">最大心率 (bpm)</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">最大心率 (bpm)</label>
             <input
               type="number"
               value={profile.max_hr || ''}
@@ -86,7 +87,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-1">静息心率 (bpm)</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">静息心率 (bpm)</label>
             <input
               type="number"
               value={profile.resting_hr || ''}
@@ -95,7 +96,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-1">FTP 功率 (W)</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">FTP 功率 (W)</label>
             <input
               type="number"
               value={profile.ftp_watts || ''}
@@ -113,12 +114,12 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             <Bike className="w-4 h-4 text-blue-600" />
             <span>主力战车与分立硬件配置</span>
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">各部件独立保存不丢失</span>
+          <span className="text-xs text-slate-500 font-medium">各部件独立保存不丢失</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">主力战车型号</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">主力战车型号</label>
             <input
               type="text"
               placeholder="例如：大行 P8 20寸折叠车"
@@ -128,7 +129,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">战车整备重量 (kg)</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">战车整备重量 (kg)</label>
             <input
               type="number"
               step="0.1"
@@ -142,8 +143,8 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
 
         <div className="space-y-2.5">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1 flex items-center">
-              <Cog className="w-3.5 h-3.5 mr-1 text-slate-400" />
+            <label className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
+              <Cog className="w-3.5 h-3.5 mr-1 text-slate-500" />
               <span>齿比与传动系统 (独立维护)</span>
             </label>
             <input
@@ -156,8 +157,8 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1 flex items-center">
-              <Disc className="w-3.5 h-3.5 mr-1 text-slate-400" />
+            <label className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
+              <Disc className="w-3.5 h-3.5 mr-1 text-slate-500" />
               <span>外胎规格与建议胎压 (独立维护)</span>
             </label>
             <input
@@ -177,7 +178,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
               <Sliders className="w-3.5 h-3.5 mr-1 text-blue-600" />
               <span>自定义改装/硬件参数扩展</span>
             </span>
-            <span className="text-[10px] text-slate-400">支持自由添加任意字段</span>
+            <span className="text-xs text-slate-500">支持自由添加任意字段</span>
           </div>
 
           {/* Existing Custom Specs Badges */}
@@ -190,14 +191,14 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
                 >
                   <span className="font-bold text-slate-500">{k}:</span>
                   <span className="font-semibold text-slate-800">{v}</span>
-                  <button
-                    type="button"
+                  <IconButton
+                    label={`删除 ${k}`}
+                    size="xs"
+                    danger
                     onClick={() => handleDeleteCustomSpec(k)}
-                    className="text-slate-300 hover:text-rose-600 p-0.5 rounded transition-colors cursor-pointer"
-                    title={`删除 ${k}`}
                   >
                     <Trash2 className="w-3 h-3" />
-                  </button>
+                  </IconButton>
                 </div>
               ))}
             </div>
