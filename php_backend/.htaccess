@@ -1,0 +1,11 @@
+# 拒绝外部访问 php_backend/ 下的敏感文件：日志、SQLite 临时文件、.env。
+# 数据库本身 (cycling.db) 在仓库根，由根目录的 .htaccess 覆盖
+#（FilesMatch 对子目录同样生效）。
+<FilesMatch "\.(log|sqlite|sqlite3|db-journal|env)$">
+    Require all denied
+</FilesMatch>
+
+# .env.example 是模板（无真实密钥），可以访问；只挡真正的 .env。
+<Files ".env">
+    Require all denied
+</Files>

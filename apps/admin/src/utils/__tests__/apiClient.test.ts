@@ -66,17 +66,20 @@ describe('getAdminToken / setAdminToken 令牌存取', () => {
 });
 
 describe('uploadRide 上传骑行记录', () => {
-  it('剥离 points 字段、携带 Authorization 与 Content-Type 头、POST JSON', async () => {
+  it('主记录入库 POST /api/admin/rides，剥离 points 字段、携带鉴权与 JSON 头', async () => {
     setAdminToken('tok-1');
+    // fetch 依次：主上传（POST /api/admin/rides）→ 明细（POST /api/admin/rides/:id/detail-points）
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => 'ok' });
     vi.stubGlobal('fetch', mockFetch);
 
     await uploadRide(mockRide);
 
-    // uploadDetailPoints 先调用一次 fetch（上传 R2 明细），主上传在第二次调用
     expect(mockFetch).toHaveBeenCalledTimes(2);
-    const [url, init] = mockFetch.mock.calls[1];
-    expect(url).toBe('/api/admin/rides');
+    const mainCall = mockFetch.mock.calls.find(
+      ([url]) => url === '/api/admin/rides'
+    );
+    expect(mainCall).toBeDefined();
+    const [, init] = mainCall!;
     expect(init.method).toBe('POST');
     const headers = new Headers(init.headers);
     expect(headers.get('Authorization')).toBe('Bearer tok-1');
@@ -87,18 +90,41 @@ describe('uploadRide 上传骑行记录', () => {
     expect(body.title).toBe('晨间骑行');
   });
 
+  it('明细走 POST /api/admin/rides/:id/detail-points，body 为 JSON 明细对象', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200, text: async () => 'ok' });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await uploadRide(mockRide);
+
+    const detailCall = mockFetch.mock.calls.find(
+      ([url]) => url === '/api/admin/rides/123/detail-points'
+    );
+    expect(detailCall).toBeDefined();
+    const [, init] = detailCall!;
+    expect(init.method).toBe('POST');
+    const headers = new Headers(init.headers);
+    expect(headers.get('Content-Type')).toBe('application/json');
+    const body = JSON.parse(init.body);
+    expect(body.v).toBe(1);
+    expect(Array.isArray(body.points)).toBe(true);
+    expect(body.points).toHaveLength(1);
+  });
+
   it('未设置令牌时不携带 Authorization 头', async () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200 });
     vi.stubGlobal('fetch', mockFetch);
 
     await uploadRide(mockRide);
 
-    const [, init] = mockFetch.mock.calls[1];
+    const mainCall = mockFetch.mock.calls.find(
+      ([url]) => url === '/api/admin/rides'
+    );
+    const [, init] = mainCall!;
     const headers = new Headers(init.headers);
     expect(headers.get('Authorization')).toBeNull();
   });
 
-  it('响应非 ok 时抛出带响应文本的错误', async () => {
+  it('主记录响应非 ok 时抛出带响应文本的错误', async () => {
     const mockFetch = vi
       .fn()
       .mockResolvedValue({ ok: false, status: 500, text: async () => 'server exploded' });
@@ -147,51 +173,12 @@ describe('fetchPrivacyZones 拉取隐私圈', () => {
   });
 });
 
-describe('suggestRideTitle AI 智能命名', () => {
-  it('成功时返回标题字符串', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ title: '晨骑 20km' }),
-    });
-    vi.stubGlobal('fetch', mockFetch);
-
-    await expect(suggestRideTitle(suggestInput)).resolves.toBe('晨骑 20km');
-    const [url, init] = mockFetch.mock.calls[0];
-    expect(url).toBe('/api/ai/rides/suggest-title');
-    expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body)).toEqual(suggestInput);
-  });
-
-  it('标题含 "undefined" 时返回 null', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ title: 'ride undefined data' }),
-    });
+describe('suggestRideTitle AI 命名（已迁移到 web 端，admin 桩函数）', () => {
+  it('始终返回 null，不再发起 fetch', async () => {
+    const mockFetch = vi.fn();
     vi.stubGlobal('fetch', mockFetch);
 
     await expect(suggestRideTitle(suggestInput)).resolves.toBeNull();
-  });
-
-  it('响应缺少 title 字段时返回 null', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
-    vi.stubGlobal('fetch', mockFetch);
-
-    await expect(suggestRideTitle(suggestInput)).resolves.toBeNull();
-  });
-
-  it('响应非 ok 时返回 null', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
-    vi.stubGlobal('fetch', mockFetch);
-
-    await expect(suggestRideTitle(suggestInput)).resolves.toBeNull();
-  });
-
-  it('网络错误时静默返回 null（不向上抛错）', async () => {
-    const mockFetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
-    vi.stubGlobal('fetch', mockFetch);
-
-    await expect(suggestRideTitle(suggestInput)).resolves.toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

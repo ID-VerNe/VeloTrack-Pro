@@ -68,7 +68,7 @@ describe('RideElevationSpeedChart', () => {
   it('渲染遥测统计文案（总历时/踩踏做功/峰值速度）', () => {
     render(<RideElevationSpeedChart ride={baseRide} routeCoordinates={coords} />);
     expect(screen.getByText(/总历时 90 分钟/)).toBeInTheDocument();
-    expect(screen.getByText(/踩踏做功: 90 min \(100%\)/)).toBeInTheDocument();
+    expect(screen.getByText(/踩踏: 90 min \(100%\)/)).toBeInTheDocument();
     expect(screen.getByText(/冲刺峰值 35 km\/h/)).toBeInTheDocument();
   });
 
@@ -83,7 +83,7 @@ describe('RideElevationSpeedChart', () => {
   it('有停顿记录时显示停顿等待徽标', () => {
     const pausedRide = { ...baseRide, moving_time_seconds: 4800, elapsed_time_seconds: 5400 };
     render(<RideElevationSpeedChart ride={pausedRide} routeCoordinates={coords} />);
-    expect(screen.getByText(/停顿等待: 10 min \(11%\)/)).toBeInTheDocument();
+    expect(screen.getByText(/停顿: 10 min \(11%\)/)).toBeInTheDocument();
   });
 
   it('支持负数海拔正常绘制且 Y 轴下限支持负值', () => {

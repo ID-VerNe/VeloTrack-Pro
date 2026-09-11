@@ -70,6 +70,11 @@ export default function DashboardControls({
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="搜索路线名称与地点..."
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            data-1p-ignore="true"
+            data-lpignore="true"
             className="w-full pl-8 pr-7 py-1.5 bg-white/95 backdrop-blur-md rounded text-xs font-normal text-slate-800 placeholder-slate-400 border border-slate-200/90 shadow-2xs focus:outline-none focus:border-slate-400 transition-colors"
           />
           {searchTerm && (

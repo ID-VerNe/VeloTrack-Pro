@@ -12,6 +12,10 @@ import PeriodSummaryCards from '../components/reports/PeriodSummaryCards';
 import PeriodTimelineChart from '../components/reports/PeriodTimelineChart';
 import PeriodInsightCard from '../components/reports/PeriodInsightCard';
 import PeriodRidesTable from '../components/reports/PeriodRidesTable';
+import {
+  computePeriodicSummary,
+  generatePeriodInsight,
+} from '../services/reportService';
 
 type PeriodType = 'week' | 'month' | 'half_year' | 'year';
 
@@ -56,10 +60,7 @@ export default function PeriodicReports() {
     }
 
     try {
-      const res = await fetch(
-        `/api/reports/summary?type=${periodType}&timestamp=${currentTimestamp}`
-      );
-      const data = await res.json();
+      const data = await computePeriodicSummary(periodType, currentTimestamp);
       setReportData(data);
     } catch (err) {
       console.error(err);
@@ -94,19 +95,14 @@ export default function PeriodicReports() {
     if (!reportData?.summary || isAiLoading) return;
     setIsAiLoading(true);
     try {
-      const res = await fetch('/api/reports/insight', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          period_type: periodType,
-          summary: reportData.summary,
-          rides_count: reportData.rides?.length || 0,
-        }),
-      });
-      const data = await res.json();
-      if (data.insight) {
-        setAiInsight(data.insight);
-        sessionStorage.setItem(cacheKey, data.insight);
+      const insight = await generatePeriodInsight(
+        periodType,
+        reportData.summary,
+        reportData.rides?.length || 0
+      );
+      if (insight) {
+        setAiInsight(insight);
+        sessionStorage.setItem(cacheKey, insight);
       }
     } catch (err) {
       console.error(err);

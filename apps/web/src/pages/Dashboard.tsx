@@ -11,6 +11,7 @@ import DashboardMap from '../components/dashboard/DashboardMap';
 import DashboardControls from '../components/dashboard/DashboardControls';
 import { useApi } from '../hooks/useApi';
 import { useMapStyle } from '../contexts/MapStyleContext';
+import { getRiderProfile } from '../services/riderService';
 
 export default function Dashboard() {
   // 统一取数：loading/error 由 useApi 托管，避免 API 故障被误呈现为"没有数据"
@@ -40,10 +41,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     // 骑行列表由 useApi 统一拉取，此处仅补齐骑手昵称
-    fetch('/api/ai/rider/profile')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.profile?.name) setRiderName(data.profile.name);
+    getRiderProfile()
+      .then((profile) => {
+        if (profile.name) setRiderName(profile.name);
       })
       .catch(() => {});
   }, []);

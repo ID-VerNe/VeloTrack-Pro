@@ -14,6 +14,8 @@ import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatMessageItem from '../components/chat/ChatMessageItem';
 import ChatComposer from '../components/chat/ChatComposer';
 import type { ChatMessage, SessionSummary } from '../types/rider';
+import { getCoachSessions, getCoachMessages, deleteCoachSession, chatWithCoach } from '../services/aiCoach';
+import { getRiderProfile } from '../services/riderService';
 
 const SUGGESTED_PROMPTS = [
   '测算大行P8在46T齿比下平路巡航20km/h的推荐踏频与档位',
@@ -53,10 +55,9 @@ export default function AICoach() {
 
   const loadSessionMessages = useCallback(async (sid: string) => {
     try {
-      const res = await fetch(`/api/ai/coach/${sid}/messages`);
-      const data = await res.json();
-      if (data.messages && data.messages.length > 0) {
-        setMessages(data.messages);
+      const msgs = await getCoachMessages(sid);
+      if (msgs && msgs.length > 0) {
+        setMessages(msgs as unknown as ChatMessage[]);
       } else {
         setMessages([DEFAULT_WELCOME_MSG]);
       }
@@ -67,11 +68,8 @@ export default function AICoach() {
 
   const loadSessionsList = async () => {
     try {
-      const res = await fetch('/api/ai/coach/sessions');
-      const data = await res.json();
-      if (data.sessions) {
-        setSessions(data.sessions);
-      }
+      const list = await getCoachSessions();
+      setSessions(list as unknown as SessionSummary[]);
     } catch (err) {
       console.error('Failed to load sessions:', err);
     }
@@ -79,14 +77,11 @@ export default function AICoach() {
 
   const fetchRiderInfo = async () => {
     try {
-      const res = await fetch('/api/ai/rider/profile');
-      const data = await res.json();
-      if (data.profile) {
-        setRiderInfo({
-          weight: data.profile.weight_kg || 75,
-          bike: data.profile.current_bike || '大行 P8',
-        });
-      }
+      const profile = await getRiderProfile();
+      setRiderInfo({
+        weight: profile.weight_kg || 75,
+        bike: profile.current_bike || '大行 P8',
+      });
     } catch {}
   };
 
@@ -122,7 +117,7 @@ export default function AICoach() {
     const sid = sessionToDelete;
     setSessionToDelete(null);
     try {
-      await fetch(`/api/ai/coach/${sid}`, { method: 'DELETE' });
+      await deleteCoachSession(sid);
       if (sid === sessionId) {
         setMessages([DEFAULT_WELCOME_MSG]);
       }
@@ -150,15 +145,9 @@ export default function AICoach() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/api/ai/coach/${sessionId}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query.trim() }),
-      });
-
-      const data = await res.json();
-      const reply = data.reply || '';
-      if (!res.ok || !reply || reply.includes('未能获取回复') || reply.includes('异常')) {
+      const result = await chatWithCoach(sessionId, query.trim());
+      const reply = result.reply || '';
+      if (!reply || reply.includes('未能获取回复') || reply.includes('异常')) {
         setMessages((prev) => [
           ...prev,
           {
@@ -175,12 +164,12 @@ export default function AICoach() {
             id: `assistant_${Date.now()}`,
             role: 'assistant',
             content: reply,
-            tool_calls: data.toolCalls,
+            tool_calls: result.toolCalls,
           },
         ]);
 
         // Trigger prominent toast if goals or profile updated
-        if (data.goalUpdated) {
+        if (result.goalUpdated) {
           setToast({
             type: 'goal',
             title: '目标与周程指标已更新',
@@ -188,7 +177,7 @@ export default function AICoach() {
             link: '/goals',
           });
           setTimeout(() => setToast(null), 5000);
-        } else if (data.profileUpdated) {
+        } else if (result.profileUpdated) {
           setToast({
             type: 'profile',
             title: '车手档案与硬件配置已更新',

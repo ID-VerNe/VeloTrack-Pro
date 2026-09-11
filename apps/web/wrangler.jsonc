@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cycling-web",
+  "main": "worker.ts",
+  "compatibility_date": "2025-03-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  },
+  // 部署相关值用 `npx wrangler secret put <NAME>` 注入，不写明文，避免进 git：
+  //   COOKIE_BRIDGE_KEY  — cookie-bridge 的 X-Api-Key（与 bookmark-frontend 同一个）
+  //   ADMIN_TOKEN        — PHP 后端 Bearer 鉴权令牌（与 php_backend/.env 的 ADMIN_TOKEN 同值）
+  // 明文 vars（非机密）用 `npx wrangler deploy --var KEY:VALUE` 或下方 vars 块写入：
+  //   VHOST_BACKEND      — 源站 URL（你部署后填）
+  //   COOKIE_BRIDGE_URL  — cookie-bridge 端点，如 https://cookie.yuuverne.site/cookie
+  "vars": {
+    "VHOST_BACKEND": "https://devtools.yuuverne.eu.org/cycling",
+    "COOKIE_BRIDGE_URL": "https://cookie.yuuverne.site/cookie"
+  },
+  "routes": [
+    {
+      "pattern": "cycling.yuuverne.site",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

@@ -150,6 +150,11 @@ export default function ActivitiesList() {
                 placeholder="搜索骑行名称..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
                 className="w-full pl-8 pr-3 py-1.5 bg-white rounded border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 shadow-2xs transition-colors"
               />
             </div>

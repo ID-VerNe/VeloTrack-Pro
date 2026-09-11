@@ -139,8 +139,26 @@ describe('RideTitleHeader', () => {
     expect(onUndoTitle).toHaveBeenCalledTimes(1);
   });
 
-  it('点击删除按钮展示确认横幅，点击确认删除触发 onDelete', async () => {
+  it('未配置管理令牌时点击删除弹出警告并不展示确认横幅', async () => {
     const user = userEvent.setup();
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    localStorage.removeItem('velotrack_admin_token');
+
+    const onDelete = vi.fn();
+    renderHeader({ onDelete });
+    await user.click(screen.getByTitle('删除此条骑行记录'));
+
+    expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('未检测到管理令牌'));
+    expect(screen.queryByText(/确定要删除此骑行记录吗/)).not.toBeInTheDocument();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    alertSpy.mockRestore();
+  });
+
+  it('已配置管理令牌时点击删除展示确认横幅，点击确认删除触发 onDelete', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('velotrack_admin_token', 'test_secret_token');
+
     const onDelete = vi.fn();
     renderHeader({ onDelete });
     await user.click(screen.getByTitle('删除此条骑行记录'));
@@ -148,10 +166,14 @@ describe('RideTitleHeader', () => {
 
     await user.click(screen.getByRole('button', { name: '确认删除' }));
     expect(onDelete).toHaveBeenCalledTimes(1);
+
+    localStorage.removeItem('velotrack_admin_token');
   });
 
   it('在删除确认横幅中点击取消关闭横幅且不触发 onDelete', async () => {
     const user = userEvent.setup();
+    localStorage.setItem('velotrack_admin_token', 'test_secret_token');
+
     const onDelete = vi.fn();
     renderHeader({ onDelete });
     await user.click(screen.getByTitle('删除此条骑行记录'));
@@ -160,6 +182,8 @@ describe('RideTitleHeader', () => {
     await user.click(screen.getByRole('button', { name: '取消' }));
     expect(onDelete).not.toHaveBeenCalled();
     expect(screen.queryByText(/确定要删除此骑行记录吗/)).not.toBeInTheDocument();
+
+    localStorage.removeItem('velotrack_admin_token');
   });
 });
 

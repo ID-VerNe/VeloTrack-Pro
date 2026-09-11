@@ -7,6 +7,7 @@ import PeriodicReports from './pages/PeriodicReports';
 import ActivitiesList from './pages/ActivitiesList';
 import RoutesExplorer from './pages/RoutesExplorer';
 import TrainingGoals from './pages/TrainingGoals';
+import DataImport from './pages/DataImport';
 import { MapStyleProvider } from './contexts/MapStyleContext';
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
         <Route path="/reports" element={<PeriodicReports />} />
         <Route path="/rides" element={<ActivitiesList />} />
         <Route path="/routes" element={<RoutesExplorer />} />
+        <Route path="/upload" element={<DataImport />} />
+        <Route path="/admin" element={<DataImport />} />
         <Route path="/goals" element={<TrainingGoals />} />
         <Route path="/ai-coach" element={<AICoach />} />
         <Route path="/ride/:id" element={<RideDetail />} />

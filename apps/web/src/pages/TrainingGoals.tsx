@@ -10,6 +10,11 @@ import GoalEvolutionTimeline from '../components/goals/GoalEvolutionTimeline';
 import AchievementsGrid from '../components/goals/AchievementsGrid';
 import EditGoalsModal, { type UserTargets } from '../components/goals/EditGoalsModal';
 import type { GoalMilestone } from '../types/rider';
+import {
+  getTrainingGoals,
+  getGoalMilestones,
+  updateTrainingGoals,
+} from '../services/riderService';
 
 const DEFAULT_TARGETS: UserTargets = {
   weeklyDistanceKm: 60.0,
@@ -32,25 +37,21 @@ export default function TrainingGoals() {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [ridesRes, goalsRes] = await Promise.all([
+      const [ridesRes, goals, milestones] = await Promise.all([
         fetch('/api/rides').then((r) => r.json()),
-        fetch('/api/ai/goals').then((r) => r.json()),
+        getTrainingGoals(),
+        getGoalMilestones(5),
       ]);
 
       if (ridesRes.rides) setRides(ridesRes.rides);
-      if (goalsRes.goals) {
-        const g = goalsRes.goals;
-        setTargets({
-          weeklyDistanceKm: g.weekly_distance_km || 60.0,
-          targetAvgSpeedKmh: g.target_avg_speed_kmh || 18.0,
-          monthlyDistanceKm: g.monthly_distance_km || 180.0,
-          annualDistanceKm: g.annual_distance_km || 1000.0,
-          coachNotes: g.coach_notes || '',
-        });
-      }
-      if (goalsRes.milestones) {
-        setMilestones(goalsRes.milestones);
-      }
+      setTargets({
+        weeklyDistanceKm: goals.weekly_distance_km,
+        targetAvgSpeedKmh: goals.target_avg_speed_kmh,
+        monthlyDistanceKm: goals.monthly_distance_km,
+        annualDistanceKm: goals.annual_distance_km,
+        coachNotes: goals.coach_notes,
+      });
+      setMilestones(milestones as unknown as GoalMilestone[]);
     } catch (err) {
       console.error(err);
       setLoadError('训练目标数据加载失败，请检查后端服务');
@@ -64,16 +65,12 @@ export default function TrainingGoals() {
   }, []);
 
   const handleSaveTargets = async (updatedTargets: UserTargets) => {
-    await fetch('/api/ai/goals', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        weekly_distance_km: updatedTargets.weeklyDistanceKm,
-        target_avg_speed_kmh: updatedTargets.targetAvgSpeedKmh,
-        monthly_distance_km: updatedTargets.monthlyDistanceKm,
-        annual_distance_km: updatedTargets.annualDistanceKm,
-        coach_notes: updatedTargets.coachNotes,
-      }),
+    await updateTrainingGoals({
+      weekly_distance_km: updatedTargets.weeklyDistanceKm,
+      target_avg_speed_kmh: updatedTargets.targetAvgSpeedKmh,
+      monthly_distance_km: updatedTargets.monthlyDistanceKm,
+      annual_distance_km: updatedTargets.annualDistanceKm,
+      coach_notes: updatedTargets.coachNotes,
     });
     setTargets(updatedTargets);
     await fetchData();

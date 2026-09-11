@@ -36,7 +36,7 @@ const mockRides = [
 describe('ActivitiesList 骑行列表页面', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    global.fetch = vi.fn().mockImplementation((url: string) => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
       if (url === '/api/rides') {
         return Promise.resolve({
           ok: true,
@@ -106,7 +106,7 @@ describe('ActivitiesList 骑行列表页面', () => {
         json: () => Promise.resolve({}),
       });
     });
-    global.fetch = deleteFetchMock as any;
+    globalThis.fetch = deleteFetchMock as any;
 
     render(
       <MemoryRouter>
@@ -152,7 +152,7 @@ describe('ActivitiesList 骑行列表页面', () => {
         json: () => Promise.resolve({}),
       });
     });
-    global.fetch = fetchMock as any;
+    globalThis.fetch = fetchMock as any;
 
     render(
       <MemoryRouter>

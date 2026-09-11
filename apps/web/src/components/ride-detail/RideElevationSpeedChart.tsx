@@ -8,6 +8,7 @@ interface Props {
   routeCoordinates?: [number, number][];
   detailPoints?: RideDetailPoint[] | null;
   externalHoverIndex?: number | null;
+  cruisingSpeedKmh?: number;
   onHoverScrub?: (point: ChartTelemetryPoint) => void;
   onLeaveScrub?: () => void;
   onRangeZoom?: (range: { startIdx: number; endIdx: number; startProgress: number; endProgress: number } | null) => void;
@@ -19,6 +20,7 @@ export default function RideElevationSpeedChart({
   routeCoordinates = [],
   detailPoints = null,
   externalHoverIndex,
+  cruisingSpeedKmh,
   onHoverScrub,
   onLeaveScrub,
   onRangeZoom,
@@ -99,8 +101,8 @@ export default function RideElevationSpeedChart({
           const isSpeed = item.seriesName.includes('速度');
           html += `
             <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:11px;padding:2px 0;">
-              <span style="color:#94A3B8;">${isSpeed ? '速度' : '海拔'}</span>
-              <span style="font-weight:600;color:${isSpeed ? '#FFFFFF' : '#CBD5E1'};font-family:monospace;">
+              <span style="color:${isSpeed ? '#60A5FA' : '#FBBF24'};">${isSpeed ? '速度' : '海拔'}</span>
+              <span style="font-weight:600;color:#FFFFFF;font-family:monospace;">
                 ${item.value} ${isSpeed ? 'km/h' : 'm'}
               </span>
             </div>
@@ -139,17 +141,17 @@ export default function RideElevationSpeedChart({
     yAxis: [
       {
         name: '速度 (km/h)',
-        nameTextStyle: { color: '#94A3B8', fontSize: 9, fontFamily: 'monospace' },
+        nameTextStyle: { color: '#2563EB', fontSize: 9, fontFamily: 'monospace' },
         type: 'value',
         scale: true,
         min: 0,
         max: (value: { max: number }) => Math.ceil(Math.max(value.max * 1.25, 20)),
         splitLine: { lineStyle: { color: '#F8FAFC' } },
-        axisLabel: { color: '#0F172A', fontSize: 10, fontFamily: 'monospace' },
+        axisLabel: { color: '#2563EB', fontSize: 10, fontFamily: 'monospace' },
       },
       {
         name: '海拔 (m)',
-        nameTextStyle: { color: '#94A3B8', fontSize: 9, fontFamily: 'monospace' },
+        nameTextStyle: { color: '#D97706', fontSize: 9, fontFamily: 'monospace' },
         type: 'value',
         scale: true,
         min: (value: { min: number }) => {
@@ -165,7 +167,7 @@ export default function RideElevationSpeedChart({
           return Math.ceil(Math.max(value.max * 1.25, 10));
         },
         splitLine: { show: false },
-        axisLabel: { color: '#64748B', fontSize: 10, fontFamily: 'monospace' },
+        axisLabel: { color: '#D97706', fontSize: 10, fontFamily: 'monospace' },
       },
     ],
     series: [
@@ -174,8 +176,8 @@ export default function RideElevationSpeedChart({
         type: 'line',
         smooth: 0.35,
         data: chartData.speedPoints,
-        itemStyle: { color: '#0F172A' },
-        lineStyle: { width: 2.0 },
+        itemStyle: { color: '#2563EB' },
+        lineStyle: { width: 2.2, color: '#2563EB' },
         areaStyle: {
           color: {
             type: 'linear',
@@ -184,8 +186,8 @@ export default function RideElevationSpeedChart({
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(15, 23, 42, 0.10)' },
-              { offset: 1, color: 'rgba(15, 23, 42, 0.01)' },
+              { offset: 0, color: 'rgba(37, 99, 235, 0.20)' },
+              { offset: 1, color: 'rgba(37, 99, 235, 0.01)' },
             ],
           },
         },
@@ -195,6 +197,33 @@ export default function RideElevationSpeedChart({
           label: { show: false },
           data: markAreas,
         },
+        markLine: cruisingSpeedKmh && cruisingSpeedKmh > 0 ? {
+          silent: true,
+          symbol: 'none',
+          data: [
+            {
+              yAxis: cruisingSpeedKmh,
+              lineStyle: {
+                color: '#10B981',
+                type: 'dashed',
+                width: 1.5,
+              },
+              label: {
+                show: true,
+                position: 'insideEndTop',
+                formatter: `稳态巡航 ${cruisingSpeedKmh} km/h`,
+                fontSize: 10,
+                color: '#059669',
+                fontFamily: 'monospace',
+                backgroundColor: 'rgba(236, 253, 245, 0.9)',
+                padding: [2, 5],
+                borderRadius: 3,
+                borderColor: '#A7F3D0',
+                borderWidth: 1,
+              },
+            },
+          ],
+        } : undefined,
       },
       {
         name: '海拔高度 (m)',
@@ -202,73 +231,74 @@ export default function RideElevationSpeedChart({
         smooth: 0.35,
         yAxisIndex: 1,
         data: chartData.altPoints,
-        itemStyle: { color: '#64748B' },
-        lineStyle: { width: 1.5, type: 'dashed' },
-        areaStyle: { color: 'rgba(100, 116, 139, 0.04)' },
+        itemStyle: { color: '#D97706' },
+        lineStyle: { width: 1.5, type: 'dashed', color: '#D97706' },
+        areaStyle: { color: 'rgba(217, 119, 6, 0.08)' },
         showSymbol: false,
       },
     ],
   });
 
   return (
-    <div className="bg-white rounded-lg p-5 sm:p-6 border border-slate-200/80 space-y-4 font-mono">
+    <div className="pt-4 space-y-6 border-t border-black/10 mt-6">
       {/* Header & Section Badges */}
-      <div className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 className="text-xs font-semibold text-slate-900 tracking-tight flex items-center space-x-1.5 font-sans">
-            <Gauge className="w-3.5 h-3.5 text-slate-700" />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[15px] font-medium text-black flex items-center space-x-1.5 font-sans">
+            <Gauge className="w-4 h-4 text-black/64" />
             <span>速度、海拔与微观路段剖面</span>
           </h3>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             {/* 数据源标注 */}
             {isRealData ? (
               <span
-                className="px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200 text-[10px]"
+                className="text-[12px] text-black/44"
                 title="海拔与速度曲线来自码表逐点实测记录"
               >
                 实测逐点数据
               </span>
             ) : (
               <span
-                className="px-2 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200 border-dashed text-[10px]"
+                className="text-[12px] text-black/44"
                 title="此骑行无逐点明细（旧数据），海拔曲线为基于总爬升/最高海拔的示意拟合，速度为由 GPS 位移推算的估算值"
               >
                 示意曲线
               </span>
             )}
+
             {isZoomed && (
               <button
                 onClick={handleResetZoom}
-                className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs flex items-center space-x-1 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[12px] text-black bg-black/5 hover:bg-black/10 flex items-center space-x-1 transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-2.5 h-2.5" />
+                <RotateCcw className="w-3 h-3" />
                 <span>复原全貌</span>
               </button>
             )}
-            <span className="text-[11px] text-slate-400">
-              总历时 {stats.elapsedMins} 分钟 · 滚轮可缩放
+            <span className="text-[12px] text-black/44">
+              总历时 {stats.elapsedMins} 分钟
             </span>
           </div>
         </div>
 
         {/* Micro-segmentation summary badges */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded bg-slate-50 text-slate-800 border border-slate-200 flex items-center space-x-1">
-            <Zap className="w-3 h-3 text-slate-700" />
-            <span>踩踏做功: {stats.movingMins} min ({stats.movingRatioPct}%)</span>
+        <div className="flex flex-wrap items-center gap-3 text-[13px] text-black/64 pt-1">
+          <span className="flex items-center space-x-1.5">
+            <Zap className="w-3.5 h-3.5" />
+            <span>踩踏: {stats.movingMins} min ({stats.movingRatioPct}%)</span>
           </span>
 
           {stats.totalPausedSecs >= 60 && (
-            <span className="px-2.5 py-1 rounded bg-slate-50 text-slate-600 border border-slate-200 flex items-center space-x-1">
-              <PauseCircle className="w-3 h-3 text-slate-500" />
-              <span>停顿等待: {stats.pausedMins} min ({stats.pausedRatioPct}%)</span>
+            <span className="flex items-center space-x-1.5">
+              <PauseCircle className="w-3.5 h-3.5" />
+              <span>停顿: {stats.pausedMins} min ({stats.pausedRatioPct}%)</span>
             </span>
           )}
         </div>
 
         {/* Quick-Jump Key Feature Capsules */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-          <span className="text-slate-400 text-[10px] uppercase tracking-wider mr-0.5">特征极值:</span>
+        <div className="flex flex-wrap items-center gap-2 pt-2 text-[12px]">
+          <span className="text-black/44 uppercase tracking-wider mr-1">特征极值:</span>
           {keyPeakIndices && (
             <>
               <button
@@ -276,10 +306,10 @@ export default function RideElevationSpeedChart({
                   const pt = telemetryPoints[keyPeakIndices.maxSpeedPointIndex];
                   if (pt) onJumpToPoint?.(pt);
                 }}
-                className="px-2 py-0.5 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors flex items-center space-x-1 cursor-pointer"
+                className="px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 text-black transition-colors flex items-center space-x-1.5 cursor-pointer"
                 title="定位至最高冲刺路段"
               >
-                <Flame className="w-2.5 h-2.5 text-slate-600" />
+                <Flame className="w-3 h-3 text-black/64" />
                 <span>冲刺峰值 {stats.maxSpeedKmh} km/h</span>
               </button>
 
@@ -288,10 +318,10 @@ export default function RideElevationSpeedChart({
                   const pt = telemetryPoints[keyPeakIndices.maxAltPointIndex];
                   if (pt) onJumpToPoint?.(pt);
                 }}
-                className="px-2 py-0.5 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors flex items-center space-x-1 cursor-pointer"
+                className="px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 text-black transition-colors flex items-center space-x-1.5 cursor-pointer"
                 title="定位至最高海拔位置"
               >
-                <Mountain className="w-2.5 h-2.5 text-slate-600" />
+                <Mountain className="w-3 h-3 text-black/64" />
                 <span>爬坡顶点 {stats.maxSpeedKmh ? (ride?.max_altitude_meters ?? 0) : 0} m</span>
               </button>
 
@@ -302,10 +332,10 @@ export default function RideElevationSpeedChart({
                     const pt = telemetryPoints.find((p) => p.coordIndex === pc?.coordIndex) || telemetryPoints[0];
                     if (pt) onJumpToPoint?.(pt);
                   }}
-                  className="px-2 py-0.5 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors flex items-center space-x-1 cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 text-black transition-colors flex items-center space-x-1.5 cursor-pointer"
                   title="定位至最长红绿灯等待点"
                 >
-                  <PauseCircle className="w-2.5 h-2.5 text-slate-600" />
+                  <PauseCircle className="w-3 h-3 text-black/64" />
                   <span>最长等灯 {keyPeakIndices.longestPauseCluster.durationMins} 分钟</span>
                 </button>
               )}

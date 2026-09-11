@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, Send, RefreshCw, CheckCircle2 } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import type { RiderProfile } from '../../types/rider';
+import { interviewChat } from '../../services/aiProfile';
 
 interface Props {
   profile: RiderProfile;
@@ -47,26 +48,17 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
     setIsInterviewing(true);
 
     try {
-      const res = await fetch('/api/ai/rider/interview/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text.trim(),
-          history: messages,
-        }),
-      });
-
-      const data = await res.json();
+      const result = await interviewChat(text.trim(), messages);
       const assistantMsg: InterviewMessage = {
         id: `assistant_${Date.now()}`,
         role: 'assistant',
-        content: data.reply || '已记录并更新。',
-        updatedFields: data.updatedFields && Object.keys(data.updatedFields).length > 0 ? data.updatedFields : undefined,
+        content: result.reply || '已记录并更新。',
+        updatedFields: result.updatedFields && Object.keys(result.updatedFields).length > 0 ? result.updatedFields : undefined,
       };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      if (data.updatedFields && Object.keys(data.updatedFields).length > 0) {
-        const fields = Object.keys(data.updatedFields);
+      if (result.updatedFields && Object.keys(result.updatedFields).length > 0) {
+        const fields = Object.keys(result.updatedFields);
         setRecentlyUpdated(fields);
         setTimeout(() => setRecentlyUpdated([]), 5000);
         onProfileUpdated();

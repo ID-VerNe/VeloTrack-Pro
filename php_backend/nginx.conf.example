@@ -1,0 +1,20 @@
+# nginx 等价配置示例（若虚拟主机是 nginx 而非 Apache）。
+# Apache 用户无需此文件，根目录 .htaccess 的 mod_rewrite 规则已处理。
+# 把本段写进 nginx server 块（或让主机商套用）：
+
+# location /api/ {
+#     rewrite ^/api/(.*)$ /php_backend/index.php last;
+# }
+#
+# location ~* \.(db|sqlite|sqlite3|log|db-journal)$ {
+#     deny all;
+#     return 404;
+# }
+#
+# location /php_backend/ {
+#     # 仅允许 index.php 被直接命中，挡掉其他 PHP 源码外泄
+#     location ~ \.php$ {
+#         deny all;
+#         return 404;
+#     }
+# }

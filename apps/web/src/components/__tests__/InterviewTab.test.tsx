@@ -1,14 +1,22 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InterviewTab from '../profile/InterviewTab';
 import type { RiderProfile } from '../../types/rider';
 
+// 在组件层 mock interviewChat 服务：组件测试只验证渲染与回调，
+// 不耦合到服务内部的 Gateway 调用序列（那是 aiProfile 服务自己的测试职责）。
+vi.mock('../../services/aiProfile', () => ({
+  interviewChat: vi.fn(),
+}));
+
+import { interviewChat } from '../../services/aiProfile';
+
 /**
  * InterviewTab AI 访谈 Tab 组件测试。
- * 覆盖：欢迎消息与 HUD 渲染、发送消息（fetch 成功/失败）、
+ * 覆盖：欢迎消息与 HUD 渲染、发送消息（interviewChat 成功/失败）、
  * onProfileUpdated 回调、loading/disabled 分支、快捷芯片。
  */
 describe('InterviewTab AI 访谈', () => {
@@ -28,9 +36,6 @@ describe('InterviewTab AI 访谈', () => {
     primary_goal: '',
   };
 
-  const makeFetchResponse = (data: unknown, status = 200) =>
-    new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
-
   const renderTab = (props: Partial<React.ComponentProps<typeof InterviewTab>> = {}) =>
     render(
       <InterviewTab profile={baseProfile} onProfileUpdated={vi.fn()} {...props} />
@@ -39,6 +44,10 @@ describe('InterviewTab AI 访谈', () => {
   beforeAll(() => {
     // jsdom 未实现 scrollIntoView，组件 useEffect 会调用它
     Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  beforeEach(() => {
+    vi.mocked(interviewChat).mockReset();
   });
 
   afterEach(() => {
@@ -57,21 +66,17 @@ describe('InterviewTab AI 访谈', () => {
     expect(screen.getByText('暂无伤病')).toBeInTheDocument();
   });
 
-  it('输入内容后点击发送调用 fetch 并渲染助手回复', async () => {
+  it('输入内容后点击发送调用 interviewChat 并渲染助手回复', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse({ reply: '已记录 46T 牙盘升级' }));
-    vi.stubGlobal('fetch', fetchMock);
+    vi.mocked(interviewChat).mockResolvedValue({ reply: '已记录 46T 牙盘升级', updatedFields: {} });
     renderTab();
 
     const input = screen.getByPlaceholderText(/输入你的硬件或身体参数/);
     await user.type(input, '我改了46T牙盘');
     await user.keyboard('{Enter}');
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/ai/rider/interview/chat',
-      expect.objectContaining({ method: 'POST' })
-    );
+    await waitFor(() => expect(interviewChat).toHaveBeenCalledTimes(1));
+    expect(interviewChat).toHaveBeenCalledWith('我改了46T牙盘', expect.any(Array));
     // 用户消息与助手回复都应出现
     expect(await screen.findByText('我改了46T牙盘')).toBeInTheDocument();
     expect(await screen.findByText('已记录 46T 牙盘升级')).toBeInTheDocument();
@@ -79,23 +84,25 @@ describe('InterviewTab AI 访谈', () => {
 
   it('点击快捷芯片直接发送对应文案', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse({ reply: 'ok' }));
-    vi.stubGlobal('fetch', fetchMock);
+    vi.mocked(interviewChat).mockResolvedValue({ reply: 'ok', updatedFields: {} });
     renderTab();
 
     await user.click(screen.getByText(/更新46T\/11-28T齿比/));
     expect(await screen.findByText('我的车齿比改成了46T牙盘+11-28T 7速飞轮')).toBeInTheDocument();
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    expect(body.message).toBe('我的车齿比改成了46T牙盘+11-28T 7速飞轮');
+    await waitFor(() => expect(interviewChat).toHaveBeenCalledTimes(1));
+    expect(interviewChat).toHaveBeenCalledWith(
+      '我的车齿比改成了46T牙盘+11-28T 7速飞轮',
+      expect.any(Array)
+    );
   });
 
   it('响应含 updatedFields 时调用 onProfileUpdated 并展示写入提示', async () => {
     const user = userEvent.setup();
     const onProfileUpdated = vi.fn();
-    const fetchMock = vi.fn().mockResolvedValue(
-      makeFetchResponse({ reply: '已更新', updatedFields: { gear_ratio: '46T/11-28T' } })
-    );
-    vi.stubGlobal('fetch', fetchMock);
+    vi.mocked(interviewChat).mockResolvedValue({
+      reply: '已更新',
+      updatedFields: { gear_ratio: '46T/11-28T' },
+    });
     renderTab({ onProfileUpdated });
 
     const input = screen.getByPlaceholderText(/输入你的硬件或身体参数/);
@@ -106,22 +113,20 @@ describe('InterviewTab AI 访谈', () => {
     expect(screen.getByText(/已写入数据库: gear_ratio/)).toBeInTheDocument();
   });
 
-  it('空输入时点击发送不触发 fetch', async () => {
+  it('空输入时点击发送不触发 interviewChat', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
     renderTab();
 
     const input = screen.getByPlaceholderText(/输入你的硬件或身体参数/);
     await user.click(input);
     await user.keyboard('{Enter}');
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(interviewChat).not.toHaveBeenCalled();
   });
 
   it('请求进行中展示加载提示且输入框禁用', async () => {
     const user = userEvent.setup();
     // 永不 resolve 的 Promise 模拟进行中状态
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    vi.mocked(interviewChat).mockReturnValue(new Promise(() => {}));
     renderTab();
 
     const input = screen.getByPlaceholderText(/输入你的硬件或身体参数/);
@@ -132,10 +137,10 @@ describe('InterviewTab AI 访谈', () => {
     expect(input).toBeDisabled();
   });
 
-  it('fetch 失败时不崩溃且输入恢复可用', async () => {
+  it('interviewChat 失败时不崩溃且输入恢复可用', async () => {
     const user = userEvent.setup();
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')));
+    vi.mocked(interviewChat).mockRejectedValue(new Error('network'));
     renderTab();
 
     const input = screen.getByPlaceholderText(/输入你的硬件或身体参数/);

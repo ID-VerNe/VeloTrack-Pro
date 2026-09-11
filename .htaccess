@@ -1,0 +1,18 @@
+# 拒绝外部访问敏感文件：数据库、日志、SQLite 临时文件。
+# cycling.db 在仓库根（vhost web root），不经 php_backend/ 子目录，
+# 故根目录单独写一条 .htaccess 覆盖。
+<FilesMatch "\.(log|db|sqlite|sqlite3|db-journal)$">
+    Require all denied
+</FilesMatch>
+
+# 生产：所有 /api/* 请求交给 PHP 前置控制器处理。
+# 前端 SPA 用相对路径 fetch('/api/...')，部署同域时需要这条把
+# /api/... 映射到 php_backend/index.php（index.php 内部按 REQUEST_URI 分发）。
+# 本地 php -S 开发用 vite proxy 直连 8788，不走这里。
+# 仅在目标虚拟主机为 Apache + mod_rewrite 时生效（nginx 需另写 location）。
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteRule ^api/(.*)$ php_backend/index.php [QSA,L]
+</IfModule>

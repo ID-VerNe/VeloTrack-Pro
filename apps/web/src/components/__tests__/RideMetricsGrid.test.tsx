@@ -44,4 +44,40 @@ describe('RideMetricsGrid', () => {
     expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(3);
     expect(screen.getByText(/最高海拔 0m · 消耗 0kcal/)).toBeInTheDocument();
   });
+
+  it('传入 speedDistribution 时渲染稳态平路巡航、踏频与持续稳态段落卡片', () => {
+    const mockSpeedDist = {
+      has_detail: true,
+      cruising_avg_speed_kmh: 25.4,
+      cruising_range_kmh: [22.9, 25.8] as [number, number],
+      speed_loss_kmh: 5.2,
+      speed_loss_pct: 20,
+      sustained_segments_count: 8,
+      sustained_avg_speed_kmh: 23.8,
+      derived_cadence_rpm: 89.6,
+      cadence_zone_status: 'golden' as const,
+      speed_tiers: {
+        paused_secs: 540,
+        paused_pct: 9,
+        low_speed_secs: 1740,
+        low_speed_pct: 29,
+        tempo_secs: 2100,
+        tempo_pct: 35,
+        cruising_secs: 1500,
+        cruising_pct: 25,
+        sprint_secs: 120,
+        sprint_pct: 2,
+      },
+      summary_text: '测试稳态巡航',
+    };
+
+    render(<RideMetricsGrid ride={ride} calories={600} speedDistribution={mockSpeedDist} />);
+    expect(screen.getByText('稳态平路巡航')).toBeInTheDocument();
+    expect(screen.getByText('25.4')).toBeInTheDocument();
+    expect(screen.getByText(/46\/15T 踏频 ~89.6 rpm/)).toBeInTheDocument();
+    expect(screen.getByText('85-95rpm 黄金区间')).toBeInTheDocument();
+    expect(screen.getByText('持续稳态巡航')).toBeInTheDocument();
+    expect(screen.getByText('8')).toBeInTheDocument();
+    expect(screen.getByText(/速度损耗 -5.2km\/h \(20%\)/)).toBeInTheDocument();
+  });
 });

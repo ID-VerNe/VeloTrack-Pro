@@ -58,39 +58,39 @@ VeloTrack Pro 从底层轨迹点位数学解算开始重构，把真实 GPS 采�
 
 ## 项目架构与技术栈
 
-本项目采用 Turborepo Monorepo 组织结构：
+本项目采用 pnpm Monorepo 组织结构：
 
 ```
 Cycling/
 ├── apps/
-│   ├── web/               # 骑手分析工作台 (前端用户界面)
+│   ├── web/               # 骑手分析工作台 (前端用户界面 + AI 逻辑)
 │   │   ├── src/
 │   │   │   ├── components/  # 仪表盘、骑行详情、图表联动、记忆画像抽屉等
-│   │   │   ├── pages/       # Dashboard, RideDetail, ActivitiesList, AICoach 等
-│   │   │   └── utils/       # 遥测解算、坐标投影、卡路里与双均速计算公式
+│   │   │   ├── pages/       # Dashboard, RideDetail, AICoach, PeriodicReports 等
+│   │   │   ├── services/    # AI 调用层：aiCoach/aiInsights/aiProfile/reportService/riderService
+│   │   │   └── utils/       # 遥测解算、坐标投影、齿比踏频物理引擎
 │   │   └── vite.config.ts
 │   │
-│   └── admin/             # 数据入库管理端
+│   └── admin/             # 数据入库管理端 (TCX/GPX 解析、隐私圈、上传)
 │       ├── src/
-│       │   ├── components/  # GPX/TCX 文件解析、隐私圈绘制、AI 服务配置
-│       │   └── utils/       # XML 轨迹点提取、多段距离聚合与过滤
+│       │   ├── components/  # 文件上传、隐私圈绘制、AI 服务 base_url/model 配置
+│       │   └── utils/       # XML 轨迹点提取、脱敏、降采样
 │       └── vite.config.ts
 │
-├── packages/
-│   └── api/               # 后端边缘 API 服务 (Cloudflare Workers / Hono)
-│       ├── src/
-│       │   ├── routes/      # 骑行数据存取、AI 复盘分析、教练对话、档案接口
-│       │   ├── services/    # D1 SQLite 迁移、记忆分层装配、动力学计算
-│       │   └── utils/       # 齿比踏频推演、物理功率估算
-│       └── wrangler.jsonc
+├── php_backend/          # PHP 后端 (SQLite on disk，替代原 Cloudflare D1/R2)
+│   ├── index.php           # 前置控制器 + PATH_INFO 路由 + Bearer 鉴权
+│   ├── routes/             # rides/admin_rides/rider/goals/coach/ride_insights/ai_config
+│   ├── dbInit.php          # DDL + seed + 迁移
+│   └── config.php          # phpdotenv + DATABASE_PATH/ADMIN_TOKEN/AI_GATEWAY_*
 │
-└── .handoffs/             # 阶段交接与架构备忘文档 (本地环境)
+└── cycling.db             # SQLite 数据库文件 (部署时 FTP 上传到虚拟主机)
 ```
 
 ### 技术栈选型
 - **Web 端**：React 19 + TypeScript + Vite 8 + Tailwind CSS + MapLibre GL + ECharts + Lucide Icons
 - **Admin 端**：React 19 + TypeScript + Vite 8 + Turf.js + fast-xml-parser
-- **API 端**：Cloudflare Workers (workerd) + Hono + D1 Database (SQLite) + OpenAI/DeepSeek 兼容客户端
+- **后端**：PHP 8 + PDO sqlite (磁盘 SQLite，无 D1/R2)，直连磁盘 `cycling.db`
+- **AI 层**：Web 端直调用户的 Serverless-AI-API-Gateway (`https://api-gateway.yuuverne.site`)，team key 存浏览器 localStorage；后端只存 `base_url` + `model_name`，不持 key
 - **包管理器**：`pnpm` (工作区单仓规范)
 
 ---
@@ -100,6 +100,7 @@ Cycling/
 ### 前置要求
 - Node.js >= 18.0.0
 - pnpm >= 9.0.0
+- PHP >= 8.0 + pdo_sqlite 扩展
 
 ### 安装依赖
 ```bash
@@ -108,13 +109,26 @@ pnpm install
 
 ### 启动全部服务
 ```bash
+# 后端 PHP（管理 SQLite，开放模式本地开发）
+cd php_backend && php -S localhost:8788 -t .
+
+# 前端 web + admin（另开终端）
 pnpm dev
 ```
 
 启动后各端本地访问地址如下：
 - **骑手工作台 (Web)**: `http://localhost:5173`
 - **数据管理端 (Admin)**: `http://localhost:5174`
-- **后端 API 引擎 (API)**: `http://localhost:8787`
+- **后端 API 引擎 (API)**: `http://localhost:8788`
+
+本地开发时，web/admin 的 vite proxy 已把 `/api` 转发到 `localhost:8788`，前端用相对路径 `fetch('/api/...')` 即可。
+
+### 生产部署（共享 PHP 虚拟主机）
+1. `pnpm build` 产物（`apps/web/dist`、`apps/admin/dist`）FTP 到对应站点目录。
+2. `php_backend/` 整目录 FTP 到站点根（运行 `composer install --no-dev` 后再上传，或主机支持时在线装依赖）。
+3. `cycling.db`（含历史骑行 + seed）FTP 到站点根；`.env` 填 `ADMIN_TOKEN` 后上传（生产必须配置，开放模式仅限本地）。
+4. 路由：Apache 主机靠根目录 `.htaccess` 的 `RewriteRule ^api/(.*)$ php_backend/index.php` 把所有 `/api/*` 交给前置控制器；nginx 主机参考 `php_backend/nginx.conf.example`。
+5. `.htaccess` / `php_backend/.htaccess` 保护 `.env`/`.db`/`.log` 不被外部访问。
 
 ---
 
@@ -123,7 +137,7 @@ pnpm dev
 ```bash
 pnpm build
 ```
-该命令会自动触发各个 Workspace 的类型检查（`tsc -b`）与 Vite / Wrangler 构建打包。
+该命令会自动触发各个 Workspace 的类型检查（`tsc -b`）与 Vite 构建打包。后端 PHP 无构建步骤，直接 FTP 上传 `php_backend/` 与 `cycling.db` 到虚拟主机。
 
 ---
 

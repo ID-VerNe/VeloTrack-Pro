@@ -5,9 +5,7 @@ import { getAdminToken } from '../utils/apiClient';
 export function AIConfigCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
-  const [modelName, setModelName] = useState('deepseek-v4-flash');
-  // 修复：移除硬编码的真实 API Key 初始值（密钥只应由用户输入或后端脱敏回显）
-  const [apiKey, setApiKey] = useState('');
+  const [modelName, setModelName] = useState('glm-5.2');
 
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
@@ -23,39 +21,17 @@ export function AIConfigCard() {
       .then((data) => {
         if (data.config) {
           setBaseUrl(data.config.base_url || '');
-          setModelName(data.config.model_name || 'deepseek-v4-flash');
-          // 后端返回的是脱敏值（如 sk-***xxxx），仅用于展示"已配置"状态
-          setApiKey(data.config.api_key || '');
+          setModelName(data.config.model_name || 'glm-5.2');
         }
       })
       .catch(console.error);
   }, []);
 
   const handleTestConnection = async () => {
-    setTestStatus('testing');
-    setTestMessage('');
-    try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const token = getAdminToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch('/api/ai/test-connection', {
-        method: 'POST',
-        headers,
-        // 后端统一使用已保存的密钥，不再把输入框内容（可能是脱敏回显值）回传
-        body: JSON.stringify({ base_url: baseUrl, model_name: modelName }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setTestStatus('success');
-        setTestMessage(`连通正常 (${data.latencyMs}ms · ${data.model})`);
-      } else {
-        setTestStatus('error');
-        setTestMessage(data.error || '连接失败');
-      }
-    } catch (err: any) {
-      setTestStatus('error');
-      setTestMessage(err.message || '网络连接异常');
-    }
+    // 后端不再持有 api_key（AI 逻辑已迁到 web 端直调 Gateway），
+    // admin 不做连通测试；提示用户到 web 端验证。
+    setTestStatus('error');
+    setTestMessage('AI 连通测试已迁移至 web 端（直调 Gateway），admin 不再提供');
   };
 
   const handleSave = async () => {
@@ -68,9 +44,8 @@ export function AIConfigCard() {
       const res = await fetch('/api/ai/config', {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ base_url: baseUrl, model_name: modelName, api_key: apiKey }),
+        body: JSON.stringify({ base_url: baseUrl, model_name: modelName }),
       });
-      // 修复：原先不检查 res.ok，保存失败也显示"已保存"
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
         throw new Error(data.error || `HTTP ${res.status}`);
@@ -137,24 +112,10 @@ export function AIConfigCard() {
                 type="text"
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
-                placeholder="deepseek-v4-flash"
+                placeholder="glm-5.2"
                 className="w-full px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
-          </div>
-
-          {/* API Key */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-              API Key (令牌)
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-..."
-              className="w-full px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-            />
           </div>
 
           {/* Action Bar */}

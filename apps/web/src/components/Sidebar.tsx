@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
+import {
   SlidersHorizontal,
-  ExternalLink
 } from 'lucide-react';
 import RiderProfileDrawer from './RiderProfileDrawer';
 import type { RiderProfile } from '../types/rider';
 import { getNaturalWeekRange } from '../utils/dateUtils';
+import { getRiderProfile } from '../services/riderService';
 
 interface NavSection {
   title: string;
@@ -14,7 +14,6 @@ interface NavSection {
     name: string;
     path: string;
     badge?: string;
-    external?: boolean;
   }[];
 }
 
@@ -42,9 +41,8 @@ export default function Sidebar() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch('/api/ai/rider/profile');
-      const data = await res.json();
-      if (data.profile) setProfile(data.profile);
+      const profile = await getRiderProfile();
+      setProfile(profile as unknown as RiderProfile);
     } catch {}
   };
 
@@ -91,6 +89,7 @@ export default function Sidebar() {
       items: [
         { name: '骑行档案', path: '/rides', badge: `${ridesCount}` },
         { name: '路线探索', path: '/routes' },
+        { name: '数据入库', path: '/upload' },
       ],
     },
     {
@@ -98,12 +97,6 @@ export default function Sidebar() {
       items: [
         { name: 'AI 教练', path: '/ai-coach' },
         { name: '目标与阶梯课表', path: '/goals', badge: `${goalPct}%` },
-      ],
-    },
-    {
-      title: '系统管理',
-      items: [
-        { name: '数据导入与脱敏', path: 'http://localhost:3001', external: true },
       ],
     },
   ];
@@ -115,9 +108,11 @@ export default function Sidebar() {
           {/* Brand Logo Header */}
           <NavLink to="/" className="block px-2 group">
             <div className="flex items-center space-x-2.5">
-              <div className="w-7 h-7 rounded border border-slate-900 bg-slate-900 text-white flex items-center justify-center font-mono font-bold text-xs">
-                V
-              </div>
+              <img
+                src="/logo-kigurumi.jpg"
+                alt="VeloTrack Logo"
+                className="w-8 h-8 rounded-lg object-cover border border-slate-200 shadow-2xs shrink-0"
+              />
               <div>
                 <span className="font-bold text-sm tracking-tight text-slate-900 block font-mono">
                   VeloTrack
@@ -140,21 +135,6 @@ export default function Sidebar() {
                 <nav className="space-y-0.5" aria-label={section.title}>
                   {section.items.map((item) => {
                     const isActive = location.pathname === item.path;
-
-                    if (item.external) {
-                      return (
-                        <a
-                          key={item.name}
-                          href={item.path}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
-                        >
-                          <span className="truncate">{item.name}</span>
-                          <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-                        </a>
-                      );
-                    }
 
                     return (
                       <NavLink
@@ -198,9 +178,11 @@ export default function Sidebar() {
             title="查看车手生物力学档案与战车硬件"
           >
             <div className="flex items-center space-x-2.5 min-w-0">
-              <div className="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-slate-700 flex items-center justify-center font-mono font-medium text-xs shrink-0">
-                {profile.name?.slice(0, 1) || 'V'}
-              </div>
+              <img
+                src="/logo-kigurumi.jpg"
+                alt="Avatar"
+                className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0"
+              />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 leading-tight truncate">
                   {profile.name || '车手档案'}

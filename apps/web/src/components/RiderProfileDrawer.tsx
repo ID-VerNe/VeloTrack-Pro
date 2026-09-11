@@ -6,8 +6,10 @@ import {
 import InterviewTab from './profile/InterviewTab';
 import ManualProfileTab from './profile/ManualProfileTab';
 import MemoriesTab from './profile/MemoriesTab';
+import AIGatewayConfigTab from './profile/AIGatewayConfigTab';
 import type { RiderProfile, RiderMemory } from '../types/rider';
 import { useDialog } from '../hooks/useDialog';
+import { updateRiderProfile, upsertRiderMemory, deleteRiderMemory } from '../services/riderService';
 
 interface Props {
   isOpen: boolean;
@@ -17,7 +19,7 @@ interface Props {
 export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
   // 弹层无障碍：焦点陷阱 + Esc 关闭 + 关闭后焦点返还
   const dialogRef = useDialog(isOpen, onClose);
-  const [activeTab, setActiveTab] = useState<'manual' | 'interview' | 'memories'>('manual');
+  const [activeTab, setActiveTab] = useState<'manual' | 'interview' | 'memories' | 'gateway'>('manual');
   const [profile, setProfile] = useState<RiderProfile>({
     name: 'VerNe Yuu',
     gender: 'male',
@@ -60,15 +62,9 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('/api/ai/rider/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile),
-      });
-      if (res.ok) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2500);
-      }
+      await updateRiderProfile(profile);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err) {
       console.error(err);
     } finally {
@@ -78,26 +74,20 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
 
   const handleAddMemory = async (category: string, content: string) => {
     const slugKey = `manual_${category}_${Date.now().toString().slice(-6)}`;
-    const res = await fetch('/api/ai/rider/memories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        category,
-        memory_key: slugKey,
-        content,
-        source: 'manual',
-        importance: 4,
-      }),
-    });
-    if (res.ok) {
+    try {
+      await upsertRiderMemory(category, slugKey, content, 'manual', 4);
       await fetchProfileAndMemories();
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const handleDeleteMemory = async (id: number) => {
-    const res = await fetch(`/api/ai/rider/memories/${id}`, { method: 'DELETE' });
-    if (res.ok) {
+    try {
+      await deleteRiderMemory(id);
       setMemories((prev) => prev.filter((m) => m.id !== id));
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -176,6 +166,17 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
                 {memories.length}
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('gateway')}
+              className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
+                activeTab === 'gateway'
+                  ? 'bg-slate-900 text-white font-medium'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <span>AI 接入</span>
+            </button>
           </div>
         </div>
 
@@ -216,6 +217,11 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
             onAddMemory={handleAddMemory}
             onDeleteMemory={handleDeleteMemory}
           />
+        </div>
+
+        {/* Tab 4: AI Gateway config (base_url / model_name 后端，team key localStorage) */}
+        <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'gateway' ? 'flex' : 'hidden'}`}>
+          <AIGatewayConfigTab />
         </div>
       </div>
     </div>

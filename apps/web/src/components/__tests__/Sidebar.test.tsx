@@ -63,10 +63,10 @@ describe('Sidebar 导航侧边栏', () => {
     expect(screen.getByText('VeloTrack')).toBeInTheDocument();
     expect(screen.getByText('科学骑行遥测与训练')).toBeInTheDocument();
 
-    ['核心概览', '骑行遥测', '科学训练', '系统管理'].forEach((title) => {
+    ['核心概览', '骑行遥测', '科学训练'].forEach((title) => {
       expect(screen.getByText(title)).toBeInTheDocument();
     });
-    ['总览仪表盘', '周期与趋势', '骑行档案', '路线探索', 'AI 教练', '目标与阶梯课表', '数据导入与脱敏'].forEach((item) => {
+    ['总览仪表盘', '周期与趋势', '骑行档案', '路线探索', 'AI 教练', '目标与阶梯课表'].forEach((item) => {
       expect(screen.getByText(item)).toBeInTheDocument();
     });
 
@@ -112,11 +112,10 @@ describe('Sidebar 导航侧边栏', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it('外部链接以新标签页打开', async () => {
+  it('档案卡片与导航项使用路由链接（无外部链接）', async () => {
     renderSidebar();
-    const externalLink = screen.getByRole('link', { name: /数据导入与脱敏/ });
-    expect(externalLink).toHaveAttribute('href', 'http://localhost:3001');
-    expect(externalLink).toHaveAttribute('target', '_blank');
+    // 各导航项为内部 NavLink，无 target=_blank 外部链接
+    expect(screen.queryByRole('link', { name: /数据导入与脱敏/ })).not.toBeInTheDocument();
     // 等待 fetch 完成避免 act 警告
     await screen.findByText('车手档案');
   });

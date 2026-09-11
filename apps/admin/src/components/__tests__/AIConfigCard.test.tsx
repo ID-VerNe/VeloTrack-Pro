@@ -33,13 +33,12 @@ describe('AIConfigCard AI 配置卡片组件', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('挂载时 GET /api/ai/config 拉取配置并回填表单', async () => {
+  it('挂载时 GET /api/ai/config 拉取配置并回填表单（无 api_key 字段）', async () => {
     const mockFetch = vi.fn().mockResolvedValue(
       jsonResponse({
         config: {
           base_url: 'https://api.example.com/v1',
           model_name: 'gpt-4o',
-          api_key: 'sk-***abcd',
         },
       })
     );
@@ -51,7 +50,6 @@ describe('AIConfigCard AI 配置卡片组件', () => {
       await screen.findByDisplayValue('https://api.example.com/v1')
     ).toBeInTheDocument();
     expect(screen.getByDisplayValue('gpt-4o')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('sk-***abcd')).toBeInTheDocument();
     expect(mockFetch.mock.calls[0][0]).toBe('/api/ai/config');
   });
 
@@ -68,7 +66,7 @@ describe('AIConfigCard AI 配置卡片组件', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('base_url / model_name / api_key 三个输入框可编辑', () => {
+  it('base_url / model_name 两个输入框可编辑（无 api_key 输入框）', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({})));
     render(<AIConfigCard />);
     toggleHeader();
@@ -77,89 +75,30 @@ describe('AIConfigCard AI 配置卡片组件', () => {
     fireEvent.change(baseInput, { target: { value: 'https://new.example.com/v1' } });
     expect(baseInput).toHaveValue('https://new.example.com/v1');
 
-    const modelInput = screen.getByPlaceholderText('deepseek-v4-flash');
+    const modelInput = screen.getByPlaceholderText('glm-5.2');
     fireEvent.change(modelInput, { target: { value: 'gpt-5' } });
     expect(modelInput).toHaveValue('gpt-5');
 
-    const keyInput = screen.getByPlaceholderText('sk-...');
-    fireEvent.change(keyInput, { target: { value: 'sk-test-key' } });
-    expect(keyInput).toHaveValue('sk-test-key');
+    // 不再有 api_key 输入框
+    expect(screen.queryByPlaceholderText('sk-...')).not.toBeInTheDocument();
   });
 
-  it('测试连接成功：POST /api/ai/test-connection 并展示延迟与模型', async () => {
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({}))
-      .mockResolvedValueOnce(
-        jsonResponse({ success: true, latencyMs: 120, model: 'deepseek-v4-flash' })
-      );
+  it('测试连接已迁移到 web 端：点击展示迁移提示，不发 POST', async () => {
+    const mockFetch = vi.fn().mockResolvedValue(jsonResponse({}));
     vi.stubGlobal('fetch', mockFetch);
     render(<AIConfigCard />);
     toggleHeader();
     fireEvent.click(screen.getByRole('button', { name: /测试连接/ }));
 
     expect(
-      await screen.findByText('连通正常 (120ms · deepseek-v4-flash)')
+      await screen.findByText('AI 连通测试已迁移至 web 端（直调 Gateway），admin 不再提供')
     ).toBeInTheDocument();
-
+    // 不应再发起 POST /api/ai/test-connection
     const postCall = mockFetch.mock.calls.find(([, init]) => init?.method === 'POST');
-    expect(postCall).toBeTruthy();
-    expect(postCall![0]).toBe('/api/ai/test-connection');
-    expect(JSON.parse((postCall![1] as RequestInit).body as string)).toEqual({
-      base_url: '',
-      model_name: 'deepseek-v4-flash',
-    });
+    expect(postCall).toBeUndefined();
   });
 
-  it('测试连接后端返回失败时展示 error 文案', async () => {
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({}))
-      .mockResolvedValueOnce(jsonResponse({ success: false, error: 'API Key 无效' }));
-    vi.stubGlobal('fetch', mockFetch);
-    render(<AIConfigCard />);
-    toggleHeader();
-    fireEvent.click(screen.getByRole('button', { name: /测试连接/ }));
-
-    expect(await screen.findByText('API Key 无效')).toBeInTheDocument();
-  });
-
-  it('测试连接网络异常时展示错误信息', async () => {
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({}))
-      .mockRejectedValueOnce(new Error('网络连接异常'));
-    vi.stubGlobal('fetch', mockFetch);
-    render(<AIConfigCard />);
-    toggleHeader();
-    fireEvent.click(screen.getByRole('button', { name: /测试连接/ }));
-
-    expect(await screen.findByText('网络连接异常')).toBeInTheDocument();
-  });
-
-  it('测试连接中按钮进入禁用（loading）状态，完成后恢复', async () => {
-    let resolveTest!: (v: unknown) => void;
-    const mockFetch = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse({}))
-      .mockImplementationOnce(() => new Promise((res) => (resolveTest = res)));
-    vi.stubGlobal('fetch', mockFetch);
-    render(<AIConfigCard />);
-    toggleHeader();
-
-    const testBtn = screen.getByRole('button', { name: /测试连接/ });
-    fireEvent.click(testBtn);
-    // fetch 尚未 resolve，按钮应处于禁用状态
-    expect(testBtn).toBeDisabled();
-
-    await act(async () => {
-      resolveTest(jsonResponse({ success: true, latencyMs: 10, model: 'deepseek-v4-flash' }));
-    });
-    expect(await screen.findByText(/连通正常/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /测试连接/ })).toBeEnabled();
-  });
-
-  it('保存配置成功：PUT 携带表单数据并显示“已保存”', async () => {
+  it('保存配置成功：PUT 携带 base_url + model_name（无 api_key）并显示"已保存"', async () => {
     const mockFetch = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({}))
@@ -171,11 +110,8 @@ describe('AIConfigCard AI 配置卡片组件', () => {
     fireEvent.change(screen.getByPlaceholderText('http://localhost:37183/v1'), {
       target: { value: 'https://a.com/v1' },
     });
-    fireEvent.change(screen.getByPlaceholderText('deepseek-v4-flash'), {
+    fireEvent.change(screen.getByPlaceholderText('glm-5.2'), {
       target: { value: 'gpt-4o-mini' },
-    });
-    fireEvent.change(screen.getByPlaceholderText('sk-...'), {
-      target: { value: 'sk-secret' },
     });
     fireEvent.click(screen.getByRole('button', { name: /保存配置/ }));
 
@@ -187,7 +123,6 @@ describe('AIConfigCard AI 配置卡片组件', () => {
     expect(JSON.parse((putCall![1] as RequestInit).body as string)).toEqual({
       base_url: 'https://a.com/v1',
       model_name: 'gpt-4o-mini',
-      api_key: 'sk-secret',
     });
   });
 
@@ -223,7 +158,7 @@ describe('AIConfigCard AI 配置卡片组件', () => {
     });
     expect(screen.getByText('已保存')).toBeInTheDocument();
 
-    // 推进 2.5s 后应恢复为“保存配置”
+    // 推进 2.5s 后应恢复为"保存配置"
     await act(async () => {
       vi.advanceTimersByTime(2500);
     });

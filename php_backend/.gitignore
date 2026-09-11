@@ -1,0 +1,5 @@
+# PHP 依赖（composer install 安装，不入库）
+vendor/
+
+# 真实令牌（.gitignore 根级已含 .env，这里兜底）
+.env

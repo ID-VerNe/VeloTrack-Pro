@@ -10,9 +10,14 @@ import { type ChartTelemetryPoint, type PauseCluster, type RideDetailPoint } fro
 import RideDetailMap from '../components/ride-detail/RideDetailMap';
 import RideTitleHeader from '../components/ride-detail/RideTitleHeader';
 import RideMetricsGrid from '../components/ride-detail/RideMetricsGrid';
+import SpeedSpectrumCard from '../components/ride-detail/SpeedSpectrumCard';
 import RideElevationSpeedChart from '../components/ride-detail/RideElevationSpeedChart';
 import RideInsightCard from '../components/ride-detail/RideInsightCard';
 import RiderProfileDrawer from '../components/RiderProfileDrawer';
+import { getRideInsight, suggestRideTitle } from '../services/aiInsights';
+import { getRiderProfile } from '../services/riderService';
+import { getAdminToken } from '../utils/activity/adminApiClient';
+import { analyzeSpeedDistribution } from '../utils/speedDistribution';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -98,11 +103,10 @@ export default function RideDetail() {
 
   // Fetch Rider Profile Weight
   useEffect(() => {
-    fetch('/api/ai/rider/profile')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.profile?.weight_kg) {
-          setRiderWeight(data.profile.weight_kg);
+    getRiderProfile()
+      .then((profile) => {
+        if (profile.weight_kg) {
+          setRiderWeight(profile.weight_kg);
         }
       })
       .catch((err) => console.error('Failed to load profile weight', err));
@@ -142,20 +146,16 @@ export default function RideDetail() {
     loadData();
   }, [loadData]);
 
-  // Fetch AI Insight
+  // Fetch AI Insight（前端调 Gateway 生成，缓存存后端）
   const fetchInsight = useCallback(
     async (forceRegenerate = false) => {
       if (!id) return;
       setAiLoading(true);
       try {
-        const url = forceRegenerate
-          ? `/api/ai/rides/${id}/insight?force=true`
-          : `/api/ai/rides/${id}/insight`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.insight) {
-          setAiInsight(data.insight);
-          setIsCached(!!data.cached);
+        const result = await getRideInsight(id, forceRegenerate);
+        if (result.insight) {
+          setAiInsight(result.insight);
+          setIsCached(result.cached);
         }
       } catch (err) {
         console.error('Failed to fetch AI insight', err);
@@ -192,19 +192,22 @@ export default function RideDetail() {
     setIsSuggestingTitle(true);
     try {
       const distKm = Number(((ride.distance_meters || 0) / 1000).toFixed(1));
-      const res = await fetch('/api/ai/rides/suggest-title', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          start_time: ride.start_time,
-          distance_km: distKm,
-          avg_speed_kmh: ride.avg_speed_kmh || 0,
-          total_ascent_meters: ride.total_ascent_meters || 0,
-        }),
+      const result = await suggestRideTitle({
+        start_time: ride.start_time,
+        distance_km: distKm,
+        avg_speed_kmh: ride.avg_speed_kmh || 0,
+        total_ascent_meters: ride.total_ascent_meters || 0,
       });
-      const data = await res.json();
-      if (data.title && !data.title.includes('undefined')) {
-        setSuggestedTitle(data.title);
+      if (result.title && !result.title.includes('undefined')) {
+        const polishedTitle = result.title.trim();
+        const oldTitle = ride.title;
+        setPreviousTitle(oldTitle);
+        await saveTitleToBackend(polishedTitle);
+        setSuggestedTitle(null);
+
+        setTimeout(() => {
+          setPreviousTitle((prev) => (prev === oldTitle ? null : prev));
+        }, 8000);
       }
     } catch (err) {
       console.error('Failed to polish title with AI', err);
@@ -215,13 +218,14 @@ export default function RideDetail() {
 
   const handleApplySuggestedTitle = async () => {
     if (!suggestedTitle || !ride) return;
-    setPreviousTitle(ride.title);
+    const oldTitle = ride.title;
+    setPreviousTitle(oldTitle);
     await saveTitleToBackend(suggestedTitle);
     setSuggestedTitle(null);
 
     setTimeout(() => {
-      setPreviousTitle(null);
-    }, 6000);
+      setPreviousTitle((prev) => (prev === oldTitle ? null : prev));
+    }, 8000);
   };
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -234,10 +238,19 @@ export default function RideDetail() {
 
   const handleDeleteRide = async () => {
     if (!id) return;
+    const token = getAdminToken();
+    if (!token) {
+      alert('未检测到管理令牌（ADMIN_TOKEN），无法执行删除操作。请先前往「数据入库」页面配置管理令牌。');
+      return;
+    }
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/rides/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Admin-Token': token,
+        },
       });
       if (res.ok) {
         if (location.state?.from) {
@@ -247,7 +260,11 @@ export default function RideDetail() {
         }
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || '删除失败，请稍后重试');
+        if (res.status === 401) {
+          alert('鉴权未通过：管理令牌无效或已过期，请前往「数据入库」页面重新配置有效令牌');
+        } else {
+          alert(data.error || '删除失败，请稍后重试');
+        }
       }
     } catch (err: any) {
       console.error('Failed to delete ride', err);
@@ -286,33 +303,33 @@ export default function RideDetail() {
           const isCruising = point.status === 'cruising';
           const isClimbing = point.status === 'climbing';
           const badgeColor = isPaused
-            ? '#E11D48'
+            ? '#64748B'
             : isCruising
-            ? '#2563EB'
+            ? '#059669'
             : isClimbing
             ? '#D97706'
-            : '#0F172A';
+            : '#2563EB';
           const badgeBg = isPaused
-            ? '#FFE4E6'
+            ? '#F1F5F9'
             : isCruising
-            ? '#DBEAFE'
+            ? '#ECFDF5'
             : isClimbing
             ? '#FEF3C7'
-            : '#F1F5F9';
+            : '#EFF6FF';
 
           scrubberPopupRef.current
             .setLngLat(coord)
             .setHTML(
-              `<div style="padding: 4px 6px; font-family: sans-serif; min-width: 130px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 3px;">
-                  <span style="font-weight: 800; font-size: 11px; color: #0F172A; font-family: monospace;">⏱️ ${point.timeLabel}</span>
-                  <span style="font-size: 9px; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 1px 4px; border-radius: 4px;">
-                    ${isPaused ? '等红灯' : isCruising ? '高速巡航' : isClimbing ? '起伏爬坡' : '匀速'}
+              `<div style="padding: 8px; font-family: sans-serif; min-width: 140px; background: white; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px;">
+                  <span style="font-weight: 600; font-size: 12px; color: #000; font-variant-numeric: tabular-nums;">${point.timeLabel}</span>
+                  <span style="font-size: 10px; font-weight: 600; color: ${badgeColor}; background: ${badgeBg}; padding: 2px 6px; border-radius: 4px;">
+                    ${isPaused ? '等红灯' : isCruising ? '稳态巡航' : isClimbing ? '起伏爬坡' : '正常骑行'}
                   </span>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: #475569;">
-                  <span>时速: <b style="color: #2563EB; font-family: monospace;">${point.speed} km/h</b></span>
-                  <span>海拔: <b style="color: #059669; font-family: monospace;">${point.altitude} m</b></span>
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748B;">
+                  <span>时速: <b style="color: #2563EB; font-variant-numeric: tabular-nums;">${point.speed}</b> km/h</span>
+                  <span>海拔: <b style="color: #D97706; font-variant-numeric: tabular-nums;">${point.altitude}</b> m</span>
                 </div>
               </div>`
             )
@@ -380,6 +397,29 @@ export default function RideDetail() {
     [ride]
   );
 
+  const movingAvgSpeedKmh = useMemo(() => {
+    if (!ride) return 0;
+    const movingSec = ride.moving_time_seconds || ride.elapsed_time_seconds || 1;
+    return movingSec > 0 ? Number(((ride.distance_meters / 1000) / (movingSec / 3600)).toFixed(1)) : 0;
+  }, [ride]);
+
+  const speedDist = useMemo(() => {
+    if (!ride) return null;
+    return analyzeSpeedDistribution(detailPoints, movingAvgSpeedKmh, 46, 15);
+  }, [ride, detailPoints, movingAvgSpeedKmh]);
+
+  const calories = useMemo(() => {
+    if (!ride) return 0;
+    const totalSeconds = ride.moving_time_seconds || ride.elapsed_time_seconds || 0;
+    return calculateCyclingCalories(
+      (ride.distance_meters || 0) / 1000,
+      totalSeconds,
+      ride.avg_speed_kmh || 0,
+      ride.total_ascent_meters || 0,
+      riderWeight
+    );
+  }, [ride, riderWeight]);
+
   if (loadError) {
     return (
       <div className="h-screen w-screen bg-[#F8FAFC] flex flex-col items-center justify-center text-slate-500 font-medium space-y-4">
@@ -411,17 +451,8 @@ export default function RideDetail() {
     );
   }
 
-  const totalSeconds = ride.moving_time_seconds || ride.elapsed_time_seconds || 0;
-  const calories = calculateCyclingCalories(
-    (ride.distance_meters || 0) / 1000,
-    totalSeconds,
-    ride.avg_speed_kmh || 0,
-    ride.total_ascent_meters || 0,
-    riderWeight
-  );
-
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] flex overflow-hidden font-sans select-none">
+    <div className="h-screen w-screen bg-white flex overflow-hidden font-sans select-none">
       {/* 1. Left Map Panel */}
       <RideDetailMap
         ride={ride}
@@ -438,9 +469,9 @@ export default function RideDetail() {
       />
 
       {/* 2. Right Analytical Bento Dashboard */}
-      <div className="w-[520px] xl:w-[560px] h-full bg-white border-l border-slate-200/80 flex flex-col z-10 shrink-0 overflow-hidden">
+      <div className="w-[520px] xl:w-[560px] h-full bg-white border-l border-black/10 flex flex-col z-10 shrink-0 overflow-hidden">
         {/* Top Sticky Header */}
-        <header className="px-6 py-5 border-b border-slate-100 bg-white shrink-0">
+        <header className="px-8 py-8 bg-white shrink-0">
           <RideTitleHeader
             title={ride.title}
             fromLabel={fromLabel}
@@ -461,14 +492,26 @@ export default function RideDetail() {
         </header>
 
         {/* Scrollable Content Stream */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 [scrollbar-width:none]">
-          {/* Bento Primary Metrics Grid */}
-          <RideMetricsGrid ride={ride} calories={calories} />
+        <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8 [scrollbar-width:none]">
+          {/* Bento Primary Metrics Grid (6-Card Enhanced) */}
+          <RideMetricsGrid
+            ride={ride}
+            calories={calories}
+            speedDistribution={speedDist}
+          />
+
+          {/* Speed Spectrum Breakdown Bar */}
+          {speedDist && (
+            <SpeedSpectrumCard
+              tiers={speedDist.speed_tiers}
+              totalDurationSeconds={ride.elapsed_time_seconds || ride.moving_time_seconds || 0}
+            />
+          )}
 
           {/* 首次访问引导：图表与地图双向联动 */}
           {showLinkHint && (
-            <div className="flex items-start gap-2.5 px-4 py-3 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700 font-normal leading-relaxed">
-              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-slate-500" />
+            <div className="flex items-start gap-3 px-5 py-4 bg-black/5 rounded text-[13px] text-black/80 font-normal leading-relaxed mt-4">
+              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-black/44" />
               <p className="flex-1">
                 左侧地图与图表双向联动：悬停图表可在地图上定位游标，拖选图表区间会自动缩放地图聚焦；点击地图里程碑或停靠点也会在图表中高亮对应位置。
               </p>
@@ -476,9 +519,9 @@ export default function RideDetail() {
                 type="button"
                 onClick={dismissLinkHint}
                 aria-label="关闭引导提示"
-                className="shrink-0 p-1 -m-1 rounded text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                className="shrink-0 p-1 -m-1 rounded text-black/44 hover:text-black transition-colors cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -488,6 +531,7 @@ export default function RideDetail() {
             ride={ride}
             routeCoordinates={effectiveRouteCoordinates}
             detailPoints={detailPoints}
+            cruisingSpeedKmh={speedDist?.cruising_avg_speed_kmh}
             externalHoverIndex={mapHoveredIndex}
             onHoverScrub={handleChartHover}
             onLeaveScrub={handleChartLeave}
