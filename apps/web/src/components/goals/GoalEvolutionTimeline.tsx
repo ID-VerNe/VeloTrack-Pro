@@ -45,7 +45,7 @@ export default function GoalEvolutionTimeline({ milestones }: Props) {
               <div
                 className={`absolute -left-5 top-1.5 w-3 h-3 rounded-full border-2 border-white ${
                   isLatest
-                    ? 'bg-slate-900'
+                    ? 'bg-brand-500 shadow-2xs'
                     : 'bg-slate-300'
                 }`}
               />
@@ -54,7 +54,7 @@ export default function GoalEvolutionTimeline({ milestones }: Props) {
               <div
                 className={`p-4 rounded border transition-colors ${
                   isLatest
-                    ? 'bg-white border-slate-900 border-l-2'
+                    ? 'bg-white border-brand-500 border-l-2'
                     : 'bg-white border-slate-200/80'
                 }`}
               >
@@ -65,7 +65,7 @@ export default function GoalEvolutionTimeline({ milestones }: Props) {
                     </span>
 
                     {isLatest && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-900 text-white flex items-center space-x-1">
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-brand-500 text-white flex items-center space-x-1 shadow-2xs">
                         <CheckCircle2 className="w-2.5 h-2.5" />
                         <span>当前生效中</span>
                       </span>

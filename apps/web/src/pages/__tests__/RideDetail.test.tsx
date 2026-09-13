@@ -91,9 +91,8 @@ describe('RideDetail 骑行详情页面', () => {
     expect(screen.getByText('18.00')).toBeInTheDocument(); // 距离 km
   });
 
-  it('未配置管理令牌时点击删除阻止发送 DELETE 请求并弹窗警告', async () => {
+  it('未在前端配置令牌时（Zero Trust 托管模式）点击删除触发二次确认并在确认后发起 DELETE 请求', async () => {
     const user = userEvent.setup();
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     localStorage.removeItem('velotrack_admin_token');
 
     render(
@@ -106,14 +105,22 @@ describe('RideDetail 骑行详情页面', () => {
 
     await screen.findByText('南山大南山夜骑');
 
-    const deleteBtn = screen.getByTitle('删除此条骑行记录');
+    const deleteBtn = screen.getByLabelText('删除此条骑行记录');
     await user.click(deleteBtn);
 
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('未检测到管理令牌'));
-    expect(screen.queryByText(/确定要删除此骑行记录吗/)).not.toBeInTheDocument();
-    expect(globalThis.fetch).not.toHaveBeenCalledWith('/api/rides/ride-001', expect.objectContaining({ method: 'DELETE' }));
+    expect(screen.getByText(/确定要删除此骑行记录吗？此操作无法撤销。/)).toBeInTheDocument();
 
-    alertSpy.mockRestore();
+    const confirmBtn = screen.getByRole('button', { name: '确认删除' });
+    await user.click(confirmBtn);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith('/api/rides/ride-001', {
+      method: 'DELETE',
+      headers: {},
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/rides', { replace: true });
+    });
   });
 
   it('已配置管理令牌时点击删除触发二次确认并在确认后发起携带 Bearer Token 的 DELETE 请求并跳转回来源路径', async () => {
@@ -131,7 +138,7 @@ describe('RideDetail 骑行详情页面', () => {
     await screen.findByText('南山大南山夜骑');
 
     // 点击删除按钮
-    const deleteBtn = screen.getByTitle('删除此条骑行记录');
+    const deleteBtn = screen.getByLabelText('删除此条骑行记录');
     await user.click(deleteBtn);
 
     // 确认横幅出现
@@ -172,7 +179,7 @@ describe('RideDetail 骑行详情页面', () => {
 
     await screen.findByText('南山大南山夜骑');
 
-    const deleteBtn = screen.getByTitle('删除此条骑行记录');
+    const deleteBtn = screen.getByLabelText('删除此条骑行记录');
     await user.click(deleteBtn);
 
     const confirmBtn = screen.getByRole('button', { name: '确认删除' });

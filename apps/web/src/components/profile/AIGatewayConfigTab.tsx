@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, AlertCircle, Loader2, Wifi, KeyRound, Cpu, Link2 } from 'lucide-react';
+import { Check, AlertCircle, Loader2, Wifi, KeyRound, Cpu, Link2, ShieldCheck } from 'lucide-react';
 import type { AIConfig } from '../../services/aiClient';
 import {
   getGatewayKey,
@@ -8,6 +8,7 @@ import {
   updateAIConfig,
   testGatewayConnection,
 } from '../../services/aiClient';
+import { getAdminToken, setAdminToken } from '../../utils/activity/adminApiClient';
 
 interface Props {
   /** 拉到最新后端配置后回调，便于父组件同步缓存 */
@@ -23,6 +24,11 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
   const [apiKey, setApiKey] = useState('');
   // key 输入框是否明文显示（默认掩码）
   const [showKey, setShowKey] = useState(false);
+
+  // 管理令牌（ADMIN_TOKEN）
+  const [adminToken, setAdminTokenState] = useState('');
+  const [showAdminToken, setShowAdminToken] = useState(false);
+  const [adminTokenSaved, setAdminTokenSaved] = useState(false);
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveError, setSaveError] = useState('');
@@ -43,7 +49,14 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
         setSaveStatus('error');
       });
     setApiKey(getGatewayKey());
+    setAdminTokenState(getAdminToken());
   }, [onConfigUpdated]);
+
+  const handleSaveAdminToken = () => {
+    setAdminToken(adminToken.trim());
+    setAdminTokenSaved(true);
+    setTimeout(() => setAdminTokenSaved(false), 2000);
+  };
 
   const handleSaveConfig = async () => {
     setSaveStatus('saving');
@@ -98,14 +111,14 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
   };
 
   const inputCls =
-    'w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs font-mono';
+    'w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs font-mono';
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-5 [scrollbar-width:none]">
       {/* Gateway Endpoint */}
       <div className="bg-slate-50/80 rounded-2xl p-4.5 border border-slate-200/80 space-y-3.5 shadow-2xs">
         <div className="flex items-center space-x-2 text-xs font-bold text-slate-800">
-          <Link2 className="w-4 h-4 text-blue-600" />
+          <Link2 className="w-4 h-4 text-brand-500" />
           <span>Gateway 端点与模型</span>
         </div>
 
@@ -143,7 +156,7 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
                   onClick={() => setModelName(m)}
                   className={`text-[10px] font-mono px-1.5 py-0.5 rounded border cursor-pointer transition-colors ${
                     modelName === m
-                      ? 'bg-slate-900 text-white border-slate-900'
+                      ? 'bg-brand-500 text-white border-brand-500 font-medium shadow-2xs'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
                   }`}
                 >
@@ -162,7 +175,7 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
             className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-2xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center space-x-1.5"
           >
             {testStatus === 'testing' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-500" />
             ) : (
               <Wifi className="w-3.5 h-3.5 text-slate-500" />
             )}
@@ -187,7 +200,7 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
           type="button"
           onClick={handleSaveConfig}
           disabled={saveStatus === 'saving'}
-          className="w-full px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-1.5"
+          className="w-full px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-400 text-white text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-1.5"
         >
           {saveStatus === 'saved' ? (
             <>
@@ -206,7 +219,7 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
       {/* API Key */}
       <div className="bg-slate-50/80 rounded-2xl p-4.5 border border-slate-200/80 space-y-3.5 shadow-2xs">
         <div className="flex items-center space-x-2 text-xs font-bold text-slate-800">
-          <KeyRound className="w-4 h-4 text-blue-600" />
+          <KeyRound className="w-4 h-4 text-brand-500" />
           <span>Gateway Team Key</span>
         </div>
         <p className="text-[10px] text-slate-400 leading-relaxed">
@@ -244,10 +257,65 @@ export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
         <button
           type="button"
           onClick={handleSaveKey}
-          className="w-full px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-1.5"
+          className="w-full px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-1.5"
         >
           <Check className="w-3.5 h-3.5" />
           <span>保存到本机</span>
+        </button>
+      </div>
+
+      {/* Admin Token (Management & Delete Authorization) */}
+      <div className="bg-slate-50/80 rounded-2xl p-4.5 border border-slate-200/80 space-y-3.5 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-xs font-bold text-slate-800">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>系统管理令牌 (ADMIN_TOKEN)</span>
+          </div>
+          {adminToken && (
+            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md font-medium border border-emerald-200/60">
+              已就绪
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-slate-400 leading-relaxed">
+          用于删除骑行活动、清空推演会话等高危操作的身份校验。保存于浏览器本地，请求时携带 Authorization 头。
+        </p>
+
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-500 mb-1">管理令牌</label>
+          <div className="relative">
+            <input
+              type="text"
+              style={showAdminToken ? undefined : ({ WebkitTextSecurity: 'disc' } as React.CSSProperties)}
+              value={adminToken}
+              onChange={(e) => setAdminTokenState(e.target.value)}
+              placeholder="输入与后端 ADMIN_TOKEN 一致的密钥"
+              className={inputCls + ' pr-12'}
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-form-type="other"
+            />
+            <button
+              type="button"
+              onClick={() => setShowAdminToken(!showAdminToken)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 hover:text-slate-700 px-1.5 py-1 cursor-pointer"
+            >
+              {showAdminToken ? '隐藏' : '显示'}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSaveAdminToken}
+          className="w-full px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-1.5"
+        >
+          <Check className="w-3.5 h-3.5" />
+          <span>{adminTokenSaved ? '管理令牌已更新' : '保存管理令牌到本机'}</span>
         </button>
       </div>
 

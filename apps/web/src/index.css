@@ -1,3 +1,5 @@
+@import "./styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -22,11 +24,8 @@
     --text-muted: #64748B;
     --text-dim: #94A3B8;
 
-    /* 4. Primary Sports Brand */
-    --brand-primary: #0F172A;
-    --brand-primary-hover: #1E293B;
-    --brand-accent: #0284C7;
-    --brand-subtle: #F1F5F9;
+    /* 4. Primary Sports Brand (Mapped to tokens.css derived from Logo #395AA7) */
+
 
     /* 5. HR & Training Zones (Sports Science Precision) */
     --hr-z1: #64748B;
@@ -36,7 +35,7 @@
     --hr-z5: #DC2626;
 
     /* 6. Cycling Telemetry Metrics */
-    --metric-speed: #0284C7;
+    --metric-speed: var(--brand-primary);
     --metric-cadence: #7C3AED;
     --metric-altitude: #D97706;
     --metric-power: #E11D48;

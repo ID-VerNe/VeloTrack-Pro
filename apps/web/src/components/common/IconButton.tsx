@@ -43,7 +43,7 @@ export default function IconButton({
             ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
             : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
         }
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60
         disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500
         ${className}
       `}

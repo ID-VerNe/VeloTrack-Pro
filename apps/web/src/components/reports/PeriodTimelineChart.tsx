@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
+import { BRAND_COLORS, CHART_COLORS } from '../../constants/designTokens';
 
 interface Props {
   timeline: {
@@ -54,7 +55,7 @@ export default function PeriodTimelineChart({ timeline }: Props) {
           type: 'value',
           name: 'km',
           splitLine: { lineStyle: { color: '#F1F5F9' } },
-          axisLabel: { color: '#2563EB', fontSize: 10 },
+          axisLabel: { color: BRAND_COLORS[500], fontSize: 10 },
         },
         {
           type: 'value',
@@ -69,7 +70,7 @@ export default function PeriodTimelineChart({ timeline }: Props) {
           type: 'bar',
           barMaxWidth: 28,
           itemStyle: {
-            color: '#2563EB',
+            color: BRAND_COLORS[500],
             borderRadius: [6, 6, 0, 0],
           },
           data: distance,

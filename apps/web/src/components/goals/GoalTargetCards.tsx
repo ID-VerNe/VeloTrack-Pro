@@ -33,23 +33,23 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. 本周里程目标 */}
       <div className="bg-white rounded-lg p-5 border border-slate-200/80 space-y-3">
-        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-500 uppercase tracking-widest">
           <span>单周里程目标</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-brand-200 bg-brand-50 text-brand-700">
             {weeklyPct}%
           </span>
         </div>
 
         <div className="text-2xl font-semibold font-mono text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.thisWeekDistanceKm}</span>
-          <span className="text-xs font-normal text-slate-400 ml-1 font-sans">
+          <span className="text-xs font-normal text-slate-500 ml-1 font-sans">
             / {targets.weeklyDistanceKm} km
           </span>
         </div>
 
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-slate-900 h-full rounded-full transition-all duration-500"
+            className="bg-brand-500 h-full rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, weeklyPct)}%` }}
           />
         </div>
@@ -57,23 +57,23 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
 
       {/* 2. 目标巡航均速 */}
       <div className="bg-white rounded-lg p-5 border border-slate-200/80 space-y-3">
-        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-500 uppercase tracking-widest">
           <span>目标巡航均速</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-brand-200 bg-brand-50 text-brand-700">
             达成 {speedPct}%
           </span>
         </div>
 
         <div className="text-2xl font-semibold font-mono text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.bestAvgSpeedKmh}</span>
-          <span className="text-xs font-normal text-slate-400 ml-1 font-sans">
+          <span className="text-xs font-normal text-slate-500 ml-1 font-sans">
             / {targets.targetAvgSpeedKmh} km/h
           </span>
         </div>
 
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-slate-900 h-full rounded-full transition-all duration-500"
+            className="bg-brand-500 h-full rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, speedPct)}%` }}
           />
         </div>
@@ -81,23 +81,23 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
 
       {/* 3. 本月目标里程 */}
       <div className="bg-white rounded-lg p-5 border border-slate-200/80 space-y-3">
-        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-500 uppercase tracking-widest">
           <span>月度总跑量</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-brand-200 bg-brand-50 text-brand-700">
             {monthlyPct}%
           </span>
         </div>
 
         <div className="text-2xl font-semibold font-mono text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.thisMonthDistanceKm}</span>
-          <span className="text-xs font-normal text-slate-400 ml-1 font-sans">
+          <span className="text-xs font-normal text-slate-500 ml-1 font-sans">
             / {targets.monthlyDistanceKm} km
           </span>
         </div>
 
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-slate-900 h-full rounded-full transition-all duration-500"
+            className="bg-brand-500 h-full rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, monthlyPct)}%` }}
           />
         </div>
@@ -105,23 +105,23 @@ export default function GoalTargetCards({ targets, realStats }: Props) {
 
       {/* 4. 年度目标里程 */}
       <div className="bg-white rounded-lg p-5 border border-slate-200/80 space-y-3">
-        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+        <div className="flex items-center justify-between text-[10px] font-mono font-medium text-slate-500 uppercase tracking-widest">
           <span>年度累计里程</span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-brand-200 bg-brand-50 text-brand-700">
             {annualPct}%
           </span>
         </div>
 
         <div className="text-2xl font-semibold font-mono text-slate-900 tracking-tight tabular-nums flex items-baseline">
           <span>{realStats.totalDistanceKm}</span>
-          <span className="text-xs font-normal text-slate-400 ml-1 font-sans">
+          <span className="text-xs font-normal text-slate-500 ml-1 font-sans">
             / {targets.annualDistanceKm} km
           </span>
         </div>
 
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-slate-900 h-full rounded-full transition-all duration-500"
+            className="bg-brand-500 h-full rounded-full transition-all duration-500"
             style={{ width: `${Math.min(100, annualPct)}%` }}
           />
         </div>

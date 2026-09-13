@@ -399,8 +399,8 @@ export default function RideDetailMap({
               onClick={() => handleStyleChange(item.id)}
               className={`px-3 py-1.5 rounded text-[13px] transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-black text-white font-medium'
-                  : 'text-black/64 hover:text-black hover:bg-black/5'
+                  ? 'bg-brand-500 hover:bg-brand-600 text-white font-medium shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               <span>{item.name}</span>
@@ -410,13 +410,13 @@ export default function RideDetailMap({
 
         {onToggleReverse && (
           <>
-            <div className="h-3 w-px bg-black/10 mx-2 shrink-0" />
+            <div className="h-3 w-px bg-slate-200 mx-2 shrink-0" />
             <button
               onClick={onToggleReverse}
               className={`px-3 py-1.5 rounded text-[13px] transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 isReversed
-                  ? 'bg-black text-white font-medium'
-                  : 'text-black/64 hover:text-black hover:bg-black/5'
+                  ? 'bg-brand-500 hover:bg-brand-600 text-white font-medium shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
               title="反转起点与终点方向"
             >
@@ -457,24 +457,24 @@ export default function RideDetailMap({
       <div className="absolute right-6 bottom-8 z-20 flex flex-col space-y-2">
         <button
           onClick={handleFitBounds}
-          className="p-2.5 bg-white/90 hover:bg-white text-black/64 hover:text-black rounded transition-colors shadow-sm cursor-pointer"
-          title="适应全部轨迹"
+          className="p-2.5 bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 rounded transition-colors shadow-sm cursor-pointer"
+          aria-label="适应全部轨迹"
         >
-          <Maximize2 className="w-4 h-4" />
+          <Maximize2 className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={handleZoomIn}
-          className="p-2.5 bg-white/90 hover:bg-white text-black/64 hover:text-black rounded transition-colors shadow-sm cursor-pointer"
-          title="放大"
+          className="p-2.5 bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 rounded transition-colors shadow-sm cursor-pointer"
+          aria-label="放大"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={handleZoomOut}
-          className="p-2.5 bg-white/90 hover:bg-white text-black/64 hover:text-black rounded transition-colors shadow-sm cursor-pointer"
-          title="缩小"
+          className="p-2.5 bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 rounded transition-colors shadow-sm cursor-pointer"
+          aria-label="缩小"
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>

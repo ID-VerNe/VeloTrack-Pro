@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import polyline from '@mapbox/polyline';
-import { RefreshCw, Lightbulb, X } from 'lucide-react';
+import { RefreshCw, Lightbulb, X, ArrowLeft } from 'lucide-react';
 import { Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
 import { exportRideAsGPX } from '../utils/gpxExport';
 import { calculateCyclingCalories } from '../utils/cyclingCalculations';
@@ -229,6 +229,7 @@ export default function RideDetail() {
   };
 
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleUndoTitle = async () => {
     if (!previousTitle || !ride) return;
@@ -239,18 +240,16 @@ export default function RideDetail() {
   const handleDeleteRide = async () => {
     if (!id) return;
     const token = getAdminToken();
-    if (!token) {
-      alert('未检测到管理令牌（ADMIN_TOKEN），无法执行删除操作。请先前往「数据入库」页面配置管理令牌。');
-      return;
-    }
     setIsDeleting(true);
     try {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['X-Admin-Token'] = token;
+      }
       const res = await fetch(`/api/rides/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Admin-Token': token,
-        },
+        headers,
       });
       if (res.ok) {
         if (location.state?.from) {
@@ -261,14 +260,14 @@ export default function RideDetail() {
       } else {
         const data = await res.json().catch(() => ({}));
         if (res.status === 401) {
-          alert('鉴权未通过：管理令牌无效或已过期，请前往「数据入库」页面重新配置有效令牌');
+          setDeleteError('鉴权未通过：管理令牌无效或已过期，请前往「数据入库」页面重新配置有效令牌');
         } else {
-          alert(data.error || '删除失败，请稍后重试');
+          setDeleteError(data.error || '删除失败，请稍后重试');
         }
       }
     } catch (err: any) {
       console.error('Failed to delete ride', err);
-      alert('网络错误，删除失败');
+      setDeleteError('网络错误，删除失败');
     } finally {
       setIsDeleting(false);
     }
@@ -308,14 +307,14 @@ export default function RideDetail() {
             ? '#059669'
             : isClimbing
             ? '#D97706'
-            : '#2563EB';
+            : '#395AA7';
           const badgeBg = isPaused
             ? '#F1F5F9'
             : isCruising
             ? '#ECFDF5'
             : isClimbing
             ? '#FEF3C7'
-            : '#EFF6FF';
+            : '#F0F4FC';
 
           scrubberPopupRef.current
             .setLngLat(coord)
@@ -328,7 +327,7 @@ export default function RideDetail() {
                   </span>
                 </div>
                 <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748B;">
-                  <span>时速: <b style="color: #2563EB; font-variant-numeric: tabular-nums;">${point.speed}</b> km/h</span>
+                  <span>时速: <b style="color: #395AA7; font-variant-numeric: tabular-nums;">${point.speed}</b> km/h</span>
                   <span>海拔: <b style="color: #D97706; font-variant-numeric: tabular-nums;">${point.altitude}</b> m</span>
                 </div>
               </div>`
@@ -427,7 +426,7 @@ export default function RideDetail() {
         <div className="flex items-center space-x-3">
           <button
             onClick={() => loadData()}
-            className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors shadow-2xs"
           >
             重试
           </button>
@@ -445,16 +444,25 @@ export default function RideDetail() {
   if (!ride) {
     return (
       <div className="h-screen w-screen bg-[#F8FAFC] flex items-center justify-center text-slate-500 font-medium">
-        <RefreshCw className="w-5 h-5 animate-spin mr-2 text-blue-600" />
+        <RefreshCw className="w-5 h-5 animate-spin mr-2 text-brand-500" />
         正在加载骑行详情数据...
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen bg-white flex overflow-hidden font-sans select-none">
+    <div className="h-full w-full bg-white flex flex-col md:flex-row overflow-hidden font-sans">
       {/* 1. Left Map Panel */}
-      <RideDetailMap
+      <div className="flex-none h-[40dvh] md:flex-1 md:h-auto min-h-0 relative">
+        {/* Mobile floating back button */}
+        <button
+          onClick={handleGoBack}
+          aria-label={fromLabel}
+          className="md:hidden absolute top-4 left-4 z-20 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-slate-700 hover:text-brand-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+        </button>
+        <RideDetailMap
         ride={ride}
         routeCoordinates={effectiveRouteCoordinates}
         detailPoints={detailPoints}
@@ -467,11 +475,12 @@ export default function RideDetail() {
         onSelectMilestone={handleSelectMilestone}
         onSelectPauseCluster={handleSelectPauseCluster}
       />
+      </div>
 
       {/* 2. Right Analytical Bento Dashboard */}
-      <div className="w-[520px] xl:w-[560px] h-full bg-white border-l border-black/10 flex flex-col z-10 shrink-0 overflow-hidden">
+      <div className="w-full md:w-[520px] xl:w-[560px] flex-1 md:h-full bg-white border-t md:border-t-0 md:border-l border-slate-200 flex flex-col z-10 shrink-0 overflow-hidden">
         {/* Top Sticky Header */}
-        <header className="px-8 py-8 bg-white shrink-0">
+        <header className="px-4 md:px-4 md:px-8 py-4 md:py-8 bg-white shrink-0">
           <RideTitleHeader
             title={ride.title}
             fromLabel={fromLabel}
@@ -485,6 +494,7 @@ export default function RideDetail() {
             onUndoTitle={handleUndoTitle}
             onDelete={handleDeleteRide}
             isDeleting={isDeleting}
+            deleteError={deleteError}
             isSuggestingTitle={isSuggestingTitle}
             suggestedTitle={suggestedTitle}
             previousTitle={previousTitle}
@@ -492,7 +502,7 @@ export default function RideDetail() {
         </header>
 
         {/* Scrollable Content Stream */}
-        <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8 [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto px-4 md:px-4 md:px-8 pb-4 md:pb-8 space-y-6 md:space-y-8 [scrollbar-width:none]">
           {/* Bento Primary Metrics Grid (6-Card Enhanced) */}
           <RideMetricsGrid
             ride={ride}
@@ -510,8 +520,8 @@ export default function RideDetail() {
 
           {/* 首次访问引导：图表与地图双向联动 */}
           {showLinkHint && (
-            <div className="flex items-start gap-3 px-5 py-4 bg-black/5 rounded text-[13px] text-black/80 font-normal leading-relaxed mt-4">
-              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-black/44" />
+            <div className="flex items-start gap-3 px-5 py-4 bg-slate-50 rounded text-[13px] text-slate-600 font-normal leading-relaxed mt-4">
+              <Lightbulb className="w-4 h-4 shrink-0 mt-0.5 text-slate-400" />
               <p className="flex-1">
                 左侧地图与图表双向联动：悬停图表可在地图上定位游标，拖选图表区间会自动缩放地图聚焦；点击地图里程碑或停靠点也会在图表中高亮对应位置。
               </p>
@@ -519,7 +529,7 @@ export default function RideDetail() {
                 type="button"
                 onClick={dismissLinkHint}
                 aria-label="关闭引导提示"
-                className="shrink-0 p-1 -m-1 rounded text-black/44 hover:text-black transition-colors cursor-pointer"
+                className="shrink-0 p-1 -m-1 rounded text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

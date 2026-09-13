@@ -187,10 +187,10 @@ describe('DashboardMap', () => {
   it('点击「放大」/「缩小」按钮调用 zoomIn / zoomOut', async () => {
     const user = userEvent.setup();
     renderMap();
-    await user.click(screen.getByTitle('放大'));
+    await user.click(screen.getByLabelText('放大'));
     expect(mockMapFns.zoomIn).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByTitle('缩小'));
+    await user.click(screen.getByLabelText('缩小'));
     expect(mockMapFns.zoomOut).toHaveBeenCalledTimes(1);
   });
 
@@ -200,7 +200,7 @@ describe('DashboardMap', () => {
     getMap().emit('load');
     mockMapFns.fitBounds.mockClear();
 
-    await user.click(screen.getByTitle('适应当前城市所有轨迹'));
+    await user.click(screen.getByLabelText('适应当前城市所有轨迹'));
     expect(mockMapFns.fitBounds).toHaveBeenCalledTimes(1);
   });
 

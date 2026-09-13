@@ -57,7 +57,7 @@ export default function ChatSidebar({
         <button
           type="button"
           onClick={onNewSession}
-          className="w-full px-3 py-2 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-mono transition-colors cursor-pointer flex items-center justify-center space-x-2"
+          className="w-full px-3 py-2 rounded bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-mono transition-colors cursor-pointer flex items-center justify-center space-x-2 shadow-2xs"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>开启新推演会话</span>
@@ -90,8 +90,8 @@ export default function ChatSidebar({
                     }}
                     className={`group flex items-center justify-between px-3 py-2 rounded text-xs transition-colors cursor-pointer ${
                       isCurrent
-                        ? 'bg-slate-100 text-slate-900 font-medium border-l-2 border-slate-900 rounded-l-none'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        ? 'bg-brand-50 text-brand-700 font-medium border-l-2 border-brand-500 rounded-l-none'
+                        : 'text-slate-600 hover:text-brand-600 hover:bg-slate-50'
                     }`}
                   >
                     <div className="min-w-0 flex-1 pr-2">

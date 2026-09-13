@@ -41,10 +41,10 @@ export default function PeriodRidesTable({ rides }: Props) {
                 key={ride.id}
                 to={`/ride/${ride.id}`}
                 state={{ from: '/reports' }}
-                className="p-4 bg-slate-50/70 hover:bg-white rounded-2xl border border-slate-100/80 hover:border-blue-300 hover:shadow-md transition-all group block"
+                className="p-4 bg-slate-50/70 hover:bg-white rounded-2xl border border-slate-100/80 hover:border-brand-300 hover:shadow-md transition-all group block"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors truncate max-w-[200px]">
+                  <span className="font-bold text-xs text-slate-900 group-hover:text-brand-600 transition-colors truncate max-w-[200px]">
                     {ride.title}
                   </span>
                   <span className="text-xs text-slate-500 font-medium">

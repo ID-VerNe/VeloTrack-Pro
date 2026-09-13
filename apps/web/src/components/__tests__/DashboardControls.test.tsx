@@ -74,16 +74,16 @@ describe('DashboardControls', () => {
   it('图例开关展开与收起', async () => {
     const user = userEvent.setup();
     renderControls();
-    await user.click(screen.getByTitle('速度图例'));
+    await user.click(screen.getByLabelText('速度图例'));
     expect(screen.getByText('动力学速度谱系')).toBeInTheDocument();
-    await user.click(screen.getByTitle('速度图例'));
+    await user.click(screen.getByLabelText('速度图例'));
     expect(screen.queryByText('动力学速度谱系')).not.toBeInTheDocument();
   });
 
   it('按 Escape 关闭已展开的图例', async () => {
     const user = userEvent.setup();
     renderControls();
-    await user.click(screen.getByTitle('速度图例'));
+    await user.click(screen.getByLabelText('速度图例'));
     expect(screen.getByText('动力学速度谱系')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByText('动力学速度谱系')).not.toBeInTheDocument();

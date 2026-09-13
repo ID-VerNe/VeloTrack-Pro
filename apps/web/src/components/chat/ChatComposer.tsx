@@ -59,6 +59,7 @@ export default function ChatComposer({
             ref={textareaRef}
             rows={1}
             value={input}
+            aria-label="输入训练推演消息"
             onChange={handleTextChange}
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
@@ -72,7 +73,7 @@ export default function ChatComposer({
               }
             }}
             placeholder="输入训练诉求或齿比配速推演需求... (Enter 发送，Shift + Enter 换行)"
-            className="w-full px-1 py-1 bg-transparent text-xs sm:text-sm font-normal text-slate-800 placeholder-slate-400 focus:outline-none resize-none max-h-[180px]"
+            className="w-full px-1 py-1 bg-transparent text-base sm:text-xs font-normal text-slate-800 placeholder-slate-400 focus:outline-none resize-none max-h-[180px]"
             disabled={isLoading}
           />
 
@@ -86,7 +87,7 @@ export default function ChatComposer({
               type="button"
               onClick={() => onSend()}
               disabled={!input.trim() || isLoading}
-              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded text-xs font-mono transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center space-x-1.5"
+              className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded text-xs font-mono transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center space-x-1.5 shadow-2xs"
             >
               <Send className="w-3 h-3" />
               <span>推演执行</span>

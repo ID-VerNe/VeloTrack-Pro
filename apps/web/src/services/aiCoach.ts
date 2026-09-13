@@ -15,6 +15,7 @@ import {
   calculateGoalTimeline,
 } from '../utils/cyclingPhysicsEngine';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
+import { getAdminToken } from '../utils/activity/adminApiClient';
 
 const MAX_TOOL_LOOPS = 6;
 
@@ -62,7 +63,23 @@ async function appendMessage(sessionId: string, msg: CoachMessage): Promise<void
 }
 
 export async function deleteCoachSession(sessionId: string): Promise<void> {
-  await fetch(`/api/ai/coach/${sessionId}`, { method: 'DELETE' });
+  const token = getAdminToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    headers['X-Admin-Token'] = token;
+  }
+  const res = await fetch(`/api/ai/coach/${sessionId}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      throw new Error(data.error || '鉴权未通过：管理令牌无效或已过期，请检查管理令牌（ADMIN_TOKEN）');
+    }
+    throw new Error(data.error || `删除会话失败 (${res.status})`);
+  }
 }
 
 // ---------------------------------------------------------------------------

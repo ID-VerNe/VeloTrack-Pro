@@ -63,9 +63,9 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
         label: '战车调校经验',
         shortLabel: '战车经验',
         icon: Wrench,
-        color: 'bg-sky-50 text-sky-700 border-sky-200/80',
-        cardBorder: 'hover:border-sky-300',
-        badgeBg: 'bg-sky-100/70 text-sky-800'
+        color: 'bg-brand-50 text-brand-700 border-brand-200/80',
+        cardBorder: 'hover:border-brand-300',
+        badgeBg: 'bg-brand-100/70 text-brand-800'
       };
     }
     return {
@@ -97,7 +97,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
           onClick={() => setSelectedFilter('all')}
           className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             selectedFilter === 'all'
-              ? 'bg-sky-600 text-white shadow-xs'
+              ? 'bg-brand-500 text-white shadow-xs'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
           }`}
         >
@@ -118,8 +118,8 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
           onClick={() => setSelectedFilter('gear')}
           className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center space-x-1 transition-all cursor-pointer ${
             selectedFilter === 'gear'
-              ? 'bg-sky-700 text-white shadow-xs'
-              : 'bg-sky-50 text-sky-700 hover:bg-sky-100/80 border border-sky-100'
+              ? 'bg-brand-600 text-white shadow-xs'
+              : 'bg-brand-50 text-brand-700 hover:bg-brand-100/80 border border-brand-100'
           }`}
         >
           <Wrench className="w-3 h-3" />
@@ -238,7 +238,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
           <button
             onClick={handleAdd}
             disabled={!newContent.trim() || isAdding}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0"
+            className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-200 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0 shadow-2xs"
           >
             {isAdding ? '添加中...' : '添加'}
           </button>

@@ -8,7 +8,6 @@ import {
   PanelLeftOpen,
   X
 } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
 import RiderProfileDrawer from '../components/RiderProfileDrawer';
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatMessageItem from '../components/chat/ChatMessageItem';
@@ -97,6 +96,7 @@ export default function AICoach() {
   }, [messages, isLoading]);
 
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSelectSession = (sid: string) => {
     setSessionId(sid);
@@ -110,20 +110,23 @@ export default function AICoach() {
 
   const handleRequestDeleteSession = (sid = sessionId) => {
     setSessionToDelete(sid);
+    setDeleteError(null);
   };
 
   const handleConfirmDeleteSession = async () => {
     if (!sessionToDelete) return;
     const sid = sessionToDelete;
-    setSessionToDelete(null);
+    setDeleteError(null);
     try {
       await deleteCoachSession(sid);
       if (sid === sessionId) {
         setMessages([DEFAULT_WELCOME_MSG]);
       }
       await loadSessionsList();
-    } catch (err) {
+      setSessionToDelete(null);
+    } catch (err: any) {
       console.error(err);
+      setDeleteError(err.message || '删除会话失败');
     }
   };
 
@@ -226,9 +229,7 @@ export default function AICoach() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] font-sans flex text-slate-900 overflow-hidden select-none">
-      <Sidebar />
-
+    <div className="h-full w-full bg-[#F8FAFC] flex flex-col text-slate-900 overflow-hidden select-none">
       <div className="flex-1 flex overflow-hidden min-w-0">
         {/* Left Column: Collapsible Chat Sessions Sidebar */}
         <ChatSidebar
@@ -247,7 +248,11 @@ export default function AICoach() {
         <main className="flex-1 h-full flex flex-col bg-white overflow-hidden min-w-0 relative">
           {/* Floating Toast Notification */}
           {toast && (
-            <div className="absolute top-16 right-6 z-50 bg-slate-900 text-white p-3.5 rounded border border-slate-800 shadow-lg animate-in slide-in-from-top-3 duration-200 flex items-center space-x-3 max-w-md font-mono">
+            <div 
+              role="status" 
+              aria-live="polite" 
+              className="absolute top-16 right-6 z-50 bg-brand-900 text-white p-3.5 rounded border border-brand-800 shadow-lg animate-in slide-in-from-top-3 duration-200 flex items-center space-x-3 max-w-md font-mono"
+            >
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium leading-tight">{toast.title}</div>
                 <p className="text-[11px] text-slate-400 truncate mt-0.5">{toast.desc}</p>
@@ -329,7 +334,7 @@ export default function AICoach() {
 
               {isLoading && (
                 <div className="flex items-start space-x-3">
-                  <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 text-xs font-bold font-mono">
+                  <div className="w-7 h-7 rounded-lg bg-brand-500 text-white flex items-center justify-center shrink-0 text-xs font-bold font-mono shadow-2xs">
                     VT
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl rounded-tl-sm px-4 py-3 text-xs text-slate-700 font-medium flex items-center space-x-2.5 shadow-xs">
@@ -366,7 +371,7 @@ export default function AICoach() {
       {/* In-App Delete Session Confirmation Modal */}
       {sessionToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 animate-in fade-in select-none">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl p-4 md:p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5" />
@@ -392,7 +397,7 @@ export default function AICoach() {
               <button
                 type="button"
                 onClick={handleConfirmDeleteSession}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-all active:scale-95 cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-transform duration-150 active:scale-[0.96] cursor-pointer"
               >
                 确认清空
               </button>

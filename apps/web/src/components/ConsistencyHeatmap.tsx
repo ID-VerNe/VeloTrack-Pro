@@ -124,10 +124,10 @@ export default function ConsistencyHeatmap({ rides }: Props) {
   }, [rides]);
 
   const getCellColor = (level: number, isFuture: boolean) => {
-    if (level === 1) return 'bg-slate-300';
-    if (level === 2) return 'bg-slate-500';
-    if (level === 3) return 'bg-slate-700';
-    if (level === 4) return 'bg-slate-900';
+    if (level === 1) return 'bg-brand-200';
+    if (level === 2) return 'bg-brand-300';
+    if (level === 3) return 'bg-brand-400';
+    if (level === 4) return 'bg-brand-500';
     if (isFuture) return 'bg-slate-100/50';
     return 'bg-slate-100 hover:bg-slate-200';
   };
@@ -212,7 +212,7 @@ export default function ConsistencyHeatmap({ rides }: Props) {
 
       {/* Floating Hover Tooltip */}
       {hoveredDay && (
-        <div className="absolute top-2 right-4 bg-slate-900 text-white text-xs font-mono px-2.5 py-1 rounded border border-slate-700 pointer-events-none z-20">
+        <div className="absolute top-2 right-4 bg-brand-900 text-white text-xs font-mono px-2.5 py-1 rounded border border-brand-700 pointer-events-none z-20 shadow-sm">
           {hoveredDay.dateStr}：
           {hoveredDay.distanceKm > 0
             ? `${hoveredDay.distanceKm} 公里 (${hoveredDay.count} 次骑行)`

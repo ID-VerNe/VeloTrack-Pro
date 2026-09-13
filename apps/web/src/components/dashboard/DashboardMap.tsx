@@ -7,6 +7,7 @@ import polyline from '@mapbox/polyline';
 import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
 import { detectCityForRide } from '../../utils/geoUtils';
 import { adaptCoordinatesToMapStyle } from '../../utils/coordTransform';
+import { MAP_ROUTE_TOKENS } from '../../constants/designTokens';
 
 interface Props {
   rides: any[];
@@ -90,9 +91,9 @@ export default function DashboardMap({
           // Style-specific styling
           const isSat = currentMapStyle === 'satellite';
 
-          const glowColor = isSat ? '#0F172A' : '#6366F1';
-          const casingColor = isSat ? '#FFFFFF' : '#0F172A';
-          const coreColor = isSat ? '#2563EB' : '#4F46E5';
+          const glowColor = isSat ? MAP_ROUTE_TOKENS.satelliteGlow : MAP_ROUTE_TOKENS.coreColor;
+          const casingColor = isSat ? MAP_ROUTE_TOKENS.satelliteCasing : '#0F172A';
+          const coreColor = MAP_ROUTE_TOKENS.coreColor;
 
           // Glow Base Layer
           if (isSat) {
@@ -298,9 +299,9 @@ export default function DashboardMap({
         } else {
           const isSat = currentMapStyle === 'satellite';
 
-          const glowColor = isSat ? '#0F172A' : '#6366F1';
-          const casingColor = isSat ? '#FFFFFF' : '#0F172A';
-          const coreColor = isSat ? '#2563EB' : '#4F46E5';
+          const glowColor = isSat ? MAP_ROUTE_TOKENS.satelliteGlow : MAP_ROUTE_TOKENS.coreColor;
+          const casingColor = isSat ? MAP_ROUTE_TOKENS.satelliteCasing : '#0F172A';
+          const coreColor = MAP_ROUTE_TOKENS.coreColor;
 
           if (map.getLayer(glowLayer)) {
             map.setPaintProperty(glowLayer, 'line-width', 8);
@@ -340,23 +341,23 @@ export default function DashboardMap({
         <button
           onClick={fitCurrentBounds}
           className="p-2.5 bg-white/90 hover:bg-white text-slate-700 rounded-xl shadow-md border border-slate-200/80 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-          title="适应当前城市所有轨迹"
+          aria-label="适应当前城市所有轨迹"
         >
-          <Maximize2 className="w-4 h-4" />
+          <Maximize2 className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={handleZoomIn}
           className="p-2.5 bg-white/90 hover:bg-white text-slate-700 rounded-xl shadow-md border border-slate-200/80 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-          title="放大"
+          aria-label="放大"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={handleZoomOut}
           className="p-2.5 bg-white/90 hover:bg-white text-slate-700 rounded-xl shadow-md border border-slate-200/80 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-          title="缩小"
+          aria-label="缩小"
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -12,10 +12,10 @@ export function PrivacyZoneList({ zones, activeZoneIds, onToggleZone }: PrivacyZ
     <div className="bg-slate-50/70 rounded-3xl p-6 border border-slate-200/80">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
-          <Shield className="w-5 h-5 text-blue-600" />
+          <Shield className="w-5 h-5 text-brand-500" />
           <h2 className="text-base font-bold text-slate-800">隐私脱敏安全区</h2>
         </div>
-        <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+        <span className="text-[11px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200/60">
           已激活 {activeZoneIds.size} 个区域
         </span>
       </div>
@@ -43,7 +43,7 @@ export function PrivacyZoneList({ zones, activeZoneIds, onToggleZone }: PrivacyZ
                     <span className="text-[10px] text-slate-400 font-medium tabular-nums">
                       {zone.latitude.toFixed(4)}°, {zone.longitude.toFixed(4)}°
                     </span>
-                    <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">
+                    <span className="text-[9px] font-bold text-brand-700 bg-brand-50 px-1.5 py-0.5 rounded-full">
                       {zone.radius_meters}米 保护半径
                     </span>
                   </div>
@@ -53,7 +53,7 @@ export function PrivacyZoneList({ zones, activeZoneIds, onToggleZone }: PrivacyZ
                   type="button"
                   onClick={() => onToggleZone(zone.id)}
                   className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
-                    isActive ? 'bg-blue-600' : 'bg-slate-300'
+                    isActive ? 'bg-brand-500' : 'bg-slate-300'
                   }`}
                   title={isActive ? '点击停用该隐私脱敏区' : '点击启用该隐私脱敏区'}
                 >

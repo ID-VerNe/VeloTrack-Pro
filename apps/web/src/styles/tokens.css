@@ -1,0 +1,33 @@
+/**
+ * VeloTrack Pro - CSS Design Tokens
+ * 核心设计变量与色彩令牌
+ * 与 src/constants/designTokens.ts 保持一致
+ * 衍生自 Logo 核心底色 #395AA7
+ */
+
+:root {
+  /* Brand Palette (Derived from Logo #395AA7) */
+  --brand-50: #F0F4FC;
+  --brand-100: #E1E9F8;
+  --brand-200: #C6D6F4;
+  --brand-300: #9FBDF0;
+  --brand-400: #6E98E4;
+  --brand-500: #395AA7; /* Logo 核心底色 */
+  --brand-600: #2E4A8E; /* Hover */
+  --brand-700: #243B72; /* Active */
+  --brand-800: #1C2E59; /* Satellite Glow / Deep Accent */
+  --brand-900: #162343; /* Deep Background */
+
+  /* Semantic Brand Tokens */
+  --brand-primary: var(--brand-500);
+  --brand-primary-hover: var(--brand-600);
+  --brand-primary-active: var(--brand-700);
+  --brand-accent: var(--brand-500);
+  --brand-subtle: var(--brand-50);
+  --brand-border: var(--brand-200);
+
+  /* Map Route Line Tokens */
+  --map-route-core: #395AA7;
+  --map-route-glow: #1C2E59;
+  --map-route-casing: #FFFFFF;
+}

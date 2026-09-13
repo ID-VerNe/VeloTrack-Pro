@@ -124,7 +124,7 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
             <div
               className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold font-mono ${
                 m.role === 'user'
-                  ? 'bg-slate-900 text-white shadow-xs'
+                  ? 'bg-brand-500 text-white shadow-xs'
                   : 'bg-slate-800 text-slate-100 shadow-xs border border-slate-700'
               }`}
             >
@@ -134,7 +134,7 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
             <div
               className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed space-y-2.5 ${
                 m.role === 'user'
-                  ? 'bg-slate-900 text-white font-medium shadow-xs rounded-tr-xs whitespace-pre-line'
+                  ? 'bg-brand-500 text-white font-medium shadow-xs rounded-tr-xs whitespace-pre-line'
                   : 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs shadow-xs'
               }`}
             >
@@ -214,7 +214,7 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isInterviewing}
-            className="p-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded-lg cursor-pointer transition-all active:scale-95 shrink-0"
+            className="p-2 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-200 text-white rounded-lg cursor-pointer transition-all active:scale-95 shrink-0 shadow-2xs"
           >
             <Send className="w-3.5 h-3.5" />
           </button>

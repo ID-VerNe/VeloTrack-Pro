@@ -94,14 +94,14 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-xs transition-opacity animate-in fade-in select-none">
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-xs transition-opacity animate-in fade-in">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="车手与战车档案舱"
         tabIndex={-1}
-        className="w-full max-w-[540px] bg-white h-full flex flex-col border-l border-slate-200/80 animate-in slide-in-from-right duration-200 focus:outline-none"
+        className="w-full sm:w-[480px] bg-white h-full flex flex-col border-l border-slate-200/80 animate-in slide-in-from-right duration-200 focus:outline-none"
       >
         {/* Top Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
@@ -133,7 +133,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
               onClick={() => setActiveTab('manual')}
               className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'manual'
-                  ? 'bg-slate-900 text-white font-medium'
+                  ? 'bg-brand-500 text-white font-medium shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
@@ -144,7 +144,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
               onClick={() => setActiveTab('interview')}
               className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'interview'
-                  ? 'bg-slate-900 text-white font-medium'
+                  ? 'bg-brand-500 text-white font-medium shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
@@ -155,13 +155,13 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
               onClick={() => setActiveTab('memories')}
               className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'memories'
-                  ? 'bg-slate-900 text-white font-medium'
+                  ? 'bg-brand-500 text-white font-medium shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <span>习惯与身体备忘</span>
               <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
-                activeTab === 'memories' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'
+                activeTab === 'memories' ? 'bg-brand-700 text-brand-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {memories.length}
               </span>
@@ -171,7 +171,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
               onClick={() => setActiveTab('gateway')}
               className={`flex-1 py-1 rounded transition-colors flex items-center justify-center space-x-1.5 cursor-pointer ${
                 activeTab === 'gateway'
-                  ? 'bg-slate-900 text-white font-medium'
+                  ? 'bg-brand-500 text-white font-medium shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
@@ -195,7 +195,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
             <button
               onClick={handleSaveProfile}
               disabled={isSaving}
-              className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded text-xs cursor-pointer transition-colors"
+              className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-200 text-white rounded text-xs cursor-pointer transition-colors shadow-2xs"
             >
               {isSaving ? '正在保存...' : '保存修改'}
             </button>

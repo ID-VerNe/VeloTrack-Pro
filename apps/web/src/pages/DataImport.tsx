@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { KeyRound, Check, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
 import { FileUpload, type BatchProgress } from '../components/upload/FileUpload';
 import { PrivacyZoneList } from '../components/upload/PrivacyZoneList';
 import type { PrivacyZone } from '../utils/activity/privacyScrubber';
@@ -150,11 +149,9 @@ export default function DataImport() {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] font-sans flex text-slate-900 overflow-hidden select-none">
-      <Sidebar />
-
+    <div className="h-full w-full bg-[#F8FAFC] flex flex-col text-slate-900 overflow-hidden select-none">
       <main className="flex-1 h-full overflow-y-auto bg-slate-50/50 min-w-0">
-        <div className="max-w-5xl mx-auto p-6 lg:p-10 space-y-8">
+        <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-10 space-y-8">
           {/* Top Navigation & Actions */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
             <div>
@@ -170,8 +167,8 @@ export default function DataImport() {
               </div>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center space-x-2.5">
                 <span>导入骑行数据</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                  <ShieldCheck className="w-3.5 h-3.5 mr-1 text-blue-600" />
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-brand-50 text-brand-700 border border-brand-200/60">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1 text-brand-600" />
                   本地脱敏保护
                 </span>
               </h1>
@@ -195,9 +192,10 @@ export default function DataImport() {
                     type="text"
                     style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
                     value={adminToken}
+                    aria-label="管理令牌"
                     onChange={(e) => setAdminTokenState(e.target.value)}
                     placeholder="粘贴 ADMIN_TOKEN"
-                    className="w-44 px-2.5 py-1 text-xs border-0 focus:outline-none font-mono text-slate-800 placeholder-slate-400"
+                    className="w-44 px-2.5 py-1 text-base sm:text-xs border-0 focus:outline-none font-mono text-slate-800 placeholder-slate-400"
                     autoFocus
                     autoComplete="off"
                     autoCapitalize="off"
@@ -211,7 +209,7 @@ export default function DataImport() {
                   <button
                     type="button"
                     onClick={handleSaveToken}
-                    className="text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                    className="text-xs font-medium text-white bg-brand-500 hover:bg-brand-600 px-3 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     保存
                   </button>
@@ -256,9 +254,9 @@ export default function DataImport() {
           )}
 
           {/* Main 2-Column Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:p-8 items-start">
             {/* Left Column: Upload Box */}
-            <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+            <div className="lg:col-span-7 bg-white rounded-3xl p-4 md:p-6 border border-slate-200/80 shadow-xs">
               <h2 className="text-base font-bold text-slate-800 mb-1">选择或拖入骑行文件</h2>
               <p className="text-xs text-slate-400 mb-5">
                 支持单个或多个 .tcx、.gpx 文件同时导入，系统将自动解算动力学参数
@@ -272,7 +270,7 @@ export default function DataImport() {
             </div>
 
             {/* Right Column: Privacy Zones */}
-            <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+            <div className="lg:col-span-5 bg-white rounded-3xl p-4 md:p-6 border border-slate-200/80 shadow-xs">
               <PrivacyZoneList
                 zones={zones}
                 activeZoneIds={activeZoneIds}

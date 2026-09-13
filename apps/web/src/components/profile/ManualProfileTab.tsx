@@ -50,14 +50,14 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
       {/* Physiological Metrics Card */}
       <div className="bg-slate-50/80 rounded-2xl p-4.5 border border-slate-200/80 space-y-3.5 shadow-2xs">
         <div className="flex items-center space-x-2 text-xs font-bold text-slate-800">
-          <HeartPulse className="w-4 h-4 text-blue-600" />
+          <HeartPulse className="w-4 h-4 text-brand-500" />
           <span>生理与体能指标</span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">车手昵称</label>
-            <input
+            <label htmlFor="profile_name" className="block text-xs font-semibold text-slate-500 mb-1">车手昵称</label>
+            <input id="profile_name"
               type="text"
               value={profile.name || ''}
               onChange={(e) => updateField('name', e.target.value)}
@@ -66,25 +66,25 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
               spellCheck={false}
               data-1p-ignore="true"
               data-lpignore="true"
-              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">体重 (kg，用于卡路里与功率)</label>
-            <input
+            <label htmlFor="profile_weight" className="block text-xs font-semibold text-slate-500 mb-1">体重 (kg，用于卡路里与功率)</label>
+            <input id="profile_weight"
               type="number"
               step="0.5"
               value={profile.weight_kg || ''}
               onChange={(e) => updateField('weight_kg', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">最大心率 (bpm)</label>
-            <input
+            <label htmlFor="profile_maxhr" className="block text-xs font-semibold text-slate-500 mb-1">最大心率 (bpm)</label>
+            <input id="profile_maxhr"
               type="number"
               value={profile.max_hr || ''}
               onChange={(e) => updateField('max_hr', parseInt(e.target.value) || 0)}
@@ -92,8 +92,8 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">静息心率 (bpm)</label>
-            <input
+            <label htmlFor="profile_resthr" className="block text-xs font-semibold text-slate-500 mb-1">静息心率 (bpm)</label>
+            <input id="profile_resthr"
               type="number"
               value={profile.resting_hr || ''}
               onChange={(e) => updateField('resting_hr', parseInt(e.target.value) || 0)}
@@ -101,8 +101,8 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">FTP 功率 (W)</label>
-            <input
+            <label htmlFor="profile_ftp" className="block text-xs font-semibold text-slate-500 mb-1">FTP 功率 (W)</label>
+            <input id="profile_ftp"
               type="number"
               value={profile.ftp_watts || ''}
               onChange={(e) => updateField('ftp_watts', parseInt(e.target.value) || 0)}
@@ -116,7 +116,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
       <div className="bg-slate-50/80 rounded-2xl p-4.5 border border-slate-200/80 space-y-3.5 shadow-2xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 text-xs font-bold text-slate-800">
-            <Bike className="w-4 h-4 text-blue-600" />
+            <Bike className="w-4 h-4 text-brand-500" />
             <span>主力战车与分立硬件配置</span>
           </div>
           <span className="text-xs text-slate-500 font-medium">各部件独立保存不丢失</span>
@@ -124,54 +124,54 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">主力战车型号</label>
-            <input
+            <label htmlFor="profile_bike" className="block text-xs font-semibold text-slate-500 mb-1">主力战车型号</label>
+            <input id="profile_bike"
               type="text"
               placeholder="例如：大行 P8 20寸折叠车"
               value={profile.current_bike || ''}
               onChange={(e) => updateField('current_bike', e.target.value)}
-              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">战车整备重量 (kg)</label>
-            <input
+            <label htmlFor="profile_bikeweight" className="block text-xs font-semibold text-slate-500 mb-1">战车整备重量 (kg)</label>
+            <input id="profile_bikeweight"
               type="number"
               step="0.1"
               placeholder="11.5"
               value={profile.bike_weight_kg || ''}
               onChange={(e) => updateField('bike_weight_kg', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
             />
           </div>
         </div>
 
         <div className="space-y-2.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
-              <Cog className="w-3.5 h-3.5 mr-1 text-slate-500" />
+            <label htmlFor="profile_gears" className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
+              <Cog className="w-3.5 h-3.5 mr-1 text-slate-500" aria-hidden="true" />
               <span>齿比与传动系统 (独立维护)</span>
             </label>
-            <input
+            <input id="profile_gears"
               type="text"
               placeholder="例如：46T牙盘 + 11-28T 7速飞轮"
               value={profile.gear_ratio || ''}
               onChange={(e) => updateField('gear_ratio', e.target.value)}
-              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
-              <Disc className="w-3.5 h-3.5 mr-1 text-slate-500" />
+            <label htmlFor="profile_tires" className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
+              <Disc className="w-3.5 h-3.5 mr-1 text-slate-500" aria-hidden="true" />
               <span>外胎规格与建议胎压 (独立维护)</span>
             </label>
-            <input
+            <input id="profile_tires"
               type="text"
               placeholder="例如：马牌 Contact Urban 2.0 轮胎 (75-80 psi)"
               value={profile.tires || ''}
               onChange={(e) => updateField('tires', e.target.value)}
-              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
             />
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
         <div className="pt-2 border-t border-slate-200/60 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-slate-700 flex items-center">
-              <Sliders className="w-3.5 h-3.5 mr-1 text-blue-600" />
+              <Sliders className="w-3.5 h-3.5 mr-1 text-brand-500" />
               <span>自定义改装/硬件参数扩展</span>
             </span>
             <span className="text-xs text-slate-500">支持自由添加任意字段</span>
@@ -188,23 +188,23 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
 
           {/* Existing Custom Specs Badges */}
           {Object.entries(customSpecsObj).length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(customSpecsObj).map(([k, v]) => (
-                <div
-                  key={k}
-                  className="bg-white px-2.5 py-1 rounded-xl border border-slate-200 text-xs flex items-center space-x-1.5 shadow-2xs group"
+            <div className="flex flex-wrap gap-2 pt-1">
+              {Object.entries(customSpecsObj).map(([key, val]) => (
+                <span
+                  key={key}
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white rounded-lg border border-slate-200 text-xs text-slate-800 font-medium shadow-2xs"
                 >
-                  <span className="font-bold text-slate-500">{k}:</span>
-                  <span className="font-semibold text-slate-800">{v}</span>
+                  <span className="text-slate-500">{key}:</span>
+                  <span className="font-bold">{val}</span>
                   <IconButton
-                    label={`删除 ${k}`}
+                    label={`删除 ${key}`}
                     size="xs"
                     danger
-                    onClick={() => handleDeleteCustomSpec(k)}
+                    onClick={() => handleDeleteCustomSpec(key)}
                   >
                     <Trash2 className="w-3 h-3" />
                   </IconButton>
-                </div>
+                </span>
               ))}
             </div>
           )}
@@ -212,24 +212,28 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
           {/* Add New Custom Field Input Row */}
           <div className="flex items-center space-x-2 pt-1">
             <input
+              id="profile_newkey"
+              aria-label="新增自定义属性名"
               type="text"
               placeholder="属性名(如: 脚踏/轮组/码表)"
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
-              className="w-1/3 px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-1/3 px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <input
+              id="profile_newval"
+              aria-label="新增自定义属性值"
               type="text"
               placeholder="属性值(如: 平踏/20寸406/迈金C406)"
               value={newVal}
               onChange={(e) => setNewVal(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 px-2.5 py-1.5 bg-white rounded-lg border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
             <button
               type="button"
               onClick={handleAddCustomSpec}
               disabled={!newKey.trim() || !newVal.trim()}
-              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center space-x-1 shadow-2xs"
+              className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-200 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center space-x-1 shadow-2xs"
             >
               <Plus className="w-3 h-3" />
               <span>添加</span>

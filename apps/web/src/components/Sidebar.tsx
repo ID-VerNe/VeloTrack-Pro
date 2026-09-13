@@ -3,7 +3,6 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   SlidersHorizontal,
 } from 'lucide-react';
-import RiderProfileDrawer from './RiderProfileDrawer';
 import type { RiderProfile } from '../types/rider';
 import { getNaturalWeekRange } from '../utils/dateUtils';
 import { getRiderProfile } from '../services/riderService';
@@ -17,10 +16,11 @@ interface NavSection {
   }[];
 }
 
-export default function Sidebar() {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  // 修复：原先硬编码一套"个人数据"（58kg/168cm/female）作为兜底，与后端
-  // riderService 默认档案（75kg/male）矛盾，拉取失败时侧边栏会展示编造数据。
+interface SidebarProps {
+  className?: string;
+}
+
+export default function Sidebar({ className = '' }: SidebarProps) {
   // 现与后端默认值对齐
   const [profile, setProfile] = useState<RiderProfile>({
     name: '',
@@ -74,6 +74,10 @@ export default function Sidebar() {
   useEffect(() => {
     fetchProfile();
     fetchRidesAndGoals();
+
+    const handleProfileUpdated = () => fetchProfile();
+    window.addEventListener('profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('profile-updated', handleProfileUpdated);
   }, []);
 
   const navSections: NavSection[] = [
@@ -103,7 +107,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="w-64 bg-white border-r border-slate-200/80 p-6 flex flex-col justify-between shrink-0 h-full select-none">
+      <aside className={`w-64 bg-white border-r border-slate-200/80 p-6 flex flex-col justify-between shrink-0 h-full ${className}`}>
         <div className="space-y-8">
           {/* Brand Logo Header */}
           <NavLink to="/" className="block px-2 group">
@@ -114,7 +118,7 @@ export default function Sidebar() {
                 className="w-8 h-8 rounded-lg object-cover border border-slate-200 shadow-2xs shrink-0"
               />
               <div>
-                <span className="font-bold text-sm tracking-tight text-slate-900 block font-mono">
+                <span className="font-bold text-sm tracking-tight text-brand-700 block font-mono group-hover:text-brand-600 transition-colors">
                   VeloTrack
                 </span>
                 <p className="text-[11px] text-slate-400 font-normal tracking-normal">
@@ -142,8 +146,8 @@ export default function Sidebar() {
                         to={item.path}
                         className={`flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors relative ${
                           isActive
-                            ? 'font-semibold text-slate-900 bg-slate-100/80 border-l-2 border-slate-900'
-                            : 'font-normal text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                            ? 'font-semibold text-brand-700 bg-brand-50 border-l-2 border-brand-500'
+                            : 'font-normal text-slate-600 hover:text-brand-600 hover:bg-slate-50'
                         }`}
                       >
                         <span className="truncate">{item.name}</span>
@@ -152,7 +156,7 @@ export default function Sidebar() {
                           <span
                             className={`text-[10px] font-mono px-1.5 py-0.5 rounded tabular-nums ${
                               isActive
-                                ? 'bg-slate-200/80 text-slate-900 font-medium'
+                                ? 'bg-brand-100 text-brand-700 font-medium'
                                 : 'text-slate-400 font-normal'
                             }`}
                           >
@@ -172,7 +176,7 @@ export default function Sidebar() {
         <div className="pt-4 border-t border-slate-100">
           <button
             type="button"
-            onClick={() => setIsProfileOpen(true)}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
             aria-label="查看车手生物力学档案与战车硬件"
             className="w-full text-left flex items-center justify-between p-2.5 rounded border border-slate-200/80 bg-white hover:bg-slate-50 transition-colors cursor-pointer group focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
             title="查看车手生物力学档案与战车硬件"
@@ -199,15 +203,6 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
-
-      {/* Slide-over Profile Drawer */}
-      <RiderProfileDrawer
-        isOpen={isProfileOpen}
-        onClose={() => {
-          setIsProfileOpen(false);
-          fetchProfile();
-        }}
-      />
     </>
   );
 }

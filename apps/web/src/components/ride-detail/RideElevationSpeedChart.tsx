@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Zap, PauseCircle, Gauge, Mountain, Flame, RotateCcw } from 'lucide-react';
 import { analyzeRideTelemetry, type ChartTelemetryPoint, type RideDetailPoint } from '../../utils/telemetrySegments';
+import { CHART_COLORS, BRAND_COLORS } from '../../constants/designTokens';
 
 interface Props {
   ride: any;
@@ -101,7 +102,7 @@ export default function RideElevationSpeedChart({
           const isSpeed = item.seriesName.includes('速度');
           html += `
             <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:11px;padding:2px 0;">
-              <span style="color:${isSpeed ? '#60A5FA' : '#FBBF24'};">${isSpeed ? '速度' : '海拔'}</span>
+              <span style="color:${isSpeed ? BRAND_COLORS[400] : '#FBBF24'};">${isSpeed ? '速度' : '海拔'}</span>
               <span style="font-weight:600;color:#FFFFFF;font-family:monospace;">
                 ${item.value} ${isSpeed ? 'km/h' : 'm'}
               </span>
@@ -141,13 +142,13 @@ export default function RideElevationSpeedChart({
     yAxis: [
       {
         name: '速度 (km/h)',
-        nameTextStyle: { color: '#2563EB', fontSize: 9, fontFamily: 'monospace' },
+        nameTextStyle: { color: CHART_COLORS.speed, fontSize: 9, fontFamily: 'monospace' },
         type: 'value',
         scale: true,
         min: 0,
         max: (value: { max: number }) => Math.ceil(Math.max(value.max * 1.25, 20)),
         splitLine: { lineStyle: { color: '#F8FAFC' } },
-        axisLabel: { color: '#2563EB', fontSize: 10, fontFamily: 'monospace' },
+        axisLabel: { color: CHART_COLORS.speed, fontSize: 10, fontFamily: 'monospace' },
       },
       {
         name: '海拔 (m)',
@@ -176,8 +177,8 @@ export default function RideElevationSpeedChart({
         type: 'line',
         smooth: 0.35,
         data: chartData.speedPoints,
-        itemStyle: { color: '#2563EB' },
-        lineStyle: { width: 2.2, color: '#2563EB' },
+        itemStyle: { color: CHART_COLORS.speed },
+        lineStyle: { width: 2.2, color: CHART_COLORS.speed },
         areaStyle: {
           color: {
             type: 'linear',
@@ -186,8 +187,8 @@ export default function RideElevationSpeedChart({
             x2: 0,
             y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(37, 99, 235, 0.20)' },
-              { offset: 1, color: 'rgba(37, 99, 235, 0.01)' },
+              { offset: 0, color: CHART_COLORS.speedAreaTop },
+              { offset: 1, color: CHART_COLORS.speedAreaBottom },
             ],
           },
         },

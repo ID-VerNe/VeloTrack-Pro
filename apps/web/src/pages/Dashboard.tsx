@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { RefreshCw } from 'lucide-react';
 
-import Sidebar from '../components/Sidebar';
 import TotalStatsCard from '../components/TotalStatsCard';
 import ConsistencyHeatmap from '../components/ConsistencyHeatmap';
 import RideCard from '../components/RideCard';
@@ -61,10 +60,7 @@ export default function Dashboard() {
   }, [rides, selectedCity, searchTerm]);
 
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] font-sans flex text-slate-900 overflow-hidden select-none">
-      {/* 1. Left Compact Navigation Sidebar */}
-      <Sidebar />
-
+    <div className="h-full w-full flex flex-col lg:flex-row relative text-slate-900">
       {/* 2. Center Geospatial Map Canvas */}
       <main className="flex-1 h-full relative overflow-hidden bg-slate-100 min-w-0">
         <DashboardControls
@@ -85,10 +81,14 @@ export default function Dashboard() {
         />
       </main>
 
-      {/* 3. Right Analytics & Feeds Bento Panel */}
-      <aside className="w-[460px] xl:w-[480px] h-full bg-white flex flex-col z-10 shrink-0 border-l border-slate-200/80">
+      <aside className="w-full h-[50dvh] lg:h-full lg:w-[460px] xl:w-[480px] bg-white flex flex-col z-10 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200/80 absolute bottom-0 lg:static lg:bottom-auto rounded-t-2xl lg:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-none transition-transform">
+        {/* Mobile Drag Handle Pill */}
+        <div className="lg:hidden flex items-center justify-center pt-3 pb-1">
+          <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+        </div>
+        
         {/* Top User Greeting Header */}
-        <div className="px-6 py-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
+        <div className="px-6 pb-5 lg:py-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
           <div>
             <h1 className="text-base font-semibold text-slate-900 tracking-tight leading-tight">
               {greetingText}
@@ -104,7 +104,7 @@ export default function Dashboard() {
         </div>
 
         {/* Scrollable Stream */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 [scrollbar-width:none]">
           {/* Global Aggregation Metric Card */}
           <TotalStatsCard rides={rides} />
 
@@ -121,17 +121,17 @@ export default function Dashboard() {
 
             <div className="space-y-3">
               {isLoading ? (
-                <div className="p-8 text-center text-slate-400 text-xs font-mono" role="status">
+                <div className="p-4 md:p-8 text-center text-slate-400 text-xs font-mono" role="status">
                   <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2 text-slate-600" />
                   正在加载骑行遥测数据...
                 </div>
               ) : loadError ? (
-                <div className="p-6 text-center bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono space-y-2" role="alert">
+                <div className="p-4 md:p-6 text-center bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono space-y-2" role="alert">
                   <p className="text-slate-700">{loadError}</p>
                   <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="px-3.5 py-1.5 bg-slate-900 text-white rounded text-xs font-mono font-medium hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="px-3.5 py-1.5 bg-brand-500 text-white rounded text-xs font-mono font-medium hover:bg-brand-600 transition-colors cursor-pointer"
                   >
                     重新加载
                   </button>
@@ -149,8 +149,18 @@ export default function Dashboard() {
                   ))}
 
                   {filteredRides.length === 0 && (
-                    <div className="p-8 text-center bg-slate-50/50 rounded-lg border border-slate-200 text-slate-400 text-xs font-mono">
-                      没有匹配的骑行记录
+                    <div className="p-4 md:p-8 text-center bg-slate-50/50 rounded-lg border border-slate-200 text-slate-400 text-xs font-mono space-y-3">
+                      <p>未找到匹配的骑行记录</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedCity('all');
+                        }}
+                        className="px-3 py-1.5 bg-white border border-slate-200 rounded text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        清空搜索词
+                      </button>
                     </div>
                   )}
                 </>

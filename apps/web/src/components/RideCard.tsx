@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import polyline from '@mapbox/polyline';
 import { detectCityForRide } from '../utils/geoUtils';
 import { calculateDualSpeeds, formatFriendlyDuration } from '../utils/cyclingCalculations';
+import { BRAND_COLORS } from '../constants/designTokens';
 
 interface Props {
   ride: any;
@@ -97,7 +98,7 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
       onMouseLeave={onMouseLeave}
       className={`block bg-white rounded-lg p-4 transition-all group relative border ${
         isHovered
-          ? 'border-blue-500 bg-slate-50/50'
+          ? 'border-brand-500 bg-brand-50/20 shadow-2xs'
           : 'border-slate-200/80 hover:border-slate-300'
       }`}
     >
@@ -111,7 +112,7 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
             {cityName}
           </span>
           <span className="h-2 w-[1px] bg-slate-200 shrink-0" />
-          <span className="font-medium text-slate-900 group-hover:text-slate-600 transition-colors text-xs truncate">
+          <span className="font-medium text-slate-900 group-hover:text-brand-600 transition-colors text-xs truncate">
             {ride.title}
           </span>
         </div>
@@ -154,14 +155,14 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
 
         {/* Micro Map Preview */}
         <div className={`w-[76px] h-[52px] rounded border flex items-center justify-center relative shrink-0 overflow-hidden transition-colors ${
-          isHovered ? 'bg-slate-100/90 border-slate-300' : 'bg-slate-50 border-slate-200/70'
+          isHovered ? 'bg-brand-50/50 border-brand-200' : 'bg-slate-50 border-slate-200/70'
         }`}>
           {pathData ? (
             <svg viewBox="0 0 76 52" className="w-full h-full relative z-10" aria-label="骑行路线缩略图">
               <path
                 d={pathData}
                 fill="none"
-                stroke={isHovered ? '#0F172A' : '#475569'}
+                stroke={isHovered ? BRAND_COLORS[700] : BRAND_COLORS[500]}
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"

@@ -24,7 +24,7 @@ export default function PeriodInsightCard({ insight, isLoading, onGenerate }: Pr
         <button
           onClick={onGenerate}
           disabled={isLoading}
-          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-mono rounded transition-colors cursor-pointer flex items-center space-x-1.5"
+          className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-xs font-mono rounded transition-colors cursor-pointer flex items-center space-x-1.5 shadow-2xs"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>{isLoading ? '计算中...' : insight ? '重新诊断' : '开始周期诊断'}</span>

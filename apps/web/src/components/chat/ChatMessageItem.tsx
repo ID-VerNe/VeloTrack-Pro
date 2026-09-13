@@ -62,7 +62,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
         <div
           className={`w-6 h-6 rounded flex items-center justify-center shrink-0 text-xs font-mono border ${
             message.role === 'user'
-              ? 'border-slate-900 bg-slate-900 text-white'
+              ? 'border-brand-500 bg-brand-500 text-white'
               : 'border-slate-200 bg-slate-50 text-slate-700 font-medium'
           }`}
         >
@@ -72,7 +72,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
         {/* Message Body */}
         <div className="flex-1 min-w-0 max-w-[92%] sm:max-w-[88%] space-y-2">
           {message.role === 'user' ? (
-            <div className="bg-slate-900 text-white rounded px-4 py-2.5 text-xs font-normal leading-relaxed inline-block">
+            <div className="bg-brand-500 text-white rounded px-4 py-2.5 text-xs font-normal leading-relaxed inline-block shadow-2xs">
               {message.content}
             </div>
           ) : message.isError ? (
@@ -105,7 +105,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                   </div>
                   <Link
                     to="/goals"
-                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer"
+                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
                   >
                     <span>查看目标进度</span>
                     <ArrowRight className="w-3 h-3" />
@@ -128,7 +128,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                     <button
                       type="button"
                       onClick={onOpenProfile}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer"
+                      className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
                     >
                       <span>查看档案</span>
                       <ArrowRight className="w-3 h-3" />

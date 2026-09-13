@@ -77,24 +77,18 @@ async function proxy(req: Request, env: Env, path: string): Promise<Response> {
     // 强制注入穿越 cookie 门必需的头；UA 不带会 520。
     headers.set('User-Agent', CHROME_UA);
     headers.set('Cookie', `__test=${cookie}; CONSENT=YES+`);
-    // 鉴权令牌传递：优先使用客户端传入的 Authorization 头（支持前端自定义配置或独立令牌）；
-    // 严禁对 DELETE 破坏性操作自动补全：删除操作必须由客户端（前端）显式携带有效 Token！
-    const clientAuth = req.headers.get('Authorization');
-    if (req.method === 'DELETE' && !clientAuth) {
-      return withSecurityHeaders(new Response(JSON.stringify({ 
-        error: '未授权：删除操作必须由前端显式提供有效的管理令牌（ADMIN_TOKEN）' 
-      }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }));
-    }
+    // 鉴权令牌传递：优先使用客户端传入的 Authorization / X-Admin-Token 头（支持前端自定义配置或独立令牌）；
+    // 若客户端未传，且已配置 env.ADMIN_TOKEN（网站接入 Zero Trust 防护），Worker 自动补齐管理令牌透传给源站 PHP；
+    const clientAuth = req.headers.get('Authorization') || (req.headers.get('X-Admin-Token') ? `Bearer ${req.headers.get('X-Admin-Token')}` : null);
     const token = clientAuth || (env.ADMIN_TOKEN ? `Bearer ${env.ADMIN_TOKEN}` : '');
     if (token) {
-      headers.set('Authorization', token);
       const rawToken = token.replace(/^Bearer\s+/i, '').trim();
+      headers.set('Authorization', `Bearer ${rawToken}`);
       headers.set('X-Admin-Token', rawToken);
-    } else if (path.startsWith('/api/admin/')) {
-      return withSecurityHeaders(new Response(JSON.stringify({ error: '需要管理令牌：请在 Cloudflare 环境变量中配置 ADMIN_TOKEN' }), {
+    } else if (path.startsWith('/api/admin/') || req.method === 'DELETE') {
+      return withSecurityHeaders(new Response(JSON.stringify({ 
+        error: '需要管理令牌：请在 Cloudflare 环境变量中配置 ADMIN_TOKEN 或在前端配置管理令牌' 
+      }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       }));

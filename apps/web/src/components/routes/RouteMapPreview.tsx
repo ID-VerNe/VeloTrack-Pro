@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Map as MapLibreMap, LngLatBounds, Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MAP_STYLES } from '../../utils/mapStyles';
+import { MAP_ROUTE_TOKENS } from '../../constants/designTokens';
 
 interface Props {
   coordinates: [number, number][];
@@ -56,9 +57,9 @@ export default function RouteMapPreview({ coordinates, routeName }: Props) {
         source: sourceId,
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#38BDF8',
+          'line-color': MAP_ROUTE_TOKENS.satelliteGlow,
           'line-width': 8,
-          'line-opacity': 0.4,
+          'line-opacity': 0.25,
           'line-blur': 2,
         },
       });
@@ -70,7 +71,7 @@ export default function RouteMapPreview({ coordinates, routeName }: Props) {
         source: sourceId,
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#0284C7',
+          'line-color': MAP_ROUTE_TOKENS.coreColor,
           'line-width': 4,
           'line-opacity': 0.95,
         },
@@ -114,7 +115,7 @@ export default function RouteMapPreview({ coordinates, routeName }: Props) {
     <div className="w-full h-48 sm:h-64 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative bg-slate-100">
       <div ref={mapContainer} className="w-full h-full" />
       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs flex items-center space-x-1.5">
-        <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+        <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
         <span>{routeName} · 轨迹地图</span>
       </div>
     </div>

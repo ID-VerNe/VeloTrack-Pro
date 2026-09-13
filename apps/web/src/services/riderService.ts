@@ -8,6 +8,7 @@
 
 import { getPeriodBoundaries } from '../utils/dateUtils';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
+import { getAdminToken } from '../utils/activity/adminApiClient';
 
 export interface RiderProfileData {
   id?: number;
@@ -187,7 +188,20 @@ export async function upsertRiderMemory(
 }
 
 export async function deleteRiderMemory(id: number): Promise<void> {
-  await fetch(`/api/ai/rider/memories/${id}`, { method: 'DELETE' });
+  const token = getAdminToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    headers['X-Admin-Token'] = token;
+  }
+  const res = await fetch(`/api/ai/rider/memories/${id}`, { method: 'DELETE', headers });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      throw new Error(data.error || '鉴权未通过：管理令牌无效或已过期，请检查管理令牌（ADMIN_TOKEN）');
+    }
+    throw new Error(data.error || `删除记忆失败 (${res.status})`);
+  }
 }
 
 /**

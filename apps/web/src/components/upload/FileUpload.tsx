@@ -77,7 +77,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
       <div
         className={`relative flex flex-col items-center justify-center w-full h-[260px] border-2 border-dashed rounded-3xl transition-all duration-200 ${
           isDragActive
-            ? 'border-blue-500 bg-blue-50/50 scale-[1.005]'
+            ? 'border-brand-500 bg-brand-50/50 scale-[1.005]'
             : 'border-slate-300 bg-slate-50/60 hover:bg-slate-50'
         } ${status === 'success' ? 'border-emerald-400 bg-emerald-50/40' : ''} ${
           status === 'error' ? 'border-rose-400 bg-rose-50/40' : ''
@@ -102,7 +102,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
             <>
               <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center text-slate-400">
                 {stagedFiles.length > 0 ? (
-                  <Layers className="w-7 h-7 text-blue-600 stroke-[1.8]" />
+                  <Layers className="w-7 h-7 text-brand-500 stroke-[1.8]" />
                 ) : (
                   <UploadCloud className="w-7 h-7 text-slate-400 stroke-[1.8]" />
                 )}
@@ -123,9 +123,9 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
 
           {(status === 'parsing' || status === 'uploading') && batchProgress && (
             <div className="w-full space-y-3">
-              <RefreshCw className="w-10 h-10 text-blue-600 animate-spin stroke-[2] mx-auto" />
+              <RefreshCw className="w-10 h-10 text-brand-500 animate-spin stroke-[2] mx-auto" />
               <div>
-                <p className="text-base font-bold text-blue-600">
+                <p className="text-base font-bold text-brand-500">
                   正在处理批量同步 ({batchProgress.current} / {batchProgress.total})...
                 </p>
                 <p className="text-xs text-slate-500 font-medium truncate max-w-xs mx-auto mt-0.5">
@@ -136,7 +136,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
               {/* Progress Bar */}
               <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
                 <div 
-                  className="bg-blue-600 h-full transition-all duration-300 rounded-full"
+                  className="bg-brand-500 h-full transition-all duration-300 rounded-full"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -193,7 +193,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
                 className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-700"
               >
                 <div className="flex items-center space-x-2 truncate mr-2">
-                  <FileCode className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <FileCode className="w-3.5 h-3.5 text-brand-500 shrink-0" />
                   <span className="truncate font-medium">{file.name}</span>
                   <span className="text-[10px] text-slate-400 font-mono shrink-0">
                     ({(file.size / 1024).toFixed(1)} KB)
@@ -218,7 +218,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
         type="button"
         onClick={handleTriggerUpload}
         disabled={stagedFiles.length === 0 || status === 'parsing' || status === 'uploading'}
-        className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-95 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center space-x-2"
+        className="px-8 py-3.5 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-300 text-white font-bold text-sm rounded-2xl shadow-lg shadow-brand-500/25 transition-all transform active:scale-95 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center space-x-2"
       >
         {status === 'uploading' || status === 'parsing' ? (
           <>

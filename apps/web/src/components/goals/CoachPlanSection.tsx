@@ -59,7 +59,7 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
 
         <button
           onClick={onAskCoach}
-          className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-mono rounded transition-colors cursor-pointer shrink-0 flex items-center space-x-1.5"
+          className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-mono rounded transition-colors cursor-pointer shrink-0 flex items-center space-x-1.5 shadow-2xs"
         >
           <span>进入决策舱调整</span>
         </button>

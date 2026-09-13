@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import IconButton from '../common/IconButton';
-import { getAdminToken } from '../../utils/activity/adminApiClient';
 import { 
   ArrowLeft, 
   Edit2, 
@@ -29,6 +28,7 @@ interface Props {
   onOpenProfile: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  deleteError?: string | null;
 }
 
 export default function RideTitleHeader({
@@ -47,6 +47,7 @@ export default function RideTitleHeader({
   onOpenProfile,
   onDelete,
   isDeleting = false,
+  deleteError = null,
 }: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [customTitle, setCustomTitle] = useState(title);
@@ -74,49 +75,43 @@ export default function RideTitleHeader({
   return (
     <div className="space-y-4">
       {/* Top action row */}
-      <div className="flex items-center justify-between pb-2 border-b border-black/10">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
         <button
           onClick={onGoBack}
-          className="inline-flex items-center text-[13px] font-medium text-black/64 hover:text-black transition-colors cursor-pointer group"
+          aria-label={fromLabel}
+          className="hidden md:inline-flex items-center text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer group"
         >
-          <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+          <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
           {fromLabel}
         </button>
 
         <div className="flex items-center space-x-3">
           <button
             onClick={onExportGPX}
-            className="px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
-            title="导出 GPX 轨迹文件"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
+            aria-label="导出 GPX 轨迹文件"
           >
-            <Download className="w-4 h-4 text-black/64" />
+            <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
             <span>导出 GPX</span>
           </button>
 
           <button
             onClick={onOpenProfile}
-            className="px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
-            title="查看车手生物力学档案与战车硬件"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
+            aria-label="查看车手生物力学档案与战车硬件"
           >
-            <User className="w-4 h-4 text-black/64" />
+            <User className="w-4 h-4 text-slate-600" aria-hidden="true" />
             <span>车手档案</span>
           </button>
 
           {onDelete && (
             <button
-              onClick={() => {
-                const token = getAdminToken();
-                if (!token) {
-                  alert('未检测到管理令牌（ADMIN_TOKEN），无法删除。请先前往「数据入库」页面配置有效的管理令牌。');
-                  return;
-                }
-                setShowDeleteConfirm(true);
-              }}
+              onClick={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
-              className="px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black hover:text-red-600 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
-              title="删除此条骑行记录"
+              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 hover:text-red-600 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5 group"
+              aria-label="删除此条骑行记录"
             >
-              <Trash2 className="w-4 h-4 text-black/64 group-hover:text-red-500" />
+              <Trash2 className="w-4 h-4 text-slate-600 group-hover:text-red-500" aria-hidden="true" />
               <span>删除</span>
             </button>
           )}
@@ -125,8 +120,8 @@ export default function RideTitleHeader({
 
       {/* Delete Confirmation Banner */}
       {showDeleteConfirm && (
-        <div className="p-4 bg-black/5 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 rounded">
-          <span className="text-[13px] text-black font-medium">
+        <div className="p-4 bg-slate-50 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 rounded">
+          <span className="text-[13px] text-slate-900 font-medium">
             确定要删除此骑行记录吗？此操作无法撤销。
           </span>
           <div className="flex items-center space-x-3">
@@ -142,11 +137,18 @@ export default function RideTitleHeader({
             </button>
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              className="px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black text-[13px] rounded transition-colors cursor-pointer"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 text-[13px] rounded transition-colors cursor-pointer"
             >
               取消
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Delete Error Banner */}
+      {deleteError && (
+        <div className="p-4 bg-red-50 border border-red-100 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 rounded">
+          <span className="text-[13px] text-red-600 font-medium">{deleteError}</span>
         </div>
       )}
 
@@ -176,40 +178,40 @@ export default function RideTitleHeader({
                 }
               }}
               autoFocus
-              className="flex-1 px-3 py-2 bg-black/5 border border-transparent focus:border-black/10 rounded text-[24px] font-medium text-black focus:outline-none"
+              className="flex-1 px-3 py-2 bg-slate-50 border border-transparent focus:border-slate-200 rounded text-[24px] font-medium text-slate-900 focus:outline-none"
             />
             <button
               onClick={handleConfirmSave}
-              className="p-2.5 bg-black hover:bg-black/80 text-white rounded transition-colors cursor-pointer"
-              title="确认保存"
+              className="p-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded transition-colors cursor-pointer shadow-2xs"
+              aria-label="确认保存"
             >
-              <Check className="w-5 h-5" />
+              <Check className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
               onClick={handleCancelEdit}
-              className="p-2.5 bg-black/5 hover:bg-black/10 text-black rounded transition-colors cursor-pointer"
-              title="取消修改"
+              className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded transition-colors cursor-pointer"
+              aria-label="取消修改"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         ) : (
           <div className="flex items-center space-x-4 group">
-            <h1 className="text-[28px] font-medium text-black tracking-tight leading-none">
+            <h1 className="text-[28px] font-medium text-slate-900 tracking-tight leading-none">
               {title}
             </h1>
             <div className="flex items-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity">
-              <IconButton label="手动重命名" size="sm" onClick={handleStartEdit} className="bg-black/5 hover:bg-black/10 rounded">
-                <Edit2 className="w-4 h-4 text-black/64" />
+              <IconButton label="手动重命名" size="sm" onClick={handleStartEdit} className="bg-slate-50 hover:bg-slate-100 rounded">
+                <Edit2 className="w-4 h-4 text-slate-600" aria-hidden="true" />
               </IconButton>
 
               <button
                 onClick={onAIPolishTitle}
                 disabled={isSuggestingTitle}
-                className="px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black rounded text-[13px] transition-colors cursor-pointer flex items-center space-x-1.5"
+                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded text-[13px] transition-colors cursor-pointer flex items-center space-x-1.5"
                 title="依据时间/时段/城市/强度生成规范命名"
               >
-                <Tag className={`w-3.5 h-3.5 ${isSuggestingTitle ? 'animate-spin text-black' : 'text-black/64'}`} />
+                <Tag className={`w-3.5 h-3.5 ${isSuggestingTitle ? 'animate-spin text-slate-900' : 'text-slate-600'}`} aria-hidden="true" />
                 <span>{isSuggestingTitle ? '生成中...' : '规范路段命名'}</span>
               </button>
             </div>
@@ -219,23 +221,23 @@ export default function RideTitleHeader({
 
       {/* Suggested Title Confirmation Banner */}
       {suggestedTitle && (
-        <div className="p-4 bg-black/5 rounded flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
+        <div className="p-4 bg-slate-50 rounded flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
           <div className="flex items-center space-x-3 text-[13px]">
-            <span className="text-black/44">
+            <span className="text-slate-500">
               规范命名建议
             </span>
-            <span className="font-medium text-black">「{suggestedTitle}」</span>
+            <span className="font-medium text-slate-900">「{suggestedTitle}」</span>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={onApplySuggestedTitle}
-              className="px-3 py-1.5 bg-black hover:bg-black/80 text-white text-[13px] rounded transition-colors cursor-pointer"
+              className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-[13px] rounded transition-colors cursor-pointer shadow-2xs"
             >
               应用
             </button>
             <button
               onClick={onCancelSuggestedTitle}
-              className="px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black text-[13px] rounded transition-colors cursor-pointer"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 text-[13px] rounded transition-colors cursor-pointer"
             >
               忽略
             </button>
@@ -245,13 +247,13 @@ export default function RideTitleHeader({
 
       {/* Undo Notification Banner */}
       {previousTitle && (
-        <div className="p-4 bg-black text-white rounded flex items-center justify-between text-[13px] animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
+        <div className="p-4 bg-brand-900 text-white rounded flex items-center justify-between text-[13px] border border-brand-800 shadow-sm animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
           <span>标题已更新。原标题：「{previousTitle}」</span>
           <button
             onClick={onUndoTitle}
-            className="flex items-center space-x-1 text-white/80 hover:text-white font-medium ml-4 cursor-pointer"
+            className="flex items-center space-x-1 text-brand-200 hover:text-white font-medium ml-4 cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>撤销</span>
           </button>
         </div>

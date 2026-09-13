@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit2, RefreshCw } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
 import { computeGoalStatsFromRides } from '../utils/goalCalculations';
 
 import GoalTargetCards from '../components/goals/GoalTargetCards';
@@ -88,12 +87,10 @@ export default function TrainingGoals() {
   const realStats = useMemo(() => computeGoalStatsFromRides(rides), [rides]);
 
   return (
-    <div className="h-screen w-screen bg-[#F8FAFC] font-sans flex text-slate-900 overflow-hidden select-none">
-      <Sidebar />
-
+    <div className="h-full w-full bg-[#F8FAFC] flex flex-col text-slate-900 overflow-hidden">
       <main className="flex-1 h-full flex flex-col bg-white overflow-hidden min-w-0">
         {/* Top Header */}
-        <header className="h-16 px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+        <header className="h-16 px-4 md:px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <div>
             <h1 className="text-base font-semibold text-slate-900 leading-tight">
               训练目标与进阶课表
@@ -113,10 +110,10 @@ export default function TrainingGoals() {
         </header>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-6 [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 [scrollbar-width:none]">
           {isLoading ? (
             <div className="h-96 flex items-center justify-center text-slate-500 text-xs font-medium" role="status">
-              <RefreshCw className="w-4 h-4 animate-spin mr-2 text-sky-600" />
+              <RefreshCw className="w-4 h-4 animate-spin mr-2 text-brand-500" />
               正在同步训练目标与达成数据...
             </div>
           ) : loadError ? (
@@ -124,7 +121,7 @@ export default function TrainingGoals() {
               <p className="text-rose-700">{loadError}</p>
               <button
                 onClick={fetchData}
-                className="px-3.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-slate-800 transition-all cursor-pointer active:scale-95"
+                className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95"
               >
                 重新加载
               </button>

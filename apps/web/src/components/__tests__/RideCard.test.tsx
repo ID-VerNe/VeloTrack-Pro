@@ -81,6 +81,6 @@ describe('RideCard', () => {
 
   it('isHovered 时应用高亮边框样式', () => {
     const { container } = renderCard(shenzhenRide, { isHovered: true });
-    expect(container.querySelector('a')).toHaveClass('border-blue-500');
+    expect(container.querySelector('a')).toHaveClass('border-brand-500');
   });
 });
