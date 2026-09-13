@@ -173,14 +173,9 @@ export default function RideDetail() {
   const saveTitleToBackend = async (newTitle: string) => {
     if (!id || !newTitle.trim()) return;
     try {
-      const res = await fetch(`/api/rides/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle.trim() }),
-      });
-      if (res.ok) {
-        setRide((prev: any) => (prev ? { ...prev, title: newTitle.trim() } : prev));
-      }
+      const { updateRideTitle } = await import('../services/rideService');
+      await updateRideTitle(id, newTitle);
+      setRide((prev: any) => (prev ? { ...prev, title: newTitle.trim() } : prev));
     } catch (err) {
       console.error('Failed to update title', err);
     }
@@ -199,14 +194,7 @@ export default function RideDetail() {
       });
       if (result.title && !result.title.includes('undefined')) {
         const polishedTitle = result.title.trim();
-        const oldTitle = ride.title;
-        setPreviousTitle(oldTitle);
-        await saveTitleToBackend(polishedTitle);
-        setSuggestedTitle(null);
-
-        setTimeout(() => {
-          setPreviousTitle((prev) => (prev === oldTitle ? null : prev));
-        }, 8000);
+        setSuggestedTitle(polishedTitle);
       }
     } catch (err) {
       console.error('Failed to polish title with AI', err);
@@ -238,35 +226,19 @@ export default function RideDetail() {
 
   const handleDeleteRide = async () => {
     if (!id) return;
-    const token = getAdminToken();
     setIsDeleting(true);
+    setDeleteError(null);
     try {
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        headers['X-Admin-Token'] = token;
-      }
-      const res = await fetch(`/api/rides/${id}`, {
-        method: 'DELETE',
-        headers,
-      });
-      if (res.ok) {
-        if (location.state?.from) {
-          navigate(location.state.from, { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+      const { deleteRide } = await import('../services/rideService');
+      await deleteRide(id);
+      if (location.state?.from) {
+        navigate(location.state.from, { replace: true });
       } else {
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          setDeleteError('鉴权未通过：管理令牌无效或已过期，请前往「数据入库」页面重新配置有效令牌');
-        } else {
-          setDeleteError(data.error || '删除失败，请稍后重试');
-        }
+        navigate('/', { replace: true });
       }
     } catch (err: any) {
       console.error('Failed to delete ride', err);
-      setDeleteError('网络错误，删除失败');
+      setDeleteError(err.message || '网络错误，删除失败');
     } finally {
       setIsDeleting(false);
     }
@@ -397,7 +369,7 @@ export default function RideDetail() {
 
   const movingAvgSpeedKmh = useMemo(() => {
     if (!ride) return 0;
-    const movingSec = ride.moving_time_seconds || ride.elapsed_time_seconds || 1;
+    const movingSec = ride.moving_time_seconds || ride.elapsed_time_seconds || 0;
     return movingSec > 0 ? Number(((ride.distance_meters / 1000) / (movingSec / 3600)).toFixed(1)) : 0;
   }, [ride]);
 

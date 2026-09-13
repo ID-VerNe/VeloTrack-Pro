@@ -48,25 +48,11 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
   const fetchRidesAndGoals = async () => {
     try {
-      const [ridesRes, goalsRes] = await Promise.all([
-        fetch('/api/rides').then(r => r.json()),
-        fetch('/api/ai/goals').then(r => r.json()).catch(() => ({ goals: null }))
-      ]);
-
-      const weeklyTarget = goalsRes?.goals?.weekly_distance_km || 50.0;
-
-      if (ridesRes.rides) {
-        setRidesCount(ridesRes.rides.length);
-
-        // Real week calculation for dynamic badge
-        const latestTime = Math.max(...ridesRes.rides.map((r: any) => r.start_time || 0));
-        const weekRange = getNaturalWeekRange(latestTime > 0 ? latestTime : Date.now());
-
-        const weekRides = ridesRes.rides.filter(
-          (r: any) => r.start_time >= weekRange.start && r.start_time <= weekRange.end
-        );
-        const thisWeekKm = weekRides.reduce((acc: number, r: any) => acc + (r.distance_meters || 0), 0) / 1000;
-        setGoalPct(Math.min(100, Math.round((thisWeekKm / weeklyTarget) * 100)));
+      const { getWeeklyStats } = await import('../services/rideService');
+      const stats = await getWeeklyStats();
+      if (stats) {
+        setRidesCount(stats.ridesCount);
+        setGoalPct(stats.goalPct);
       }
     } catch {}
   };

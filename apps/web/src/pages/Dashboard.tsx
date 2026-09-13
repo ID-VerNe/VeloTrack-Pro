@@ -82,10 +82,7 @@ export default function Dashboard() {
       </main>
 
       <aside className="w-full h-[50dvh] lg:h-full lg:w-[460px] xl:w-[480px] bg-white flex flex-col z-10 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200/80 absolute bottom-0 lg:static lg:bottom-auto rounded-t-2xl lg:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-none transition-transform">
-        {/* Mobile Drag Handle Pill */}
-        <div className="lg:hidden flex items-center justify-center pt-3 pb-1">
-          <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
-        </div>
+
         
         {/* Top User Greeting Header */}
         <div className="px-6 pb-5 lg:py-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">

@@ -141,17 +141,19 @@ export default function AICoach() {
   const hasTriggeredPromptRef = useRef(false);
   const initialPrompt = searchParams.get('prompt');
 
-  const handleSend = useCallback(async (textToSend?: string) => {
+  const handleSend = useCallback(async (textToSend?: string, appendUserMsg = true) => {
     const query = textToSend || input;
     if (!query.trim() || isLoading) return;
 
-    const userMsg: ChatMessage = {
-      id: `user_${Date.now()}`,
-      role: 'user',
-      content: query.trim(),
-    };
+    if (appendUserMsg) {
+      const userMsg: ChatMessage = {
+        id: `user_${Date.now()}`,
+        role: 'user',
+        content: query.trim(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+    }
 
-    setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInput('');
     setIsLoading(true);
 
@@ -233,7 +235,7 @@ export default function AICoach() {
       return next;
     });
 
-    await handleSend(lastUserMsg.content);
+    await handleSend(lastUserMsg.content, false);
   };
 
   return (
@@ -369,9 +371,21 @@ export default function AICoach() {
 
       {/* In-App Delete Session Confirmation Modal */}
       {sessionToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 animate-in fade-in select-none">
-          <div className="bg-white rounded-3xl p-4 md:p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center space-x-3">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 animate-in fade-in select-none"
+          onClick={() => setSessionToDelete(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-4 md:p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSessionToDelete(null)}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center space-x-3 pr-8">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>

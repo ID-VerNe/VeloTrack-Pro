@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   LayoutGrid, 
@@ -17,6 +17,7 @@ import { useApi } from '../hooks/useApi';
 import { getAdminToken } from '../utils/activity/adminApiClient';
 
 export default function ActivitiesList() {
+  const navigate = useNavigate();
   // 统一取数：loading/error 由 useApi 托管，错误不再被静默吞掉
   const { data: fetchedRides, isLoading, error } = useApi<any[]>('/api/rides', (json) => json.rides || []);
   const [localRides, setLocalRides] = useState<any[] | null>(null);
@@ -59,30 +60,13 @@ export default function ActivitiesList() {
   const executeDelete = async () => {
     if (!deleteConfirmDialog) return;
     const { id: rideId } = deleteConfirmDialog;
-    const token = getAdminToken();
     setDeletingId(rideId);
     setDeleteError(null);
     try {
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        headers['X-Admin-Token'] = token;
-      }
-      const res = await fetch(`/api/rides/${rideId}`, {
-        method: 'DELETE',
-        headers,
-      });
-      if (res.ok) {
-        setLocalRides((prev) => (prev ? prev.filter((r) => r.id !== rideId) : []));
-        setDeleteConfirmDialog(null);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          setDeleteError('鉴权未通过：管理令牌无效或已过期，请检查管理令牌（ADMIN_TOKEN）');
-        } else {
-          setDeleteError(data.error || '删除失败，请重试');
-        }
-      }
+      const { deleteRide } = await import('../services/rideService');
+      await deleteRide(rideId);
+      setLocalRides((prev) => (prev ? prev.filter((r) => r.id !== rideId) : []));
+      setDeleteConfirmDialog(null);
     } catch (err: any) {
       setDeleteError(err.message || '网络错误，删除失败');
     } finally {
@@ -301,11 +285,10 @@ export default function ActivitiesList() {
                   const dateStr = formatRideDate(ride.start_time);
 
                   return (
-                    <Link
+                    <div
                       key={ride.id}
-                      to={`/ride/${ride.id}`}
-                      state={{ from: '/rides' }}
-                      className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                      onClick={() => navigate(`/ride/${ride.id}`, { state: { from: '/rides' } })}
+                      className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer"
                     >
                       <div className="min-w-0 flex-1 pr-3">
                         <div className="flex items-center space-x-2">
@@ -343,7 +326,7 @@ export default function ActivitiesList() {
                           <ChevronRight className="w-3.5 h-3.5 inline-block" aria-hidden="true" />
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
