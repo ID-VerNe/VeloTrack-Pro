@@ -104,7 +104,8 @@ export default function SpeedSpectrumCard({ tiers, totalDurationSeconds = 0, cla
       <div className="grid grid-cols-5 gap-1.5 mt-3 pt-2 border-t border-slate-200/60">
         {TIER_CONFIGS.map((tier) => {
           const pct = Number(tiers[tier.pctKey]) || 0;
-          const secs = Number(tiers[tier.key]) || 0;
+          const rawSecs = Number(tiers[tier.key]) || 0;
+          const secs = totalDurationSeconds > 0 ? Math.round(totalDurationSeconds * (pct / 100)) : rawSecs;
           const isCruise = tier.key === 'cruising_secs';
 
           return (

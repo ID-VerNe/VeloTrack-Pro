@@ -2,6 +2,8 @@
  * 将骑行活动及经纬度坐标导出为标准 GPX 文件并触发浏览器下载
  */
 
+import { gcj02_to_wgs84 } from './coordTransform';
+
 /** XML 实体转义：标题等用户/AI 生成文本直接拼进 GPX 会被特殊字符破坏甚至注入 XML */
 function escapeXml(str: string): string {
   return String(str)
@@ -35,7 +37,12 @@ export function exportRideAsGPX(ride: any, routeCoordinates: [number, number][])
   <trk>
     <name>${safeTitle}</name>
     <trkseg>
-      ${routeCoordinates.map((c) => `<trkpt lat="${c[1]}" lon="${c[0]}"></trkpt>`).join('\n      ')}
+      ${routeCoordinates
+        .map((c) => {
+          const [wgsLng, wgsLat] = gcj02_to_wgs84(c[0], c[1]);
+          return `<trkpt lat="${wgsLat}" lon="${wgsLng}"></trkpt>`;
+        })
+        .join('\n      ')}
     </trkseg>
   </trk>
 </gpx>`;

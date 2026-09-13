@@ -255,7 +255,7 @@ export function analyzeRideTelemetry(
 
       // 累计距离：基于明细自身坐标（隐私圈内无坐标段距离不增长）
       if (dp.la !== undefined && dp.ln !== undefined) {
-        const cur: [number, number] = [dp.la, dp.ln];
+        const cur: [number, number] = [dp.ln, dp.la];
         if (lastCoord) cumDist += computeDistanceMeters(lastCoord, cur);
         lastCoord = cur;
       }
@@ -276,7 +276,7 @@ export function analyzeRideTelemetry(
           dp.la !== undefined && dp.ln !== undefined &&
           next.la !== undefined && next.ln !== undefined
         ) {
-          const d = computeDistanceMeters([dp.la, dp.ln], [next.la, next.ln]);
+          const d = computeDistanceMeters([dp.ln, dp.la], [next.ln, next.la]);
           speed = (d / ((next.t - dp.t) / 1000)) * 3.6;
         } else if (lastSpeed !== null) {
           speed = lastSpeed;

@@ -102,7 +102,7 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
             <div className="text-slate-500 text-xs font-semibold">齿比 / 外胎</div>
             <div className="font-bold text-slate-900 truncate text-xs" title={`${profile.gear_ratio || '46T/11-28T'} | ${profile.tires || '马牌2.0'}`}>
-              {profile.gear_ratio?.split(' ')[0] || '46T/11-28T'} · 马牌2.0
+              {profile.gear_ratio?.split(' ')[0] || '46T/11-28T'} · {profile.tires?.split(' ')[0] || '马牌2.0'}
             </div>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">

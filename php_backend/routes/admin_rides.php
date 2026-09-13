@@ -24,7 +24,9 @@ route('POST', '/api/admin/rides', function (array $p) {
     $pdo = get_db_connection();
 
     $id = $data['id'];
-    $title = !empty($data['title']) ? $data['title'] : ('骑行 ' . date('Y/m/d', (int)$data['start_time']));
+    $rawStart = (float)$data['start_time'];
+    $startSec = (int)($rawStart > 1e11 ? $rawStart / 1000 : $rawStart);
+    $title = !empty($data['title']) ? $data['title'] : ('骑行 ' . date('Y/m/d', $startSec));
     $startTime = num_or_null($data['start_time']);
     $endTime = num_or_null($data['end_time']);
     $elapsed = num_or_null($data['elapsed_time_seconds']);

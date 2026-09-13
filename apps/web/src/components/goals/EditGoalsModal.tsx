@@ -25,12 +25,14 @@ export default function EditGoalsModal({
 }: Props) {
   const [form, setForm] = useState<UserTargets>(initialValues);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // 弹层无障碍：焦点陷阱 + Esc 关闭 + 关闭后焦点返还
   const dialogRef = useDialog(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {
       setForm(initialValues);
+      setSaveError(null);
     }
   }, [initialValues, isOpen]);
 
@@ -39,9 +41,13 @@ export default function EditGoalsModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSaveError(null);
     try {
       await onSave(form);
       onClose();
+    } catch (err: any) {
+      console.error('Failed to save goals', err);
+      setSaveError(err.message || '保存目标失败，请检查管理令牌或网络连接');
     } finally {
       setIsSaving(false);
     }
@@ -69,6 +75,19 @@ export default function EditGoalsModal({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {saveError && (
+          <div className="mx-6 mt-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between">
+            <span>{saveError}</span>
+            <button
+              type="button"
+              onClick={() => setSaveError(null)}
+              className="text-rose-500 hover:text-rose-700 p-0.5 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">

@@ -40,6 +40,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
   const [memories, setMemories] = useState<RiderMemory[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Silent update that NEVER unmounts tabs or resets chat
   const fetchProfileAndMemories = useCallback(async () => {
@@ -55,18 +56,21 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
 
   useEffect(() => {
     if (isOpen) {
+      setSaveError(null);
       fetchProfileAndMemories();
     }
   }, [isOpen, fetchProfileAndMemories]);
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
+    setSaveError(null);
     try {
       await updateRiderProfile(profile);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setSaveError(err.message || '保存档案失败');
     } finally {
       setIsSaving(false);
     }
@@ -187,6 +191,11 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
             onChange={setProfile}
           />
           <div className="p-4 border-t border-slate-100 bg-white flex items-center justify-end space-x-3 shrink-0 font-mono">
+            {saveError && (
+              <span className="text-xs text-rose-600 flex items-center font-medium">
+                {saveError}
+              </span>
+            )}
             {saveSuccess && (
               <span className="text-xs text-slate-900 flex items-center font-medium">
                 <Check className="w-3.5 h-3.5 mr-1" /> 已保存

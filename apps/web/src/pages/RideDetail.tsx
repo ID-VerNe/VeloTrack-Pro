@@ -13,7 +13,6 @@ import RideMetricsGrid from '../components/ride-detail/RideMetricsGrid';
 import SpeedSpectrumCard from '../components/ride-detail/SpeedSpectrumCard';
 import RideElevationSpeedChart from '../components/ride-detail/RideElevationSpeedChart';
 import RideInsightCard from '../components/ride-detail/RideInsightCard';
-import RiderProfileDrawer from '../components/RiderProfileDrawer';
 import { getRideInsight, suggestRideTitle } from '../services/aiInsights';
 import { getRiderProfile } from '../services/riderService';
 import { getAdminToken } from '../utils/activity/adminApiClient';
@@ -558,12 +557,6 @@ export default function RideDetail() {
           />
         </div>
       </div>
-
-      {/* Rider Profile Configuration Drawer */}
-      <RiderProfileDrawer
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-      />
     </div>
   );
 }

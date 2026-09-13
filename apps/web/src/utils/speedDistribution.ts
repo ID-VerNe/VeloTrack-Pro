@@ -178,6 +178,37 @@ export function analyzeSpeedDistribution(
     : Number((cruisingAvg - 2.0).toFixed(1));
 
   // 3. 速度分层耗时分布
+  const hasTimestamps = sortedByTime.length >= 2 && sortedByTime[0].t !== undefined && sortedByTime[sortedByTime.length - 1].t !== undefined;
+  let totalSecs = 0;
+  let pausedSecs = 0;
+  let lowSecs = 0;
+  let tempoSecs = 0;
+  let cruiseSecs = 0;
+  let sprintSecs = 0;
+
+  if (hasTimestamps) {
+    for (let i = 0; i < sortedByTime.length; i++) {
+      const p = sortedByTime[i];
+      let deltaSecs = 1;
+      if (i < sortedByTime.length - 1) {
+        const nextT = sortedByTime[i + 1].t ?? p.t ?? 0;
+        const curT = p.t ?? 0;
+        deltaSecs = Math.max(0, Math.min(300, (nextT - curT) / 1000));
+      } else if (i > 0) {
+        const prevT = sortedByTime[i - 1].t ?? p.t ?? 0;
+        const curT = p.t ?? 0;
+        deltaSecs = Math.max(0, Math.min(300, (curT - prevT) / 1000));
+      }
+      totalSecs += deltaSecs;
+      const sp = p.sp || 0;
+      if (sp < 2.0) pausedSecs += deltaSecs;
+      else if (sp < 15.0) lowSecs += deltaSecs;
+      else if (sp < 22.0) tempoSecs += deltaSecs;
+      else if (sp < 30.0) cruiseSecs += deltaSecs;
+      else sprintSecs += deltaSecs;
+    }
+  }
+
   let pausedCount = 0;
   let lowCount = 0;
   let tempoCount = 0;
@@ -196,6 +227,13 @@ export function analyzeSpeedDistribution(
   const speedLoss = Number(Math.max(0, cruisingAvg - fallbackMovingAvgKmh).toFixed(1));
   const derivedCadence = deriveCadenceFromSpeed(cruisingAvg, chainring, cog);
 
+  const effTotalSecs = totalSecs > 0 ? totalSecs : totalCount;
+  const effPausedSecs = totalSecs > 0 ? Math.round(pausedSecs) : pausedCount;
+  const effLowSecs = totalSecs > 0 ? Math.round(lowSecs) : lowCount;
+  const effTempoSecs = totalSecs > 0 ? Math.round(tempoSecs) : tempoCount;
+  const effCruiseSecs = totalSecs > 0 ? Math.round(cruiseSecs) : cruiseCount;
+  const effSprintSecs = totalSecs > 0 ? Math.round(sprintSecs) : sprintCount;
+
   return {
     has_detail: true,
     cruising_avg_speed_kmh: cruisingAvg,
@@ -207,16 +245,16 @@ export function analyzeSpeedDistribution(
     derived_cadence_rpm: derivedCadence,
     cadence_zone_status: derivedCadence >= 85 && derivedCadence <= 95 ? 'golden' : derivedCadence < 85 ? 'low' : 'high',
     speed_tiers: {
-      paused_secs: pausedCount,
-      paused_pct: Math.round((pausedCount / totalCount) * 100),
-      low_speed_secs: lowCount,
-      low_speed_pct: Math.round((lowCount / totalCount) * 100),
-      tempo_secs: tempoCount,
-      tempo_pct: Math.round((tempoCount / totalCount) * 100),
-      cruising_secs: cruiseCount,
-      cruising_pct: Math.round((cruiseCount / totalCount) * 100),
-      sprint_secs: sprintCount,
-      sprint_pct: Math.round((sprintCount / totalCount) * 100),
+      paused_secs: effPausedSecs,
+      paused_pct: Math.round((effPausedSecs / effTotalSecs) * 100),
+      low_speed_secs: effLowSecs,
+      low_speed_pct: Math.round((effLowSecs / effTotalSecs) * 100),
+      tempo_secs: effTempoSecs,
+      tempo_pct: Math.round((effTempoSecs / effTotalSecs) * 100),
+      cruising_secs: effCruiseSecs,
+      cruising_pct: Math.round((effCruiseSecs / effTotalSecs) * 100),
+      sprint_secs: effSprintSecs,
+      sprint_pct: Math.round((effSprintSecs / effTotalSecs) * 100),
     },
     summary_text: `稳态平路巡航 ${cruisingAvg} km/h (${p75}-${p90} km/h), 46/15T 踏频 ${derivedCadence} rpm, 速度损耗 ${speedLoss} km/h (${Math.round((speedLoss / cruisingAvg) * 100)}%)`,
   };

@@ -56,10 +56,10 @@ describe('exportRideAsGPX XML 转义', () => {
     expect(gpx).toContain('<name>周末晨骑</name>');
   });
 
-  it('trackpoint 经纬度正确写入（lat/lng 不互换）', async () => {
+  it('trackpoint 经纬度正确写入（转换为标准 WGS-84 且 lat/lng 不互换）', async () => {
     const gpx = await getGpxContent({ id: 'r3', title: 't', start_time: 1700000000000 }, coords);
-    expect(gpx).toContain('<trkpt lat="30" lon="120"></trkpt>');
-    expect(gpx).toContain('<trkpt lat="30.001" lon="120.001"></trkpt>');
+    expect(gpx).toContain('<trkpt lat="30.002466" lon="119.99534"></trkpt>');
+    expect(gpx).toContain('<trkpt lat="30.003463" lon="119.996337"></trkpt>');
   });
 
   it('缺少时间字段时使用当前时间兜底，不抛异常', async () => {

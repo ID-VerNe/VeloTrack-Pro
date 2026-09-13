@@ -22,10 +22,13 @@ export function setAdminToken(token: string) {
   localStorage.setItem('velotrack_admin_token', token);
 }
 
-async function authFetch(url: string, init: RequestInit = {}, timeoutMs = 30000): Promise<Response> {
+export async function authFetch(url: string, init: RequestInit = {}, timeoutMs = 30000): Promise<Response> {
   const headers = new Headers(init.headers || {});
   const token = getAdminToken();
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+    headers.set('X-Admin-Token', token);
+  }
   return fetch(url, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
 }
 

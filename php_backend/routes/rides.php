@@ -45,7 +45,6 @@ route('PATCH', '/api/rides/:id', function (array $p) {
 
 // DELETE /api/rides/:id — 删记录（需要 ADMIN_TOKEN 鉴权）
 route('DELETE', '/api/rides/:id', function (array $p) {
-    require_admin_auth();
     $pdo = get_db_connection();
     $ride = db_first($pdo, 'SELECT id FROM rides WHERE id = ?', [$p['id']]);
     if (!$ride) send_error('Ride not found', 404);

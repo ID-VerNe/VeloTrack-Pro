@@ -8,7 +8,6 @@ import {
   PanelLeftOpen,
   X
 } from 'lucide-react';
-import RiderProfileDrawer from '../components/RiderProfileDrawer';
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatMessageItem from '../components/chat/ChatMessageItem';
 import ChatComposer from '../components/chat/ChatComposer';
@@ -38,9 +37,9 @@ export default function AICoach() {
   const [messages, setMessages] = useState<ChatMessage[]>([DEFAULT_WELCOME_MSG]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [riderInfo, setRiderInfo] = useState<{ weight: number; bike: string }>({ weight: 75, bike: '大行 P8' });
 
   // Floating Toast Notification State
@@ -62,6 +61,8 @@ export default function AICoach() {
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
+    } finally {
+      setIsSessionLoaded(true);
     }
   }, []);
 
@@ -86,10 +87,17 @@ export default function AICoach() {
 
   useEffect(() => {
     localStorage.setItem('velotrack_coach_session_id', sessionId);
+    setIsSessionLoaded(false);
     loadSessionMessages(sessionId);
     loadSessionsList();
     fetchRiderInfo();
   }, [sessionId, loadSessionMessages]);
+
+  useEffect(() => {
+    const handleProfileUpdated = () => fetchRiderInfo();
+    window.addEventListener('profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('profile-updated', handleProfileUpdated);
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -207,11 +215,11 @@ export default function AICoach() {
   }, [input, isLoading, sessionId]);
 
   useEffect(() => {
-    if (initialPrompt && !hasTriggeredPromptRef.current && !isLoading) {
+    if (initialPrompt && isSessionLoaded && !hasTriggeredPromptRef.current && !isLoading) {
       hasTriggeredPromptRef.current = true;
       handleSend(initialPrompt);
     }
-  }, [initialPrompt, isLoading, handleSend]);
+  }, [initialPrompt, isSessionLoaded, isLoading, handleSend]);
 
   const handleRegenerate = async () => {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
@@ -241,7 +249,7 @@ export default function AICoach() {
           onSelectSession={handleSelectSession}
           onNewSession={handleNewSession}
           onDeleteSession={handleRequestDeleteSession}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={() => window.dispatchEvent(new CustomEvent('open-profile'))}
         />
 
         {/* Center Main Workspace */}
@@ -266,7 +274,7 @@ export default function AICoach() {
                 </Link>
               ) : (
                 <button
-                  onClick={() => setIsProfileOpen(true)}
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
                   className="px-2.5 py-0.5 bg-white/10 hover:bg-white/20 text-white rounded text-xs transition-colors shrink-0 cursor-pointer"
                 >
                   查看
@@ -301,7 +309,7 @@ export default function AICoach() {
             <div className="flex items-center space-x-2 font-mono">
               <button
                 type="button"
-                onClick={() => setIsProfileOpen(true)}
+                onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
                 className="px-2.5 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 text-xs border border-slate-200 transition-colors cursor-pointer flex items-center space-x-1.5 shadow-2xs"
               >
                 <SlidersHorizontal className="w-3 h-3 text-slate-400" />
@@ -328,7 +336,7 @@ export default function AICoach() {
                   message={msg}
                   isLoading={isLoading}
                   onRegenerate={handleRegenerate}
-                  onOpenProfile={() => setIsProfileOpen(true)}
+                  onOpenProfile={() => window.dispatchEvent(new CustomEvent('open-profile'))}
                 />
               ))}
 
@@ -358,15 +366,6 @@ export default function AICoach() {
           />
         </main>
       </div>
-
-      {/* Slide-over Rider Profile & Onboarding Interview Drawer */}
-      <RiderProfileDrawer
-        isOpen={isProfileOpen}
-        onClose={() => {
-          setIsProfileOpen(false);
-          fetchRiderInfo();
-        }}
-      />
 
       {/* In-App Delete Session Confirmation Modal */}
       {sessionToDelete && (

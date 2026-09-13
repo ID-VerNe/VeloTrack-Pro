@@ -101,15 +101,17 @@ describe('Sidebar 导航侧边栏', () => {
     expect(screen.getByText('40%')).toBeInTheDocument();
   });
 
-  it('点击档案卡片打开抽屉，再点关闭收起抽屉', async () => {
+  it('点击档案卡片派发 open-profile 全局事件以打开顶层抽屉', async () => {
     const user = userEvent.setup();
+    const handleOpenProfile = vi.fn();
+    window.addEventListener('open-profile', handleOpenProfile);
+
     renderSidebar();
 
     await user.click(screen.getByLabelText('查看车手生物力学档案与战车硬件'));
-    expect(await screen.findByRole('dialog', { name: /车手与战车档案舱/ })).toBeInTheDocument();
+    expect(handleOpenProfile).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByLabelText('关闭'));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    window.removeEventListener('open-profile', handleOpenProfile);
   });
 
   it('档案卡片与导航项使用路由链接（无外部链接）', async () => {

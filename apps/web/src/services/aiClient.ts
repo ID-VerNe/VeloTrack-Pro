@@ -9,6 +9,8 @@
  * api_key（Gateway team key）存浏览器 localStorage，不进后端。
  */
 
+import { authFetch } from '../utils/activity/adminApiClient';
+
 const AI_TIMEOUT_MS = 120_000;
 // 10 次重试（共 11 次尝试）。Gateway 与其他调用方共享上游配额，
 // 429 是正常限流而非故障，靠指数退避异步等待而非失败。
@@ -55,7 +57,7 @@ export async function getAIConfig(): Promise<AIConfig> {
 
 /** 把 base_url + model_name 写回后端 ai_config（跨设备同步；key 不走后端） */
 export async function updateAIConfig(config: AIConfig): Promise<void> {
-  const res = await fetch('/api/ai/config', {
+  const res = await authFetch('/api/ai/config', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ base_url: config.base_url, model_name: config.model_name }),

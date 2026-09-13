@@ -82,12 +82,13 @@ export default function PeriodicReports() {
   };
 
   const handleNextPeriod = () => {
+    if (currentTimestamp >= latestActiveTimestamp) return;
     const d = new Date(currentTimestamp);
     if (periodType === 'week') d.setDate(d.getDate() + 7);
     else if (periodType === 'month') d.setMonth(d.getMonth() + 1);
     else if (periodType === 'half_year') d.setMonth(d.getMonth() + 6);
     else d.setFullYear(d.getFullYear() + 1);
-    setCurrentTimestamp(d.getTime());
+    setCurrentTimestamp(Math.min(latestActiveTimestamp, d.getTime()));
   };
 
   const handleGenerateAiInsight = async () => {

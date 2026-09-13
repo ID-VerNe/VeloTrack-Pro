@@ -8,7 +8,7 @@
 
 import { getPeriodBoundaries } from '../utils/dateUtils';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
-import { getAdminToken } from '../utils/activity/adminApiClient';
+import { authFetch } from '../utils/activity/adminApiClient';
 
 export interface RiderProfileData {
   id?: number;
@@ -83,12 +83,15 @@ export async function getRiderProfile(): Promise<RiderProfileData> {
 }
 
 export async function updateRiderProfile(data: Partial<RiderProfileData>): Promise<RiderProfileData> {
-  const res = await fetch('/api/ai/rider/profile', {
+  const res = await authFetch('/api/ai/rider/profile', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('更新车手档案失败：HTTP ' + res.status);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || errData.message || '更新车手档案失败：HTTP ' + res.status);
+  }
   const d = await res.json();
   return d.profile;
 }
@@ -117,12 +120,15 @@ export async function getTrainingGoals(): Promise<TrainingGoalsData> {
 }
 
 export async function updateTrainingGoals(data: Partial<TrainingGoalsData>): Promise<TrainingGoalsData> {
-  const res = await fetch('/api/ai/goals', {
+  const res = await authFetch('/api/ai/goals', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('更新训练目标失败：HTTP ' + res.status);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || errData.message || '更新训练目标失败：HTTP ' + res.status);
+  }
   const d = await res.json();
   return d.goals;
 }
@@ -142,11 +148,15 @@ export async function addGoalMilestone(data: {
   rationale: string;
   source?: string;
 }): Promise<void> {
-  await fetch('/api/ai/goals/milestones', {
+  const res = await authFetch('/api/ai/goals/milestones', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || errData.message || '添加里程碑失败：HTTP ' + res.status);
+  }
 }
 
 export interface RiderMemory {
@@ -177,24 +187,21 @@ export async function upsertRiderMemory(
   source = 'manual',
   importance = 3
 ): Promise<number> {
-  const res = await fetch('/api/ai/rider/memories', {
+  const res = await authFetch('/api/ai/rider/memories', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ category, memory_key: key, content, source, importance }),
   });
-  if (!res.ok) throw new Error('保存记忆失败');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || errData.message || '保存记忆失败：HTTP ' + res.status);
+  }
   const data = await res.json();
   return data.id;
 }
 
 export async function deleteRiderMemory(id: number): Promise<void> {
-  const token = getAdminToken();
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-    headers['X-Admin-Token'] = token;
-  }
-  const res = await fetch(`/api/ai/rider/memories/${id}`, { method: 'DELETE', headers });
+  const res = await authFetch(`/api/ai/rider/memories/${id}`, { method: 'DELETE' });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) {
