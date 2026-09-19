@@ -50,32 +50,45 @@ VeloTrack Pro 从底层轨迹点位数学解算开始重构，把真实 GPS 采�
   - L4: 近期实战骑行与微观遥测。
 - **防污染机制**：教练生成的目标计划写入独立里程碑表，杜绝大段课表文本污染长期事实库。
 
-### 6. 数据安全与隐私脱敏
+### 6. 数据安全与端侧隐私脱敏
 - 管理端支持划定家庭或公司隐私区域（设置经纬度与遮蔽半径）。
 - 导入 GPX/TCX 轨迹时自动模糊敏感点位，保护日常起止点隐私。
+
+### 7. VeloSync 原生 Android 中继伴侣 (Mobile Companion)
+- **华为运动健康/Garmin 一键直传**：手机端直接点击 TCX 分享至 VeloSync，无需手动保存文件再开浏览器上传。
+- **100% 端侧本地脱敏**：流式 XML 解析、GCJ-02 火星纠偏、三道隐私圈拦截网（圈内抹除、垂足防穿透、起点 300m 安全缓冲）全部在手机本地运行，敏感原始坐标绝不出端。
+- **Cloudflare Zero Trust 穿透**：原生支持 Service Auth 凭证注入（`CF-Access-Client-Id` / `Secret`），免登穿透企业级网关。
+- **极速轻量体验**：单 APK 仅 ~7MB，半透明底部卡片动效，1~2 秒内自动同步并退出。
 
 ---
 
 ## 项目架构与技术栈
 
-本项目采用 pnpm Monorepo 组织结构：
+本项目采用 pnpm Monorepo + Android 原生混合架构：
 
 ```
 Cycling/
 ├── apps/
-│   ├── web/               # 骑手分析工作台 (前端用户界面 + AI 逻辑)
+│   ├── web/               # 骑手分析工作台 (前端用户界面 + AI 逻辑，部署至 CF Workers)
 │   │   ├── src/
-│   │   │   ├── components/  # 仪表盘、骑行详情、图表联动、记忆画像抽屉等
-│   │   │   ├── pages/       # Dashboard, RideDetail, AICoach, PeriodicReports 等
+│   │   │   ├── components/  # 仪表盘、骑行详情、图表联动、手机配对二维码弹窗等
+│   │   │   ├── pages/       # Dashboard, RideDetail, AICoach, DataImport 等
 │   │   │   ├── services/    # AI 调用层：aiCoach/aiInsights/aiProfile/reportService/riderService
 │   │   │   └── utils/       # 遥测解算、坐标投影、齿比踏频物理引擎
 │   │   └── vite.config.ts
 │   │
-│   └── admin/             # 数据入库管理端 (TCX/GPX 解析、隐私圈、上传)
-│       ├── src/
-│       │   ├── components/  # 文件上传、隐私圈绘制、AI 服务 base_url/model 配置
-│       │   └── utils/       # XML 轨迹点提取、脱敏、降采样
-│       └── vite.config.ts
+│   ├── admin/             # Web 端数据入库管理端 (TCX/GPX 解析、隐私圈、上传)
+│   │   ├── src/
+│   │   │   ├── components/  # 文件上传、隐私圈绘制、AI 服务配置
+│   │   │   └── utils/       # XML 轨迹点提取、脱敏、降采样
+│   │   └── vite.config.ts
+│   │
+│   └── android/           # VeloSync 原生 Android 中继伴侣 (Kotlin 原生开发)
+│       ├── app/src/main/
+│       │   ├── java/.../core/  # TcxParser (流式解析), PrivacyScrubber (本地脱敏), GeoCalculations (火星纠偏)
+│       │   ├── java/.../data/  # ApiService (Zero Trust 自动注入), ConfigRepository (DataStore)
+│       │   └── java/.../ui/    # ShareReceiverActivity (分享接管卡片), MainActivity (扫码配对)
+│       └── build.gradle.kts
 │
 ├── php_backend/          # PHP 后端 (SQLite on disk，替代原 Cloudflare D1/R2)
 │   ├── index.php           # 前置控制器 + PATH_INFO 路由 + Bearer 鉴权
@@ -87,8 +100,9 @@ Cycling/
 ```
 
 ### 技术栈选型
-- **Web 端**：React 19 + TypeScript + Vite 8 + Tailwind CSS + MapLibre GL + ECharts + Lucide Icons
+- **Web 端**：React 19 + TypeScript + Vite 8 + Tailwind CSS + MapLibre GL + ECharts + Lucide Icons (Cloudflare Worker 部署)
 - **Admin 端**：React 19 + TypeScript + Vite 8 + Turf.js + fast-xml-parser
+- **Android 伴侣端**：Kotlin + Jetpack (DataStore, Coroutines, Lifecycle) + OkHttp 4 + KotlinX Serialization + ZXing
 - **后端**：PHP 8 + PDO sqlite (磁盘 SQLite，无 D1/R2)，直连磁盘 `cycling.db`
 - **AI 层**：Web 端直调用户的 Serverless-AI-API-Gateway (`https://api-gateway.yuuverne.site`)，team key 存浏览器 localStorage；后端只存 `base_url` + `model_name`，不持 key
 - **包管理器**：`pnpm` (工作区单仓规范)

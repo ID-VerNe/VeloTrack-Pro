@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+  <Activities>
+    <Activity Sport="Biking">
+      <Id>2024-05-01T10:00:00Z</Id>
+      <Lap StartTime="2024-05-01T10:00:00Z">
+        <TotalTimeSeconds>120</TotalTimeSeconds>
+        <DistanceMeters>1000</DistanceMeters>
+        <Calories>45</Calories>
+        <Track>
+          <Trackpoint>
+            <Time>2024-05-01T10:00:00Z</Time>
+            <Position>
+              <LatitudeDegrees>23.1291</LatitudeDegrees>
+              <LongitudeDegrees>113.2644</LongitudeDegrees>
+            </Position>
+            <AltitudeMeters>25.0</AltitudeMeters>
+            <HeartRateBpm><Value>135</Value></HeartRateBpm>
+            <Cadence>80</Cadence>
+            <Extensions>
+              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+                <Speed>6.0</Speed>
+              </TPX>
+            </Extensions>
+          </Trackpoint>
+          <Trackpoint>
+            <Time>2024-05-01T10:01:00Z</Time>
+            <Position>
+              <LatitudeDegrees>23.1310</LatitudeDegrees>
+              <LongitudeDegrees>113.2660</LongitudeDegrees>
+            </Position>
+            <AltitudeMeters>30.0</AltitudeMeters>
+            <HeartRateBpm><Value>155</Value></HeartRateBpm>
+            <Cadence>85</Cadence>
+            <Extensions>
+              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+                <Speed>8.0</Speed>
+              </TPX>
+            </Extensions>
+          </Trackpoint>
+        </Track>
+      </Lap>
+    </Activity>
+  </Activities>
+</TrainingCenterDatabase>

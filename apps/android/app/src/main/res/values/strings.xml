@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">VeloSync</string>
+    <string name="share_target_label">上传到 VeloTrack Pro</string>
+    <string name="status_ready">已就绪，等待数据同步</string>
+    <string name="btn_scan_qr">扫码配对电脑端</string>
+    <string name="btn_manual_save">保存配置</string>
+    <string name="title_config">连接与凭证设置</string>
+    <string name="label_base_url">服务地址 (Cloudflare Worker 域名)</string>
+    <string name="label_admin_token">管理令牌 (ADMIN_TOKEN)</string>
+    <string name="label_cf_client_id">Zero Trust Client ID</string>
+    <string name="label_cf_client_secret">Zero Trust Client Secret</string>
+    <string name="zones_count">已缓存 %1$d 个隐私脱敏区域</string>
+    <string name="syncing_title">正在同步骑行数据</string>
+    <string name="step_parsing">正在解析轨迹 XML...</string>
+    <string name="step_scrubbing">正在执行本地隐私脱敏...</string>
+    <string name="step_uploading">正在通过 Zero Trust 传输...</string>
+    <string name="sync_success">同步完成！</string>
+    <string name="sync_failed">同步失败: %1$s</string>
+</resources>

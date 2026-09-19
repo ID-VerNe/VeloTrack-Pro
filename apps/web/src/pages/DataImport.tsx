@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KeyRound, Check, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { KeyRound, Check, ShieldCheck, ArrowLeft, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FileUpload, type BatchProgress } from '../components/upload/FileUpload';
 import { PrivacyZoneList } from '../components/upload/PrivacyZoneList';
+import { PairingModal } from '../components/upload/PairingModal';
 import type { PrivacyZone } from '../utils/activity/privacyScrubber';
 import { parseActivityFile } from '../utils/activity/activityParser';
 import { scrubPrivacyZones } from '../utils/activity/privacyScrubber';
@@ -24,6 +25,7 @@ export default function DataImport() {
   const [adminToken, setAdminTokenState] = useState(getAdminToken());
   const [showTokenInput, setShowTokenInput] = useState(false);
   const [tokenSavedToast, setTokenSavedToast] = useState(false);
+  const [showPairingModal, setShowPairingModal] = useState(false);
 
   const loadZones = useCallback(async () => {
     setZonesError(null);
@@ -179,6 +181,16 @@ export default function DataImport() {
 
             {/* Admin Token Control */}
             <div className="flex items-center space-x-3 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setShowPairingModal(true)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 bg-white text-slate-700 hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50/40 shadow-xs transition-all cursor-pointer"
+                title="配对 Android 原生伴侣 (VeloSync)，扫码一秒导入全部凭证"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-brand-600" />
+                <span>配对手机 (VeloSync)</span>
+              </button>
+
               {tokenSavedToast && (
                 <span className="text-xs font-medium text-emerald-600 flex items-center animate-in fade-in">
                   <Check className="w-3.5 h-3.5 mr-1" />
@@ -279,6 +291,12 @@ export default function DataImport() {
             </div>
           </div>
         </div>
+
+        {/* 移动伴侣配对弹窗 */}
+        <PairingModal
+          isOpen={showPairingModal}
+          onClose={() => setShowPairingModal(false)}
+        />
       </main>
     </div>
   );

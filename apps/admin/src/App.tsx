@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Smartphone } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import type { BatchProgress } from './components/FileUpload';
 import { PrivacyZoneList } from './components/PrivacyZoneList';
 import { AIConfigCard } from './components/AIConfigCard';
+import { PairingModal } from './components/PairingModal';
 import type { PrivacyZone } from './utils/privacyScrubber';
 import { parseActivityFile } from './utils/activityParser';
 import { scrubPrivacyZones } from './utils/privacyScrubber';
@@ -20,6 +21,7 @@ function App() {
   const [activeZoneIds, setActiveZoneIds] = useState<Set<string>>(new Set());
   const [adminToken, setAdminTokenState] = useState(getAdminToken());
   const [showTokenInput, setShowTokenInput] = useState(false);
+  const [showPairingModal, setShowPairingModal] = useState(false);
 
   const loadZones = useCallback(async () => {
     setZonesError(null);
@@ -154,6 +156,17 @@ function App() {
             <p className="text-xs text-slate-400 font-medium mt-0.5">本地隐私擦除 · 自动纠偏 · 智能命名 · 云端入库</p>
           </div>
           <div className="flex items-center space-x-4">
+            {/* 配对移动伴侣按钮 */}
+            <button
+              aria-label="配对移动端"
+              title="配对移动伴侣 (VeloSync)"
+              onClick={() => setShowPairingModal(true)}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 transition-colors text-xs font-semibold"
+            >
+              <Smartphone className="w-4 h-4 text-blue-600" />
+              <span>配对手机</span>
+            </button>
+
             {/* 管理令牌配置：与后端 ADMIN_TOKEN Secret 配套 */}
             {showTokenInput ? (
               <div className="flex items-center space-x-2">
@@ -224,6 +237,12 @@ function App() {
 
           {/* Model Configuration Card */}
           <AIConfigCard />
+
+          {/* 配对移动伴侣弹窗 */}
+          <PairingModal
+            isOpen={showPairingModal}
+            onClose={() => setShowPairingModal(false)}
+          />
         </div>
       </div>
     </div>
