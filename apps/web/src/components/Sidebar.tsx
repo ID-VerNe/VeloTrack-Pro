@@ -6,6 +6,7 @@ import {
 import type { RiderProfile } from '../types/rider';
 import { getNaturalWeekRange } from '../utils/dateUtils';
 import { getRiderProfile } from '../services/riderService';
+import SyncStatusBar from './common/SyncStatusBar';
 
 interface NavSection {
   title: string;
@@ -160,33 +161,43 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
         {/* Bottom Profile Footer Card */}
         <div className="pt-4 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
-            aria-label="查看车手生物力学档案与战车硬件"
-            className="w-full text-left flex items-center justify-between p-2.5 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50 transition-colors cursor-pointer group focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-            title="查看车手生物力学档案与战车硬件"
-          >
-            <div className="flex items-center space-x-2.5 min-w-0">
+          <div className="w-full flex items-center justify-between p-2 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50/80 transition-colors group">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
+              aria-label="查看车手生物力学档案与战车硬件"
+              className="flex items-center space-x-2.5 min-w-0 flex-1 text-left cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400 rounded"
+              title="查看车手生物力学档案与战车硬件"
+            >
               <img
                 src="/logo-kigurumi.jpg"
                 alt="Avatar"
                 className="w-6 h-6 rounded-full object-cover border border-slate-200 shrink-0"
               />
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-900 leading-tight truncate">
+                <div className="text-xs font-semibold text-slate-900 leading-tight truncate group-hover:text-brand-600 transition-colors">
                   {profile.name || '车手档案'}
                 </div>
                 <div className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
                   {profile.current_bike?.split(' ')[0] || '战车'} · {profile.weight_kg}kg
                 </div>
               </div>
-            </div>
+            </button>
 
-            <div className="flex items-center text-slate-400 group-hover:text-slate-700 transition-colors pl-1">
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+            {/* 同步状态微徽章 + 设置抽屉按钮 */}
+            <div className="flex items-center space-x-1 shrink-0 pl-1">
+              <SyncStatusBar placement="bottom-left" />
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
+                className="p-1 text-slate-400 hover:text-slate-700 transition-colors rounded cursor-pointer hover:bg-slate-100 focus:outline-none"
+                title="查看车手生物力学档案与战车硬件"
+                aria-label="打开设置抽屉"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+              </button>
             </div>
-          </button>
+          </div>
         </div>
       </aside>
     </>

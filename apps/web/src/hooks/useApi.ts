@@ -17,6 +17,21 @@ export function useApi<T>(url: string | null, select: (json: any) => T = (j) => 
   selectRef.current = select;
   const hasLocalDataRef = useRef(false);
 
+// 浅比较骑行列表是否完全等价（防止空更新导致下游组件重新渲染和重绘地图）
+function isRidesDataIdentical(prev: any, next: any): boolean {
+  if (prev === next) return true;
+  if (!Array.isArray(prev) || !Array.isArray(next)) return false;
+  if (prev.length !== next.length) return false;
+  for (let i = 0; i < prev.length; i++) {
+    const a = prev[i];
+    const b = next[i];
+    if (a?.id !== b?.id || a?.updated_at !== b?.updated_at || a?.title !== b?.title) {
+      return false;
+    }
+  }
+  return true;
+}
+
   const load = useCallback(
     async (silent = false) => {
       if (url === null) return;
@@ -28,7 +43,13 @@ export function useApi<T>(url: string | null, select: (json: any) => T = (j) => 
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        setData(selectRef.current(json));
+        const nextData = selectRef.current(json);
+        setData((prevData) => {
+          if (isRidesDataIdentical(prevData, nextData)) {
+            return prevData;
+          }
+          return nextData;
+        });
         setError(null);
 
         // 若是骑行列表，静默回写到本地 IndexedDB 保持持久化（同时保护发件箱未决修改，防止旧数据覆盖）
@@ -72,8 +93,10 @@ export function useApi<T>(url: string | null, select: (json: any) => T = (j) => 
           hasLocalDataRef.current = true;
           setData(selectRef.current({ rides: cached }));
           setIsLoading(false);
-          // 后台静默对齐，不触发骨架屏
-          load(true);
+          // 本地已有完整缓存时，交给 syncEngine 轻量增量对齐（带 45s 防抖），不再发全量重复请求
+          import('../services/syncEngine').then(({ syncEngine }) => {
+            syncEngine.pullSync().catch(() => {});
+          }).catch(() => {});
         } else {
           load(false);
         }
@@ -85,10 +108,17 @@ export function useApi<T>(url: string | null, select: (json: any) => T = (j) => 
         if (cancelled) return;
         unsubscribeSync = syncEngine.subscribe(async (event) => {
           if (cancelled) return;
-          if (event.type === 'sync_completed') {
+          // 仅当真正有增量新增、修改或删除时才通知更新，避免无意义的重复渲染
+          if (
+            event.type === 'sync_completed' &&
+            ((event.newCount && event.newCount > 0) ||
+              (event.deletedCount && event.deletedCount > 0) ||
+              (event.updatedCount && event.updatedCount > 0))
+          ) {
             const fresh = await getAllLocalRides();
             if (!cancelled && fresh && fresh.length > 0) {
-              setData(selectRef.current({ rides: fresh }));
+              const nextData = selectRef.current({ rides: fresh });
+              setData((prev) => (isRidesDataIdentical(prev, nextData) ? prev : nextData));
             }
           }
         });

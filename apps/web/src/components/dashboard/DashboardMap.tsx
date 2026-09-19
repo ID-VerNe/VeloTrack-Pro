@@ -61,9 +61,13 @@ export default function DashboardMap({
     }
   }, [rides, selectedCity, currentMapStyle]);
 
+  const hasFittedInitialBoundsRef = useRef(false);
+  const ridesRef = useRef(rides);
+  ridesRef.current = rides;
+
   // Render Routes on Map
-  const renderRoutes = React.useCallback((map: MapLibreMap, ridesToRender: any[]) => {
-    if (!map || !map.isStyleLoaded() || ridesToRender.length === 0) return;
+  const renderRoutes = React.useCallback((map: MapLibreMap, ridesToRender: any[], shouldFitBounds = false) => {
+    if (!map || !map.isStyleLoaded() || !ridesToRender || ridesToRender.length === 0) return;
 
     const bounds = new LngLatBounds();
     let hasPoints = false;
@@ -173,12 +177,13 @@ export default function DashboardMap({
       }
     });
 
-    if (hasPoints) {
+    if (hasPoints && shouldFitBounds) {
+      hasFittedInitialBoundsRef.current = true;
       map.fitBounds(bounds, { padding: 45, duration: 800 });
     }
   }, [currentMapStyle, navigate]);
 
-  // Map Initialization
+  // Map Initialization - 仅在底图风格变更或容器挂载时初始化一次，绝不因 rides 数据更新而销毁重做
   useEffect(() => {
     if (!mapContainer.current) return;
 
@@ -195,10 +200,11 @@ export default function DashboardMap({
       attributionControl: false,
     });
     mapRef.current = map;
+    hasFittedInitialBoundsRef.current = false;
 
     map.on('load', () => {
       map.resize();
-      renderRoutes(map, rides);
+      renderRoutes(map, ridesRef.current, true);
     });
 
     return () => {
@@ -207,7 +213,17 @@ export default function DashboardMap({
         mapRef.current = null;
       }
     };
-  }, [currentMapStyle, rides, renderRoutes]);
+  }, [currentMapStyle, renderRoutes]);
+
+  // 当 rides 数据更新且地图就绪时，增量绘制路线，不销毁重建地图，不强行动画夺取用户视野
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (map.isStyleLoaded()) {
+      renderRoutes(map, rides, !hasFittedInitialBoundsRef.current);
+    }
+  }, [rides, renderRoutes]);
 
   // City Switcher Camera Focus
   useEffect(() => {
