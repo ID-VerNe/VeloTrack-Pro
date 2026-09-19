@@ -122,4 +122,37 @@ describe('useActivityFilters', () => {
     expect(result.current.sortBy).toBe('date_desc');
     expect(result.current.filteredRides).toHaveLength(3);
   });
+
+  it('按 cross_city 筛选跨城远征以及按包含在跨城中的子城市筛选', () => {
+    const ridesWithCross = [
+      ...mockRides,
+      {
+        id: 'r4',
+        title: '深莞跨城远征',
+        distance_meters: 80000,
+        start_time: 1700300000000,
+        avg_speed_kmh: 24.0,
+        total_ascent_meters: 200,
+        city: '深圳 → 东莞',
+        is_cross_city: true,
+      },
+    ];
+    const { result } = renderHook(() => useActivityFilters({ rides: ridesWithCross }));
+    act(() => {
+      result.current.setCityFilter('cross_city');
+    });
+    expect(result.current.filteredRides).toHaveLength(1);
+    expect(result.current.filteredRides[0].id).toBe('r4');
+
+    act(() => {
+      result.current.setCityFilter('东莞');
+    });
+    expect(result.current.filteredRides).toHaveLength(1);
+    expect(result.current.filteredRides[0].id).toBe('r4');
+
+    act(() => {
+      result.current.setCityFilter('深圳');
+    });
+    expect(result.current.filteredRides).toHaveLength(3);
+  });
 });

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Map as MapLibreMap, LngLatBounds, Marker } from 'maplibre-gl';
-import { Plus, Minus, Maximize2 } from 'lucide-react';
+import MapFloatingControls from '../common/MapFloatingControls';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import polyline from '@mapbox/polyline';
 import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
-import { detectCityForRide } from '../../utils/geoUtils';
+import { matchesCityFilter } from '../../utils/geoUtils';
 import { adaptCoordinatesToMapStyle } from '../../utils/coordTransform';
 import { MAP_ROUTE_TOKENS } from '../../constants/designTokens';
 import {
@@ -42,7 +42,7 @@ export default function DashboardMap({
     const targetRides =
       selectedCity === 'all'
         ? rides
-        : rides.filter((r) => detectCityForRide(r) === selectedCity);
+        : rides.filter((r) => matchesCityFilter(r, selectedCity));
 
     if (targetRides.length === 0) return;
 
@@ -231,7 +231,7 @@ export default function DashboardMap({
     const targetRides =
       selectedCity === 'all'
         ? rides
-        : rides.filter((r) => detectCityForRide(r) === selectedCity);
+        : rides.filter((r) => matchesCityFilter(r, selectedCity));
 
     if (targetRides.length === 0) return;
 
@@ -351,29 +351,12 @@ export default function DashboardMap({
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Floating Zoom & Fit Controls (Bottom Right Ergonomics - iOS style integrated capsule) */}
-      <div className="absolute right-4 bottom-6 z-20 flex flex-col bg-white/90 backdrop-blur-md rounded-xl border border-slate-200/80 shadow-md divide-y divide-slate-200/60 overflow-hidden pointer-events-auto">
-        <button
-          onClick={fitCurrentBounds}
-          className="p-2.5 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors active:scale-95 cursor-pointer flex items-center justify-center"
-          aria-label="适应当前城市所有轨迹"
-        >
-          <Maximize2 className="w-4 h-4" aria-hidden="true" />
-        </button>
-        <button
-          onClick={handleZoomIn}
-          className="p-2.5 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors active:scale-95 cursor-pointer flex items-center justify-center"
-          aria-label="放大"
-        >
-          <Plus className="w-4 h-4" aria-hidden="true" />
-        </button>
-        <button
-          onClick={handleZoomOut}
-          className="p-2.5 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors active:scale-95 cursor-pointer flex items-center justify-center"
-          aria-label="缩小"
-        >
-          <Minus className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
-        </button>
-      </div>
+      <MapFloatingControls
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitBounds={fitCurrentBounds}
+        fitLabel="适应当前城市所有轨迹"
+      />
     </div>
   );
 }

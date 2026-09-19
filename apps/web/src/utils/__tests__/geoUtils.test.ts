@@ -5,6 +5,7 @@ import {
   extractCitiesFromRides,
   getRideCities,
   isCrossCityRide,
+  matchesCityFilter,
 } from '../geoUtils';
 
 afterEach(() => {
@@ -133,5 +134,36 @@ describe('extractCitiesFromRides 城市聚合与多维包含', () => {
   it('空骑乘列表只返回 全部城市（计数 0）', () => {
     const list = extractCitiesFromRides([]);
     expect(list).toEqual([{ id: 'all', name: '全部城市', count: 0 }]);
+  });
+});
+
+describe('matchesCityFilter 城市过滤匹配', () => {
+  const szRide = { id: 1, city: '深圳' };
+  const dgRide = { id: 2, city: '东莞' };
+  const crossRide = { id: 3, city: '深圳 → 东莞', is_cross_city: true };
+
+  it('当 cityFilter 为 all 或空时始终返回 true', () => {
+    expect(matchesCityFilter(szRide, 'all')).toBe(true);
+    expect(matchesCityFilter(crossRide, 'all')).toBe(true);
+    expect(matchesCityFilter(szRide, '')).toBe(true);
+  });
+
+  it('当 cityFilter 为 cross_city 时仅匹配跨城远征', () => {
+    expect(matchesCityFilter(crossRide, 'cross_city')).toBe(true);
+    expect(matchesCityFilter(szRide, 'cross_city')).toBe(false);
+    expect(matchesCityFilter(dgRide, 'cross_city')).toBe(false);
+  });
+
+  it('当筛选具体城市时，能正确匹配普通城市与跨城路线中包含的子城市', () => {
+    expect(matchesCityFilter(szRide, '深圳')).toBe(true);
+    expect(matchesCityFilter(szRide, '东莞')).toBe(false);
+    // 跨城路线同时满足深圳与东莞
+    expect(matchesCityFilter(crossRide, '深圳')).toBe(true);
+    expect(matchesCityFilter(crossRide, '东莞')).toBe(true);
+    expect(matchesCityFilter(crossRide, '广州')).toBe(false);
+  });
+
+  it('空记录安全防御', () => {
+    expect(matchesCityFilter(null, '深圳')).toBe(true);
   });
 });

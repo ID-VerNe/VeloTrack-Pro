@@ -113,6 +113,18 @@ export function isCrossCityRide(ride: any): boolean {
 }
 
 /**
+ * 判断某条骑行记录是否匹配城市筛选条件（支持 'all'、'cross_city' 及具体城市名）
+ */
+export function matchesCityFilter(ride: any, cityFilter: string): boolean {
+  if (!ride || !cityFilter || cityFilter === 'all') return true;
+  if (cityFilter === 'cross_city') {
+    return isCrossCityRide(ride);
+  }
+  const cities = getRideCities(ride);
+  return cities.includes(cityFilter);
+}
+
+/**
  * 聚合骑行列表中的所有城市，并支持多维包含计数与跨城聚合
  */
 export function extractCitiesFromRides(rides: any[]): CityInfo[] {

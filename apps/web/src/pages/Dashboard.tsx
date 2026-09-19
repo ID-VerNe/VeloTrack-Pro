@@ -4,7 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import TotalStatsCard from '../components/TotalStatsCard';
 import ConsistencyHeatmap from '../components/ConsistencyHeatmap';
 import RideCard from '../components/RideCard';
-import { extractCitiesFromRides, detectCityForRide, getRideCities, isCrossCityRide } from '../utils/geoUtils';
+import { extractCitiesFromRides, matchesCityFilter } from '../utils/geoUtils';
 
 import DashboardMap from '../components/dashboard/DashboardMap';
 import DashboardControls from '../components/dashboard/DashboardControls';
@@ -47,13 +47,7 @@ export default function Dashboard() {
 
   const filteredRides = useMemo(() => {
     return rides.filter((r) => {
-      const cities = getRideCities(r);
-      const matchCity =
-        selectedCity === 'all'
-          ? true
-          : selectedCity === 'cross_city'
-          ? isCrossCityRide(r)
-          : cities.includes(selectedCity);
+      const matchCity = matchesCityFilter(r, selectedCity);
 
       const matchSearch =
         !searchTerm.trim() ||

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { detectCityForRide, extractCitiesFromRides, type CityInfo } from '../utils/geoUtils';
+import { matchesCityFilter, extractCitiesFromRides, type CityInfo } from '../utils/geoUtils';
 
 export type ActivitySortOption = 'date_desc' | 'dist_desc' | 'speed_desc' | 'ascent_desc';
 export type ActivityDistanceOption = 'all' | 'short' | 'medium' | 'long';
@@ -35,8 +35,7 @@ export function useActivityFilters({ rides }: UseActivityFiltersOptions) {
     return rides
       .filter((r) => {
         const titleMatch = (r.title || '').toLowerCase().includes(searchQuery.toLowerCase());
-        const city = detectCityForRide(r);
-        const cityMatch = cityFilter === 'all' || city === cityFilter;
+        const cityMatch = matchesCityFilter(r, cityFilter);
 
         const distKm = (r.distance_meters || 0) / 1000;
         let distMatch = true;
