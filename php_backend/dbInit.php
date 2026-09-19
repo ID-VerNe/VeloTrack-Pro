@@ -65,21 +65,27 @@ function run_ensure_tables(PDO $pdo): void
             cities TEXT,
             is_cross_city INTEGER DEFAULT 0,
             is_commute INTEGER DEFAULT 0,
-            created_at INTEGER NOT NULL
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER,
+            deleted_at INTEGER
         )
     ");
     try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)'); } catch (Throwable $e) {}
     try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_city ON rides(city)'); } catch (Throwable $e) {}
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_sync ON rides(updated_at, deleted_at)'); } catch (Throwable $e) {}
 
     require_once __DIR__ . '/utils/geo_resolver.php';
 
-    // 迁移：旧库可能仍有 r2 key 列、缺 detail_points 列、city 列、cities 列或 is_cross_city 列
+    // 迁移：旧库可能仍有 r2 key 列、缺 detail_points 列、city 列、cities 列、is_cross_city 列、或增量同步字段
     try { $pdo->exec('ALTER TABLE rides ADD COLUMN detail_points TEXT'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides ADD COLUMN city TEXT'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides ADD COLUMN cities TEXT'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides ADD COLUMN is_cross_city INTEGER DEFAULT 0'); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN updated_at INTEGER'); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN deleted_at INTEGER'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides DROP COLUMN detail_points_r2_key'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides DROP COLUMN raw_tcx_r2_key'); } catch (Throwable $e) {}
+    try { $pdo->exec("UPDATE rides SET updated_at = COALESCE(created_at, CAST(strftime('%s', 'now') AS INTEGER) * 1000) WHERE updated_at IS NULL"); } catch (Throwable $e) {}
 
     // 自动回填：为历史记录中缺失 cities 或 city 的行自动补齐城市与跨城信息
     try {

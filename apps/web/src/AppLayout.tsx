@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar';
 import MobileTabBar from './components/MobileTabBar';
 import RiderProfileDrawer from './components/RiderProfileDrawer';
 
+import SyncStatusBar from './components/common/SyncStatusBar';
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
@@ -20,6 +22,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       
       {/* 主体内容区域 - padding-bottom 适配移动端底部导航，md 以上无 padding */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0">
+        {/* 全局同步状态微徽标 */}
+        <div className="absolute top-3.5 right-4 z-40 pointer-events-auto">
+          <SyncStatusBar />
+        </div>
         {children}
       </main>
 

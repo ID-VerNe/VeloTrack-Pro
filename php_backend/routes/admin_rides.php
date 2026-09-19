@@ -61,13 +61,13 @@ route('POST', '/api/admin/rides', function (array $p) {
         distance_meters, max_speed_kmh, avg_speed_kmh, total_ascent_meters, total_descent_meters, max_altitude_meters,
         avg_heart_rate, max_heart_rate, avg_cadence, max_cadence, calories,
         hr_z1_seconds, hr_z2_seconds, hr_z3_seconds, hr_z4_seconds, hr_z5_seconds,
-        start_lat, start_lng, summary_polyline, detail_points, city, cities, is_cross_city, created_at
+        start_lat, start_lng, summary_polyline, detail_points, city, cities, is_cross_city, created_at, updated_at, deleted_at
     ) VALUES (
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?, ?, NULL, ?, ?, ?, ?
+        ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL
     )
     ON CONFLICT(id) DO UPDATE SET
         start_time=excluded.start_time, end_time=excluded.end_time,
@@ -83,16 +83,21 @@ route('POST', '/api/admin/rides', function (array $p) {
         summary_polyline=excluded.summary_polyline,
         city=excluded.city,
         cities=excluded.cities,
-        is_cross_city=excluded.is_cross_city
+        is_cross_city=excluded.is_cross_city,
+        updated_at=excluded.updated_at
         -- title 与 created_at 不在更新列表中，重传不覆盖用户修改
     ";
+
+    $now = (int)(microtime(true) * 1000);
+    $createdAt = isset($data['created_at']) && is_numeric($data['created_at']) ? (int)$data['created_at'] : $now;
+    $updatedAt = $now;
 
     $params = [
         $id, $title, $startTime, $endTime, $elapsed, $moving,
         $distance, $maxSpeed, $avgSpeed, $ascent, $descent, $maxAlt,
         $avgHr, $maxHr, $avgCad, $maxCad, $cal,
         $z1, $z2, $z3, $z4, $z5,
-        $startLat, $startLng, $polyline, $city, $citiesJson, $isCrossCity, $createdAt,
+        $startLat, $startLng, $polyline, $city, $citiesJson, $isCrossCity, $createdAt, $updatedAt,
     ];
 
     db_run($pdo, $sql, $params);

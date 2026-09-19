@@ -64,7 +64,9 @@ export default function ActivitiesList() {
     setDeleteError(null);
     try {
       const { deleteRide } = await import('../services/rideService');
+      const { deleteLocalRide } = await import('../utils/storage/indexedDb');
       await deleteRide(rideId);
+      await deleteLocalRide(rideId);
       setLocalRides((prev) => (prev ? prev.filter((r) => r.id !== rideId) : []));
       setDeleteConfirmDialog(null);
     } catch (err: any) {

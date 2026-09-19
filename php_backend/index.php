@@ -114,6 +114,7 @@ require_once __DIR__ . '/routes/goals.php';
 require_once __DIR__ . '/routes/coach.php';
 require_once __DIR__ . '/routes/ride_insights.php';
 require_once __DIR__ . '/routes/reports.php';
+require_once __DIR__ . '/routes/sync.php';
 
 // ---------------------------------------------------------------------------
 // 分发

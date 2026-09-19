@@ -17,6 +17,8 @@ import { getRideInsight, suggestRideTitle } from '../services/aiInsights';
 import { getRiderProfile } from '../services/riderService';
 import { getAdminToken } from '../utils/activity/adminApiClient';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
+import { getLocalRideDetail, saveLocalRideDetail, deleteLocalRide } from '../utils/storage/indexedDb';
+import { outboxManager } from '../services/outboxManager';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -111,35 +113,58 @@ export default function RideDetail() {
       .catch((err) => console.error('Failed to load profile weight', err));
   }, []);
 
-  // Fetch Ride Details
-  // 修复：原先请求失败/404 只 console.error，UI 永远停在"正在加载"转圈。现在区分错误态并支持重试
+  const hasLocalDetailRef = useRef(false);
+
+  const applyRideData = useCallback((data: { ride: any; detailPoints?: any[] | null }) => {
+    if (data.ride) {
+      setRide(data.ride);
+      setDetailPoints(Array.isArray(data.detailPoints) ? data.detailPoints : null);
+      if (data.ride.summary_polyline) {
+        const rawCoords = polyline.decode(data.ride.summary_polyline);
+        const formatted: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
+        setRouteCoordinates(formatted);
+      }
+      setLoadError(null);
+    }
+  }, []);
+
+  // Fetch Ride Details (Local-First 0ms 秒开 + 后台静默对齐)
   const loadData = useCallback(async () => {
     if (!id) return;
     setLoadError(null);
+
+    // 1. 优先从 IndexedDB 读本地缓存（0ms 呈现）
+    try {
+      const cached = await getLocalRideDetail(id);
+      if (cached && cached.ride) {
+        hasLocalDetailRef.current = true;
+        applyRideData(cached);
+      }
+    } catch {}
+
+    // 2. 发起网络请求
     try {
       const res = await fetch(`/api/rides/${id}`);
       if (!res.ok) {
-        setLoadError(res.status === 404 ? '骑行记录不存在或已被删除' : `加载失败（HTTP ${res.status}）`);
+        if (!hasLocalDetailRef.current) {
+          setLoadError(res.status === 404 ? '骑行记录不存在或已被删除' : `加载失败（HTTP ${res.status}）`);
+        }
         return;
       }
       const data = await res.json();
       if (data.ride) {
-        setRide(data.ride);
-        // R2 逐点明细（实测海拔/速度/时间），缺失时图表降级为示意模式
-        setDetailPoints(Array.isArray(data.detailPoints) ? data.detailPoints : null);
-        if (data.ride.summary_polyline) {
-          const rawCoords = polyline.decode(data.ride.summary_polyline);
-          const formatted: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
-          setRouteCoordinates(formatted);
-        }
-      } else {
+        applyRideData(data);
+        saveLocalRideDetail(id, data.ride, data.detailPoints).catch(() => {});
+      } else if (!hasLocalDetailRef.current) {
         setLoadError('骑行数据格式异常');
       }
     } catch (err) {
       console.error('Failed to load ride detail', err);
-      setLoadError('网络异常，无法加载骑行详情');
+      if (!hasLocalDetailRef.current) {
+        setLoadError('网络异常，无法加载骑行详情');
+      }
     }
-  }, [id]);
+  }, [id, applyRideData]);
 
   useEffect(() => {
     loadData();
@@ -169,13 +194,15 @@ export default function RideDetail() {
     fetchInsight(false);
   }, [fetchInsight]);
 
-  // Title Management
+  // Title Management (0ms 乐观修改 + 发件箱与远端同步)
   const saveTitleToBackend = async (newTitle: string) => {
     if (!id || !newTitle.trim()) return;
+    const trimmed = newTitle.trim();
+    setRide((prev: any) => (prev ? { ...prev, title: trimmed } : prev));
     try {
+      await outboxManager.updateRideTitle(id, trimmed);
       const { updateRideTitle } = await import('../services/rideService');
-      await updateRideTitle(id, newTitle);
-      setRide((prev: any) => (prev ? { ...prev, title: newTitle.trim() } : prev));
+      await updateRideTitle(id, trimmed);
     } catch (err) {
       console.error('Failed to update title', err);
     }
@@ -236,6 +263,7 @@ export default function RideDetail() {
     setIsDeleting(true);
     setDeleteError(null);
     try {
+      await deleteLocalRide(id);
       const { deleteRide } = await import('../services/rideService');
       await deleteRide(id);
       if (location.state?.from) {
