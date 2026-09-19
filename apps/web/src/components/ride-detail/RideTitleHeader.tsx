@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import IconButton from '../common/IconButton';
-import ConfirmModal from '../common/ConfirmModal';
-import { 
-  ArrowLeft, 
-  Edit2, 
-  Check, 
-  X, 
-  Tag, 
-  RotateCcw, 
-  Download, 
-  User,
-  Trash2
-} from 'lucide-react';
+import RideHeaderToolbar from './RideHeaderToolbar';
+import RideTitleBanners from './RideTitleBanners';
+import { Edit2, Check, X, Tag } from 'lucide-react';
 
 interface Props {
   title: string;
@@ -53,7 +44,6 @@ export default function RideTitleHeader({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [customTitle, setCustomTitle] = useState(title);
   const [isComposing, setIsComposing] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleStartEdit = () => {
     setCustomTitle(title);
@@ -75,76 +65,18 @@ export default function RideTitleHeader({
 
   return (
     <div className="space-y-4">
-      {/* Top action row */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-        <button
-          onClick={onGoBack}
-          aria-label={fromLabel}
-          className="hidden md:inline-flex items-center text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1.5 transition-transform group-hover:-translate-x-1 translate-y-[-0.5px]" aria-hidden="true" />
-          {fromLabel}
-        </button>
-
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <button
-            onClick={onExportGPX}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
-            aria-label="导出 GPX 轨迹文件"
-          >
-            <Download className="w-4 h-4 text-slate-500" aria-hidden="true" />
-            <span>导出 GPX</span>
-          </button>
-
-          <button
-            onClick={onOpenProfile}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
-            aria-label="查看车手生物力学档案与战车硬件"
-          >
-            <User className="w-4 h-4 text-slate-500" aria-hidden="true" />
-            <span>车手档案</span>
-          </button>
-
-          {onDelete && (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={isDeleting}
-              className="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1 group"
-              aria-label="删除此条骑行记录"
-            >
-              <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-rose-500" aria-hidden="true" />
-              <span>删除</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showDeleteConfirm}
-        title="删除骑行记录"
-        description="确定要删除此骑行记录吗？此操作无法撤销。"
-        confirmText="确认删除"
-        cancelText="取消"
-        isDanger={true}
-        isLoading={isDeleting}
-        loadingText="正在删除..."
-        errorMessage={deleteError}
-        onConfirm={() => {
-          setShowDeleteConfirm(false);
-          onDelete?.();
-        }}
-        onClose={() => setShowDeleteConfirm(false)}
+      {/* 顶部操作工具栏与删除确认弹窗 */}
+      <RideHeaderToolbar
+        fromLabel={fromLabel}
+        onGoBack={onGoBack}
+        onExportGPX={onExportGPX}
+        onOpenProfile={onOpenProfile}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
+        deleteError={deleteError}
       />
 
-      {/* Delete Error Banner */}
-      {deleteError && (
-        <div className="p-4 bg-red-50 border border-red-100 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 rounded">
-          <span className="text-[13px] text-red-600 font-medium">{deleteError}</span>
-        </div>
-      )}
-
-      {/* Title & Interactive Rename Flow */}
+      {/* 标题呈现与交互式重命名编辑 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         {isEditingTitle ? (
           <div className="flex items-center space-x-3 flex-1 max-w-lg">
@@ -211,45 +143,14 @@ export default function RideTitleHeader({
         )}
       </div>
 
-      {/* Suggested Title Confirmation Banner */}
-      {suggestedTitle && (
-        <div className="p-4 bg-slate-50 rounded flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
-          <div className="flex items-center space-x-3 text-[13px]">
-            <span className="text-slate-500">
-              规范命名建议
-            </span>
-            <span className="font-medium text-slate-900">「{suggestedTitle}」</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={onApplySuggestedTitle}
-              className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-[13px] rounded transition-colors cursor-pointer shadow-2xs"
-            >
-              应用
-            </button>
-            <button
-              onClick={onCancelSuggestedTitle}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 text-[13px] rounded transition-colors cursor-pointer"
-            >
-              忽略
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Undo Notification Banner */}
-      {previousTitle && (
-        <div className="p-4 bg-brand-900 text-white rounded flex items-center justify-between text-[13px] border border-brand-800 shadow-sm animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
-          <span>标题已更新。原标题：「{previousTitle}」</span>
-          <button
-            onClick={onUndoTitle}
-            className="flex items-center space-x-1 text-brand-200 hover:text-white font-medium ml-4 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>撤销</span>
-          </button>
-        </div>
-      )}
+      {/* AI 建议横幅与撤销操作提示 */}
+      <RideTitleBanners
+        suggestedTitle={suggestedTitle}
+        previousTitle={previousTitle}
+        onApplySuggestedTitle={onApplySuggestedTitle}
+        onCancelSuggestedTitle={onCancelSuggestedTitle}
+        onUndoTitle={onUndoTitle}
+      />
     </div>
   );
 }

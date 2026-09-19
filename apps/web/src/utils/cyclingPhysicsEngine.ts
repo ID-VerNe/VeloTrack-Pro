@@ -20,6 +20,23 @@ export const STANDARD_WHEEL_CIRCUMFERENCES: Record<string, number> = {
   '29x2.2': 2.298,      // 29寸山地车
 };
 
+/**
+ * 根据时速、牙盘齿数、飞轮齿数与外胎周长反推踩踏踏频 (rpm)
+ * Speed(km/h) = Cadence * ratio * circ * 60 / 1000
+ * Cadence = Speed * 1000 / (ratio * circ * 60)
+ */
+export function deriveCadenceFromSpeed(
+  speedKmh: number,
+  chainring = 46,
+  cog = 15,
+  wheelCircumferenceMeters = 1.54
+): number {
+  if (speedKmh <= 0) return 0;
+  const ratio = chainring / cog;
+  const cadence = (speedKmh * 1000.0) / (ratio * wheelCircumferenceMeters * 60.0);
+  return Number(cadence.toFixed(1));
+}
+
 export interface GearCadenceSpeedOptions {
   chainring: number;
   cogs?: number[];

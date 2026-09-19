@@ -46,22 +46,8 @@ export function calcPercentile(sortedVals: number[], p: number): number {
   return Number((sortedVals[f] + (sortedVals[c] - sortedVals[f]) * d).toFixed(1));
 }
 
-/**
- * 根据大行 P8 (46T 牙盘, 15T 飞轮, 20x2.0 外胎周长 1.54m) 反推理论踩踏踏频
- */
-export function deriveCadenceFromSpeed(
-  speedKmh: number,
-  chainring = 46,
-  cog = 15,
-  wheelCircumferenceMeters = 1.54
-): number {
-  if (speedKmh <= 0) return 0;
-  const ratio = chainring / cog;
-  // Speed(km/h) = Cadence * ratio * circ * 60 / 1000
-  // Cadence = Speed * 1000 / (ratio * circ * 60)
-  const cadence = (speedKmh * 1000.0) / (ratio * wheelCircumferenceMeters * 60.0);
-  return Number(cadence.toFixed(1));
-}
+import { deriveCadenceFromSpeed } from './cyclingPhysicsEngine';
+export { deriveCadenceFromSpeed };
 
 export interface MinimalPoint {
   t?: number;
