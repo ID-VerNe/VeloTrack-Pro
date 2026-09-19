@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Plus, BookmarkCheck, ShieldAlert, Wrench, Compass } from 'lucide-react';
+import { BookmarkCheck, ShieldAlert, Wrench, Compass } from 'lucide-react';
 import type { RiderMemory } from '../../types/rider';
+import MemoryItemCard from './MemoryItemCard';
+import AddMemoryForm from './AddMemoryForm';
 
 interface Props {
   memories: RiderMemory[];
@@ -12,9 +14,6 @@ type FilterCategory = 'all' | 'health' | 'gear' | 'habit';
 
 export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: Props) {
   const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('all');
-  const [newCategory, setNewCategory] = useState('health');
-  const [newContent, setNewContent] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const filteredMemories = useMemo(() => {
@@ -28,54 +27,12 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
     return memories.filter(m => m.category === 'habit' || m.category === 'preference' || m.category === 'coaching' || m.category === 'goal');
   }, [memories, selectedFilter]);
 
-  const handleAdd = async () => {
-    if (!newContent.trim() || isAdding) return;
-    setIsAdding(true);
-    try {
-      await onAddMemory(newCategory, newContent.trim());
-      setNewContent('');
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
   const handleConfirmDelete = async (id: number) => {
     try {
       await onDeleteMemory(id);
     } finally {
       setConfirmDeleteId(null);
     }
-  };
-
-  const getCategoryMeta = (cat: string) => {
-    if (cat === 'health' || cat === 'physiology') {
-      return {
-        label: '健康与身体底线',
-        shortLabel: '身体底线',
-        icon: ShieldAlert,
-        color: 'bg-rose-50 text-rose-700 border-rose-200/80',
-        cardBorder: 'hover:border-rose-300',
-        badgeBg: 'bg-rose-100/70 text-rose-800'
-      };
-    }
-    if (cat === 'gear') {
-      return {
-        label: '战车调校经验',
-        shortLabel: '战车经验',
-        icon: Wrench,
-        color: 'bg-brand-50 text-brand-700 border-brand-200/80',
-        cardBorder: 'hover:border-brand-300',
-        badgeBg: 'bg-brand-100/70 text-brand-800'
-      };
-    }
-    return {
-      label: '习惯与训练偏好',
-      shortLabel: '习惯偏好',
-      icon: Compass,
-      color: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
-      cardBorder: 'hover:border-indigo-300',
-      badgeBg: 'bg-indigo-100/70 text-indigo-800'
-    };
   };
 
   return (
@@ -140,66 +97,16 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
 
       {/* Atomic Memories List */}
       <div className="space-y-2.5">
-        {filteredMemories.map((mem) => {
-          const meta = getCategoryMeta(mem.category);
-          const Icon = meta.icon;
-          const isCoachExtracted = mem.source === 'coach' || mem.source === 'auto_extracted' || mem.source === 'coaching';
-
-          return (
-            <div
-              key={mem.id}
-              className={`p-3.5 bg-white hover:bg-slate-50/90 rounded-2xl border border-slate-200/90 ${meta.cardBorder} transition-all flex items-start justify-between gap-3 group shadow-2xs`}
-            >
-              <div className="space-y-1.5 min-w-0 flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className={`text-xs font-extrabold px-2 py-0.5 rounded-md border flex items-center space-x-1 ${meta.color}`}>
-                    <Icon className="w-2.5 h-2.5" />
-                    <span>{meta.shortLabel}</span>
-                  </span>
-
-                  <span className={`text-2xs font-bold px-1.5 py-0.2 rounded font-mono ${
-                    isCoachExtracted ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {isCoachExtracted ? '实战沟通沉淀' : '手动设定'}
-                  </span>
-
-                  <span className="text-xs text-slate-500 font-mono ml-auto">
-                    {new Date((mem.created_at || Date.now() / 1000) * 1000).toLocaleDateString('zh-CN')}
-                  </span>
-                </div>
-
-                <p className="text-xs font-semibold text-slate-800 leading-relaxed break-words">
-                  {mem.content}
-                </p>
-              </div>
-
-              {confirmDeleteId === mem.id ? (
-                <div className="flex items-center space-x-1.5 shrink-0 bg-rose-50 border border-rose-200 rounded-xl p-1 animate-in fade-in">
-                  <button
-                    onClick={() => handleConfirmDelete(mem.id)}
-                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
-                  >
-                    确认
-                  </button>
-                  <button
-                    onClick={() => setConfirmDeleteId(null)}
-                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium border border-slate-200 transition-all cursor-pointer"
-                  >
-                    取消
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmDeleteId(mem.id)}
-                  className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors p-1.5 rounded-lg cursor-pointer shrink-0"
-                  title="删除该条备忘"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          );
-        })}
+        {filteredMemories.map((mem) => (
+          <MemoryItemCard
+            key={mem.id}
+            memory={mem}
+            isConfirmingDelete={confirmDeleteId === mem.id}
+            onRequestDelete={(id) => setConfirmDeleteId(id)}
+            onConfirmDelete={handleConfirmDelete}
+            onCancelDelete={() => setConfirmDeleteId(null)}
+          />
+        ))}
 
         {filteredMemories.length === 0 && (
           <div className="text-center py-10 text-slate-500 text-xs font-medium bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
@@ -209,41 +116,7 @@ export default function MemoriesTab({ memories, onAddMemory, onDeleteMemory }: P
       </div>
 
       {/* Manual Memory Ingestion Bar */}
-      <div className="pt-3 border-t border-slate-100 space-y-2.5">
-        <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
-          <Plus className="w-3.5 h-3.5 text-slate-500" />
-          <span>手动添加身体或器材备忘</span>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <select
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer"
-          >
-            <option value="health">健康与身体底线</option>
-            <option value="gear">战车与配件经验</option>
-            <option value="habit">骑行时段与路线习惯</option>
-            <option value="preference">配速与训练偏好</option>
-          </select>
-
-          <input
-            type="text"
-            placeholder="例如：右膝曾有劳损，需维持 85rpm 以上高踏频..."
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
-          />
-
-          <button
-            onClick={handleAdd}
-            disabled={!newContent.trim() || isAdding}
-            className="px-4 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-200 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0 shadow-2xs"
-          >
-            {isAdding ? '添加中...' : '添加'}
-          </button>
-        </div>
-      </div>
+      <AddMemoryForm onAddMemory={onAddMemory} />
     </div>
   );
 }

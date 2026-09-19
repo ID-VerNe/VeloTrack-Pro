@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { User, Copy, Check, RotateCcw, AlertCircle, ArrowRight } from 'lucide-react';
+import { User, Copy, Check, RotateCcw, AlertCircle } from 'lucide-react';
 import MarkdownRenderer from '../MarkdownRenderer';
 import type { ChatMessage } from '../../types/rider';
+import { detectChatAction } from '../../utils/chatActionDetector';
+import ChatActionBanner from './ChatActionBanner';
 
 interface Props {
   message: ChatMessage;
@@ -20,36 +21,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // 1. Detect Goal Sync Action from tool_calls or comprehensive text heuristics
-  const toolCallsStr = typeof message.tool_calls === 'string' 
-    ? message.tool_calls 
-    : JSON.stringify(message.tool_calls || []);
-
-  const hasGoalToolCall = toolCallsStr.includes('set_training_goals');
-  const hasProfileToolCall = toolCallsStr.includes('update_rider_profile') || toolCallsStr.includes('update_profile');
-
-  const hasGoalTextHeuristic = 
-    message.role === 'assistant' && 
-    (message.content.includes('目标已生效') || 
-     message.content.includes('新目标已生效') ||
-     message.content.includes('目标已成功同步') || 
-     message.content.includes('新目标参数已生效') || 
-     message.content.includes('已在系统成功设定') ||
-     message.content.includes('已为你自动同步') ||
-     message.content.includes('新阶段目标') ||
-     message.content.includes('已更新训练目标') ||
-     message.content.includes('已自动写入系统生效'));
-
-  const hasProfileTextHeuristic = 
-    message.role === 'assistant' && 
-    (message.content.includes('已为您更新齿比') || 
-     message.content.includes('已成功更新档案') ||
-     message.content.includes('已更新你的档案') ||
-     message.content.includes('已记录并更新') ||
-     message.content.includes('硬件配置已成功更新'));
-
-  const isGoalAction = hasGoalToolCall || hasGoalTextHeuristic;
-  const isProfileAction = hasProfileToolCall || hasProfileTextHeuristic;
+  const { actionType } = detectChatAction(message);
 
   return (
     <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
@@ -92,50 +64,8 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
             </div>
           ) : (
             <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-4">
-              {/* Prominent Action Banner for Goal Sync */}
-              {isGoalAction && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-slate-900 text-xs">
-                      阶段训练目标与量化指标已写入生效
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
-                      已同步至目标看板，周目标与巡航基准已更新
-                    </p>
-                  </div>
-                  <Link
-                    to="/goals"
-                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-md text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
-                  >
-                    <span>查看目标进度</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              )}
-
-              {/* Prominent Action Banner for Profile / Hardware Sync */}
-              {isProfileAction && !isGoalAction && (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-slate-900 text-xs">
-                      战车硬件参数与传动规格已成功更新
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
-                      车辆参数与齿比配置已更新
-                    </p>
-                  </div>
-                  {onOpenProfile && (
-                    <button
-                      type="button"
-                      onClick={onOpenProfile}
-                      className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-md text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
-                    >
-                      <span>查看档案</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* Action Banner for Goal Sync or Profile Sync */}
+              <ChatActionBanner actionType={actionType} onOpenProfile={onOpenProfile} />
 
               {/* Main Markdown Content */}
               <div className="markdown-body">

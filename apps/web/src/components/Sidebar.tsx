@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   SlidersHorizontal,
 } from 'lucide-react';
-import type { RiderProfile } from '../types/rider';
-import { getNaturalWeekRange } from '../utils/dateUtils';
-import { getRiderProfile } from '../services/riderService';
 import SyncStatusBar from './common/SyncStatusBar';
+import { useSidebarData } from '../hooks/useSidebarData';
 
 interface NavSection {
   title: string;
@@ -22,50 +20,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ className = '' }: SidebarProps) {
-  // 现与后端默认值对齐
-  const [profile, setProfile] = useState<RiderProfile>({
-    name: '',
-    gender: 'male',
-    weight_kg: 75,
-    height_cm: 175,
-    max_hr: 188,
-    resting_hr: 60,
-    ftp_watts: 200,
-    current_bike: '',
-    bike_specs: '',
-    injuries_notes: '',
-    primary_goal: '',
-  });
-  const [ridesCount, setRidesCount] = useState(0);
-  const [goalPct, setGoalPct] = useState(0);
+  const { profile, ridesCount, goalPct } = useSidebarData();
   const location = useLocation();
-
-  const fetchProfile = async () => {
-    try {
-      const profile = await getRiderProfile();
-      setProfile(profile as unknown as RiderProfile);
-    } catch {}
-  };
-
-  const fetchRidesAndGoals = async () => {
-    try {
-      const { getWeeklyStats } = await import('../services/rideService');
-      const stats = await getWeeklyStats();
-      if (stats) {
-        setRidesCount(stats.ridesCount);
-        setGoalPct(stats.goalPct);
-      }
-    } catch {}
-  };
-
-  useEffect(() => {
-    fetchProfile();
-    fetchRidesAndGoals();
-
-    const handleProfileUpdated = () => fetchProfile();
-    window.addEventListener('profile-updated', handleProfileUpdated);
-    return () => window.removeEventListener('profile-updated', handleProfileUpdated);
-  }, []);
 
   const navSections: NavSection[] = [
     {
