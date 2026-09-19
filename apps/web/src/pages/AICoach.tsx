@@ -14,6 +14,7 @@ import ChatComposer from '../components/chat/ChatComposer';
 import type { ChatMessage, SessionSummary } from '../types/rider';
 import { getCoachSessions, getCoachMessages, deleteCoachSession, chatWithCoach } from '../services/aiCoach';
 import { getRiderProfile } from '../services/riderService';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const SUGGESTED_PROMPTS = [
   '测算大行P8在46T齿比下平路巡航20km/h的推荐踏频与档位',
@@ -370,54 +371,20 @@ export default function AICoach() {
       </div>
 
       {/* In-App Delete Session Confirmation Modal */}
-      {sessionToDelete && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 animate-in fade-in select-none"
-          onClick={() => setSessionToDelete(null)}
-        >
-          <div 
-            className="bg-white rounded-3xl p-4 md:p-6 max-w-sm w-full shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button 
-              onClick={() => setSessionToDelete(null)}
-              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <div className="flex items-center space-x-3 pr-8">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">清空推演会话</h3>
-                <p className="text-xs text-slate-500 mt-0.5">确定要清空该推演会话的历史记录吗？</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-              清空后该推演会话的历史消息将被清除，但已沉淀的车手档案与目标记忆不会受到影响。
-            </p>
-
-            <div className="flex items-center justify-end space-x-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setSessionToDelete(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDeleteSession}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-transform duration-150 active:scale-[0.96] cursor-pointer"
-              >
-                确认清空
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={Boolean(sessionToDelete)}
+        title="清空推演会话"
+        description="确定要清空该推演会话的历史记录吗？清空后该推演会话的历史消息将被清除，但已沉淀的车手档案与目标记忆不会受到影响。"
+        confirmText="确认清空"
+        cancelText="取消"
+        isDanger={true}
+        errorMessage={deleteError}
+        onConfirm={handleConfirmDeleteSession}
+        onClose={() => {
+          setSessionToDelete(null);
+          setDeleteError(null);
+        }}
+      />
     </div>
   );
 }

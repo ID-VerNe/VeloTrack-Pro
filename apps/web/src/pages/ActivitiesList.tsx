@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -11,11 +11,13 @@ import {
   Trash2
 } from 'lucide-react';
 import RideCard from '../components/RideCard';
-import { detectCityForRide, extractCitiesFromRides } from '../utils/geoUtils';
 import { formatDuration, formatRideDate } from '../utils/cyclingCalculations';
+import { detectCityForRide } from '../utils/geoUtils';
 import { useApi } from '../hooks/useApi';
 import { getAdminToken } from '../utils/activity/adminApiClient';
 import ConfirmModal from '../components/common/ConfirmModal';
+import { useActivityFilters, type ActivitySortOption } from '../hooks/useActivityFilters';
+import { useActivityDelete } from '../hooks/useActivityDelete';
 
 export default function ActivitiesList() {
   const navigate = useNavigate();
@@ -30,76 +32,34 @@ export default function ActivitiesList() {
   }, [fetchedRides]);
 
   const rides = localRides ?? fetchedRides ?? [];
-  const [searchQuery, setSearchQuery] = useState('');
-  const [cityFilter, setCityFilter] = useState<string>('all');
-  const [distanceFilter, setDistanceFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'date_desc' | 'dist_desc' | 'speed_desc' | 'ascent_desc'>('date_desc');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const availableCities = useMemo(() => extractCitiesFromRides(rides), [rides]);
+  const {
+    searchQuery,
+    setSearchQuery,
+    cityFilter,
+    setCityFilter,
+    distanceFilter,
+    setDistanceFilter,
+    sortBy,
+    setSortBy,
+    viewMode,
+    setViewMode,
+    availableCities,
+    filteredRides,
+    isFiltered,
+    resetFilters: handleResetFilters,
+  } = useActivityFilters({ rides });
 
-  const isFiltered = searchQuery.trim() !== '' || cityFilter !== 'all' || distanceFilter !== 'all' || sortBy !== 'date_desc';
-
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setCityFilter('all');
-    setDistanceFilter('all');
-    setSortBy('date_desc');
-  };
-
-  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{ id: string; title: string } | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const handleDeleteRequest = (e: React.MouseEvent, rideId: string, title: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDeleteError(null);
-    setDeleteConfirmDialog({ id: rideId, title });
-  };
-
-  const executeDelete = async () => {
-    if (!deleteConfirmDialog) return;
-    const { id: rideId } = deleteConfirmDialog;
-    setDeletingId(rideId);
-    setDeleteError(null);
-    try {
-      const { deleteRide } = await import('../services/rideService');
-      const { deleteLocalRide } = await import('../utils/storage/indexedDb');
-      await deleteRide(rideId);
-      await deleteLocalRide(rideId);
-      setLocalRides((prev) => (prev ? prev.filter((r) => r.id !== rideId) : []));
-      setDeleteConfirmDialog(null);
-    } catch (err: any) {
-      setDeleteError(err.message || '网络错误，删除失败');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const filteredRides = useMemo(() => {
-    return rides
-      .filter((r) => {
-        const titleMatch = (r.title || '').toLowerCase().includes(searchQuery.toLowerCase());
-        const city = detectCityForRide(r);
-        const cityMatch = cityFilter === 'all' || city === cityFilter;
-
-        const distKm = (r.distance_meters || 0) / 1000;
-        let distMatch = true;
-        if (distanceFilter === 'short') distMatch = distKm < 15;
-        else if (distanceFilter === 'medium') distMatch = distKm >= 15 && distKm <= 30;
-        else if (distanceFilter === 'long') distMatch = distKm > 30;
-
-        return titleMatch && cityMatch && distMatch;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'date_desc') return (b.start_time || 0) - (a.start_time || 0);
-        if (sortBy === 'dist_desc') return (b.distance_meters || 0) - (a.distance_meters || 0);
-        if (sortBy === 'speed_desc') return (b.avg_speed_kmh || 0) - (a.avg_speed_kmh || 0);
-        if (sortBy === 'ascent_desc') return (b.total_ascent_meters || 0) - (a.total_ascent_meters || 0);
-        return 0;
-      });
-  }, [rides, searchQuery, cityFilter, distanceFilter, sortBy]);
+  const {
+    deletingId,
+    deleteConfirmDialog,
+    deleteError,
+    requestDelete: handleDeleteRequest,
+    cancelDelete: handleCancelDelete,
+    executeDelete,
+  } = useActivityDelete({
+    onDeleted: (rideId) => setLocalRides((prev) => (prev ? prev.filter((r) => r.id !== rideId) : [])),
+  });
 
   return (
     <div className="h-full w-full bg-[#F8FAFC] flex flex-col text-slate-900 overflow-hidden">
@@ -192,10 +152,10 @@ export default function ActivitiesList() {
             <div className="flex items-center space-x-1 bg-white px-1.5 py-1 rounded border border-slate-200 font-mono shadow-2xs">
               <span className="text-[10px] uppercase tracking-wider text-slate-400 px-1">里程:</span>
               {[
-                { id: 'all', label: '全部' },
-                { id: 'short', label: '<15km' },
-                { id: 'medium', label: '15-30km' },
-                { id: 'long', label: '>30km' },
+                { id: 'all' as const, label: '全部' },
+                { id: 'short' as const, label: '<15km' },
+                { id: 'medium' as const, label: '15-30km' },
+                { id: 'long' as const, label: '>30km' },
               ].map((d) => (
                 <button
                   key={d.id}
@@ -356,7 +316,7 @@ export default function ActivitiesList() {
         loadingText="正在删除..."
         errorMessage={deleteError}
         onConfirm={executeDelete}
-        onClose={() => setDeleteConfirmDialog(null)}
+        onClose={handleCancelDelete}
       />
     </div>
   );

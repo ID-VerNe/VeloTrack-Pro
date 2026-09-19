@@ -8,6 +8,7 @@
 
 import { getPeriodBoundaries, type PeriodType } from '../utils/dateUtils';
 import { getRiderProfile } from './riderService';
+import { calculateCyclingCalories, calculateDualSpeeds } from '../utils/cyclingCalculations';
 
 export interface PeriodicSummaryResult {
   period_type: PeriodType;
@@ -64,14 +65,7 @@ export function estimateCyclingCalories(
   totalAscentMeters: number,
   riderWeightKg = 75
 ): number {
-  const hours = totalMovingSecs / 3600;
-  let met = 5.5;
-  if (avgSpeedKmh < 15) met = 5.5;
-  else if (avgSpeedKmh < 19.3) met = 6.8;
-  else if (avgSpeedKmh < 22.5) met = 8.0;
-  else met = 10.0;
-
-  return Math.round(met * riderWeightKg * hours + totalAscentMeters * (riderWeightKg / 65) * 0.25);
+  return calculateCyclingCalories(0, totalMovingSecs, avgSpeedKmh, totalAscentMeters, riderWeightKg);
 }
 
 export async function computePeriodicSummary(
@@ -95,14 +89,16 @@ export async function computePeriodicSummary(
   const totalDistMeters = currentRides.reduce((acc, r) => acc + (r.distance_meters || 0), 0);
   const totalMovingSecs = currentRides.reduce((acc, r) => acc + (r.moving_time_seconds || r.elapsed_time_seconds || 0), 0);
   const totalElapsedSecs = currentRides.reduce((acc, r) => acc + (r.elapsed_time_seconds || r.moving_time_seconds || 0), 0);
-  const totalPausedSecs = Math.max(0, totalElapsedSecs - totalMovingSecs);
-  const movingRatioPct = totalElapsedSecs > 0 ? Math.round((totalMovingSecs / totalElapsedSecs) * 100) : 100;
+
+  const {
+    movingAvgSpeedKmh,
+    elapsedAvgSpeedKmh,
+    pausedTimeSeconds: totalPausedSecs,
+    movingRatioPct,
+  } = calculateDualSpeeds(totalDistMeters, totalMovingSecs, totalElapsedSecs);
 
   const totalAscentMeters = currentRides.reduce((acc, r) => acc + (r.total_ascent_meters || 0), 0);
   const maxSpeedKmh = currentRides.reduce((acc, r) => Math.max(acc, r.max_speed_kmh || 0), 0);
-
-  const movingAvgSpeedKmh = totalMovingSecs > 0 ? Number(((totalDistMeters / 1000) / (totalMovingSecs / 3600)).toFixed(1)) : 0;
-  const elapsedAvgSpeedKmh = totalElapsedSecs > 0 ? Number(((totalDistMeters / 1000) / (totalElapsedSecs / 3600)).toFixed(1)) : 0;
 
   const activeDaysSet = new Set(currentRides.map((r) => new Date(r.start_time).toDateString()));
 

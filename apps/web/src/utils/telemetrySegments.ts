@@ -49,19 +49,9 @@ export interface RideDetailPoint {
   sp?: number;
 }
 
-// 辅助计算两经纬度点之间的球面距离 (米)
-export function computeDistanceMeters(coord1: [number, number], coord2: [number, number]): number {
-  const R = 6371e3;
-  const phi1 = (coord1[1] * Math.PI) / 180;
-  const phi2 = (coord2[1] * Math.PI) / 180;
-  const dPhi = ((coord2[1] - coord1[1]) * Math.PI) / 180;
-  const dLambda = ((coord2[0] - coord1[0]) * Math.PI) / 180;
-  const a =
-    Math.sin(dPhi / 2) * Math.sin(dPhi / 2) +
-    Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLambda / 2) * Math.sin(dLambda / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+// 统一复用 geoCalculations 中的球面距离算法
+import { computeDistanceMeters } from './activity/geoCalculations';
+export { computeDistanceMeters };
 
 /**
  * 空间反查：根据地图光标位置找到最近的轨迹点及对应的图表采样点索引

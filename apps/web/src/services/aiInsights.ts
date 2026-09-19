@@ -8,6 +8,7 @@
 
 import { getAIConfig, callAICompletion, sha256, parseAIResponse } from './aiClient';
 import { getRiderProfile, getRiderContextPrompt } from './riderService';
+import { calculateDualSpeeds } from '../utils/cyclingCalculations';
 import {
   calculateClimbingPower,
   calculateGearCadenceSpeed,
@@ -34,17 +35,22 @@ export async function getRideInsight(rideId: string, force = false): Promise<Rid
 
   const profile = await getRiderProfile();
 
-  const distKm = (ride.distance_meters / 1000).toFixed(2);
-  const movingSec = ride.moving_time_seconds || ride.elapsed_time_seconds || 1;
-  const elapsedSec = ride.elapsed_time_seconds || ride.moving_time_seconds || movingSec;
-  const pausedSec = Math.max(0, elapsedSec - movingSec);
+  const distKm = ((ride.distance_meters || 0) / 1000).toFixed(2);
+  const {
+    movingAvgSpeedKmh,
+    elapsedAvgSpeedKmh,
+    movingTimeSeconds: movingSec,
+    elapsedTimeSeconds: elapsedSec,
+    pausedTimeSeconds: pausedSec,
+  } = calculateDualSpeeds(
+    ride.distance_meters || 0,
+    ride.moving_time_seconds,
+    ride.elapsed_time_seconds
+  );
 
   const movingMins = (movingSec / 60).toFixed(1);
   const elapsedMins = (elapsedSec / 60).toFixed(1);
   const pausedMins = (pausedSec / 60).toFixed(1);
-
-  const movingAvgSpeedKmh = movingSec > 0 ? Number(((ride.distance_meters / 1000) / (movingSec / 3600)).toFixed(1)) : 0;
-  const elapsedAvgSpeedKmh = elapsedSec > 0 ? Number(((ride.distance_meters / 1000) / (elapsedSec / 3600)).toFixed(1)) : 0;
 
   // 速度分层与稳态巡航特征提取
   const speedDist = analyzeSpeedDistribution(detailPoints, movingAvgSpeedKmh, 46, 15);

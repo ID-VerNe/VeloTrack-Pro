@@ -52,3 +52,18 @@ export function getHaversineDistanceMeters(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
+/**
+ * 半正矢公式计算经纬度点之间的地表球面距离 (米)，接收 [lng, lat] 坐标对
+ */
+export function computeDistanceMeters(coord1: [number, number], coord2: [number, number]): number {
+  return getHaversineDistanceMeters(coord1[1], coord1[0], coord2[1], coord2[0]);
+}
+
+/**
+ * 半正矢公式计算两点之间的地表球面距离 (千米)
+ */
+export function haversineDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  return getHaversineDistanceMeters(lat1, lng1, lat2, lng2) / 1000;
+}
+
