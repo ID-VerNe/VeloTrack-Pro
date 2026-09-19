@@ -8,6 +8,12 @@ import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
 import { detectCityForRide } from '../../utils/geoUtils';
 import { adaptCoordinatesToMapStyle } from '../../utils/coordTransform';
 import { MAP_ROUTE_TOKENS } from '../../constants/designTokens';
+import {
+  createRouteGlowLayer,
+  createRouteCasingLayer,
+  createRouteCoreLayer,
+  createRouteHitTargetLayer,
+} from '../../utils/mapRouteLayers';
 
 interface Props {
   rides: any[];
@@ -101,61 +107,53 @@ export default function DashboardMap({
 
           // Glow Base Layer
           if (isSat) {
-            map.addLayer({
-              id: `route-glow-${ride.id}`,
-              type: 'line',
-              source: sourceId,
-              layout: { 'line-join': 'round', 'line-cap': 'round' },
-              paint: {
-                'line-color': glowColor,
-                'line-width': 8,
-                'line-opacity': 0.45,
-                'line-blur': 2.5,
-              },
-            });
+            map.addLayer(
+              createRouteGlowLayer({
+                id: `route-glow-${ride.id}`,
+                source: sourceId,
+                color: glowColor,
+                width: 8,
+                opacity: 0.45,
+                blur: 2.5,
+              })
+            );
           }
 
           // Casing Layer for Satellite to pop out
           if (isSat) {
-            map.addLayer({
-              id: `route-casing-${ride.id}`,
-              type: 'line',
-              source: sourceId,
-              layout: { 'line-join': 'round', 'line-cap': 'round' },
-              paint: {
-                'line-color': casingColor,
-                'line-width': 6.5,
-                'line-opacity': 0.95,
-              },
-            });
+            map.addLayer(
+              createRouteCasingLayer({
+                id: `route-casing-${ride.id}`,
+                source: sourceId,
+                color: casingColor,
+                width: 6.5,
+                opacity: 0.95,
+              })
+            );
           }
 
           // Sharp Core Track Line
-          map.addLayer({
-            id: `route-core-${ride.id}`,
-            type: 'line',
-            source: sourceId,
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-              'line-color': coreColor,
-              'line-width': 3.5,
-              'line-opacity': 0.95,
-            },
-          });
+          map.addLayer(
+            createRouteCoreLayer({
+              id: `route-core-${ride.id}`,
+              source: sourceId,
+              color: coreColor,
+              width: 3.5,
+              opacity: 0.95,
+            })
+          );
 
           // Transparent Hit Target Layer for direct click & hover ergonomics
           const hitLayerId = `route-hit-${ride.id}`;
-          map.addLayer({
-            id: hitLayerId,
-            type: 'line',
-            source: sourceId,
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-              'line-width': 22,
-              'line-opacity': 0.001,
-              'line-color': '#000000',
-            },
-          });
+          map.addLayer(
+            createRouteHitTargetLayer({
+              id: hitLayerId,
+              source: sourceId,
+              width: 22,
+              opacity: 0.001,
+              color: '#000000',
+            })
+          );
 
           map.on('mouseenter', hitLayerId, () => {
             map.getCanvas().style.cursor = 'pointer';

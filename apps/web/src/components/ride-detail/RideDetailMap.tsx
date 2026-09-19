@@ -8,6 +8,12 @@ import { MAP_STYLE_VISUALS } from '../../utils/mapVisualConfigs';
 import { adaptCoordinatesToMapStyle } from '../../utils/coordTransform';
 import { useMapStyle } from '../../contexts/MapStyleContext';
 import {
+  createRouteGlowLayer,
+  createRouteCasingLayer,
+  createRouteCoreLayer,
+  createRouteHitTargetLayer,
+} from '../../utils/mapRouteLayers';
+import {
   analyzeRideTelemetry,
   computeDistanceMeters,
   findClosestTelemetryIndex,
@@ -177,58 +183,50 @@ export default function RideDetailMap({
 
       // 1. Glow Base Layer (if style provides one)
       if (visual.glowColor) {
-        map.addLayer({
-          id: 'route-glow',
-          type: 'line',
-          source: 'route-source',
-          layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: {
-            'line-color': visual.glowColor,
-            'line-width': visual.glowWidth || 10,
-            'line-opacity': visual.glowOpacity || 0.5,
-            'line-blur': visual.glowBlur || 2,
-          },
-        });
+        map.addLayer(
+          createRouteGlowLayer({
+            id: 'route-glow',
+            source: 'route-source',
+            color: visual.glowColor,
+            width: visual.glowWidth || 10,
+            opacity: visual.glowOpacity || 0.5,
+            blur: visual.glowBlur || 2,
+          })
+        );
       }
 
       // 2. High-contrast Outer Casing Layer
-      map.addLayer({
-        id: 'route-casing',
-        type: 'line',
-        source: 'route-source',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': visual.casingColor,
-          'line-width': visual.casingWidth,
-          'line-opacity': visual.casingOpacity,
-        },
-      });
+      map.addLayer(
+        createRouteCasingLayer({
+          id: 'route-casing',
+          source: 'route-source',
+          color: visual.casingColor,
+          width: visual.casingWidth,
+          opacity: visual.casingOpacity,
+        })
+      );
 
       // 3. Inner Colored Velocity Gradient Layer
-      map.addLayer({
-        id: 'route-inner',
-        type: 'line',
-        source: 'route-source',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': ['get', 'color'],
-          'line-width': visual.innerWidth,
-          'line-opacity': 1,
-        },
-      });
+      map.addLayer(
+        createRouteCoreLayer({
+          id: 'route-inner',
+          source: 'route-source',
+          color: ['get', 'color'],
+          width: visual.innerWidth,
+          opacity: 1,
+        })
+      );
 
       // 4. Interactive Transparent Hit-Target Layer for Map -> Chart Scrubbing
-      map.addLayer({
-        id: 'route-hit-target',
-        type: 'line',
-        source: 'route-source',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-width': 26,
-          'line-opacity': 0.001,
-          'line-color': '#000000',
-        },
-      });
+      map.addLayer(
+        createRouteHitTargetLayer({
+          id: 'route-hit-target',
+          source: 'route-source',
+          width: 26,
+          opacity: 0.001,
+          color: '#000000',
+        })
+      );
 
       map.on('mouseenter', 'route-hit-target', () => {
         map.getCanvas().style.cursor = 'crosshair';

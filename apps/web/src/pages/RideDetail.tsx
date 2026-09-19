@@ -2,10 +2,9 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import polyline from '@mapbox/polyline';
 import { RefreshCw, Lightbulb, X, ArrowLeft } from 'lucide-react';
-import { Map as MapLibreMap, Marker, Popup } from 'maplibre-gl';
 import { exportRideAsGPX } from '../utils/gpxExport';
 import { calculateCyclingCalories } from '../utils/cyclingCalculations';
-import { type ChartTelemetryPoint, type PauseCluster, type RideDetailPoint } from '../utils/telemetrySegments';
+import { type RideDetailPoint } from '../utils/telemetrySegments';
 
 import RideDetailMap from '../components/ride-detail/RideDetailMap';
 import RideTitleHeader from '../components/ride-detail/RideTitleHeader';
@@ -13,12 +12,12 @@ import RideMetricsGrid from '../components/ride-detail/RideMetricsGrid';
 import SpeedSpectrumCard from '../components/ride-detail/SpeedSpectrumCard';
 import RideElevationSpeedChart from '../components/ride-detail/RideElevationSpeedChart';
 import RideInsightCard from '../components/ride-detail/RideInsightCard';
-import { getRideInsight, suggestRideTitle } from '../services/aiInsights';
+import { getRideInsight } from '../services/aiInsights';
 import { getRiderProfile } from '../services/riderService';
-import { getAdminToken } from '../utils/activity/adminApiClient';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
 import { getLocalRideDetail, saveLocalRideDetail, deleteLocalRide } from '../utils/storage/indexedDb';
-import { outboxManager } from '../services/outboxManager';
+import { useRideTitleManager } from '../hooks/useRideTitleManager';
+import { useRideTelemetryLinkage } from '../hooks/useRideTelemetryLinkage';
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
@@ -33,15 +32,35 @@ export default function RideDetail() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [riderWeight, setRiderWeight] = useState<number>(75.0);
 
-  // Title Polish & Edit State
-  const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
-  const [suggestedTitle, setSuggestedTitle] = useState<string | null>(null);
-  const [previousTitle, setPreviousTitle] = useState<string | null>(null);
+  // Title Polish, Edit & Undo Management
+  const {
+    isSuggestingTitle,
+    suggestedTitle,
+    previousTitle,
+    saveTitleToBackend,
+    handleAIPolishTitle,
+    handleApplySuggestedTitle,
+    handleCancelSuggestedTitle,
+    handleUndoTitle,
+  } = useRideTitleManager({ id, ride, setRide });
 
-  // Direction Reversal State (Persisted per ride in localStorage)
-  const [isReversed, setIsReversed] = useState<boolean>(() => {
-    return localStorage.getItem(`velotrack_ride_${id}_reversed`) === 'true';
-  });
+  // Map & Chart Bidirectional Telemetry Linkage
+  const {
+    isReversed,
+    handleToggleReverse,
+    effectiveRouteCoordinates,
+    mapHoveredIndex,
+    focusedRange,
+    handleMapReady,
+    handleChartHover,
+    handleChartLeave,
+    handleMapHoverPoint,
+    handleMapLeavePoint,
+    handleRangeZoom,
+    handleJumpToPoint,
+    handleSelectPauseCluster,
+    handleSelectMilestone,
+  } = useRideTelemetryLinkage({ id, ride, routeCoordinates });
 
   // 联动引导：仅首次访问展示，关闭后写入 localStorage 不再打扰
   const [showLinkHint, setShowLinkHint] = useState<boolean>(() => {
@@ -56,37 +75,10 @@ export default function RideDetail() {
     }
   }, []);
 
-  const handleToggleReverse = useCallback(() => {
-    setIsReversed((prev) => {
-      const next = !prev;
-      if (id) {
-        localStorage.setItem(`velotrack_ride_${id}_reversed`, String(next));
-      }
-      return next;
-    });
-  }, [id]);
-
-  const effectiveRouteCoordinates = useMemo(() => {
-    if (!routeCoordinates || routeCoordinates.length === 0) return [];
-    return isReversed ? [...routeCoordinates].reverse() : routeCoordinates;
-  }, [routeCoordinates, isReversed]);
-
-  // Bidirectional Interactive Linkage State
-  const [mapHoveredIndex, setMapHoveredIndex] = useState<number | null>(null);
-  const [focusedRange, setFocusedRange] = useState<{
-    startProgress: number;
-    endProgress: number;
-  } | null>(null);
-
   // Performance Insight State
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [isCached, setIsCached] = useState(false);
-
-  // Map & Marker References for bidirectional sync
-  const mapInstanceRef = useRef<MapLibreMap | null>(null);
-  const scrubberMarkerRef = useRef<Marker | null>(null);
-  const scrubberPopupRef = useRef<Popup | null>(null);
 
   // 返回按钮文案与实际来源匹配：骑行列表 → 返回骑行列表；历史 → 返回历史；其余 → 返回仪表盘
   const fromLabel =
@@ -194,69 +186,9 @@ export default function RideDetail() {
     fetchInsight(false);
   }, [fetchInsight]);
 
-  // Title Management (0ms 乐观修改 + 发件箱与远端同步)
-  const saveTitleToBackend = async (newTitle: string) => {
-    if (!id || !newTitle.trim()) return;
-    const trimmed = newTitle.trim();
-    setRide((prev: any) => (prev ? { ...prev, title: trimmed } : prev));
-    try {
-      await outboxManager.updateRideTitle(id, trimmed);
-      const { updateRideTitle } = await import('../services/rideService');
-      await updateRideTitle(id, trimmed);
-    } catch (err) {
-      console.error('Failed to update title', err);
-    }
-  };
-
-  const handleAIPolishTitle = async () => {
-    if (!id || !ride) return;
-    setIsSuggestingTitle(true);
-    try {
-      const distKm = Number(((ride.distance_meters || 0) / 1000).toFixed(1));
-      const result = await suggestRideTitle({
-        start_time: ride.start_time,
-        distance_km: distKm,
-        avg_speed_kmh: ride.avg_speed_kmh || 0,
-        total_ascent_meters: ride.total_ascent_meters || 0,
-      });
-      if (result.title && !result.title.includes('undefined')) {
-        const polishedTitle = result.title.trim();
-        const oldTitle = ride.title;
-        setPreviousTitle(oldTitle);
-        await saveTitleToBackend(polishedTitle);
-        setSuggestedTitle(null);
-
-        setTimeout(() => {
-          setPreviousTitle((prev) => (prev === oldTitle ? null : prev));
-        }, 8000);
-      }
-    } catch (err) {
-      console.error('Failed to polish title with AI', err);
-    } finally {
-      setIsSuggestingTitle(false);
-    }
-  };
-
-  const handleApplySuggestedTitle = async () => {
-    if (!suggestedTitle || !ride) return;
-    const oldTitle = ride.title;
-    setPreviousTitle(oldTitle);
-    await saveTitleToBackend(suggestedTitle);
-    setSuggestedTitle(null);
-
-    setTimeout(() => {
-      setPreviousTitle((prev) => (prev === oldTitle ? null : prev));
-    }, 8000);
-  };
-
+  // Ride Deletion
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  const handleUndoTitle = async () => {
-    if (!previousTitle || !ride) return;
-    await saveTitleToBackend(previousTitle);
-    setPreviousTitle(null);
-  };
 
   const handleDeleteRide = async () => {
     if (!id) return;
@@ -278,129 +210,6 @@ export default function RideDetail() {
       setIsDeleting(false);
     }
   };
-
-  // Map Scrubber Sync Handlers
-  const handleMapReady = useCallback((map: MapLibreMap, marker: Marker, popup: Popup) => {
-    mapInstanceRef.current = map;
-    scrubberMarkerRef.current = marker;
-    scrubberPopupRef.current = popup;
-  }, []);
-
-  const handleChartHover = useCallback(
-    (point: ChartTelemetryPoint) => {
-      if (!mapInstanceRef.current || effectiveRouteCoordinates.length === 0) return;
-      const coordIndex =
-        point.coordIndex !== undefined
-          ? point.coordIndex
-          : Math.min(
-              effectiveRouteCoordinates.length - 1,
-              Math.floor(
-                (point.index / Math.max(1, (point.totalPoints || 45) - 1)) *
-                  (effectiveRouteCoordinates.length - 1)
-              )
-            );
-      const coord = effectiveRouteCoordinates[coordIndex] || effectiveRouteCoordinates[0];
-
-      if (coord && scrubberMarkerRef.current) {
-        scrubberMarkerRef.current.setLngLat(coord).addTo(mapInstanceRef.current);
-        if (scrubberPopupRef.current) {
-          const isPaused = point.status === 'paused';
-          const isCruising = point.status === 'cruising';
-          const isClimbing = point.status === 'climbing';
-          const badgeColor = isPaused
-            ? '#64748B'
-            : isCruising
-            ? '#059669'
-            : isClimbing
-            ? '#D97706'
-            : '#395AA7';
-          const badgeBg = isPaused
-            ? '#F1F5F9'
-            : isCruising
-            ? '#ECFDF5'
-            : isClimbing
-            ? '#FEF3C7'
-            : '#F0F4FC';
-
-          scrubberPopupRef.current
-            .setLngLat(coord)
-            .setHTML(
-              `<div style="padding: 8px; font-family: sans-serif; min-width: 140px; background: white; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px;">
-                  <span style="font-weight: 600; font-size: 12px; color: #000; font-variant-numeric: tabular-nums;">${point.timeLabel}</span>
-                  <span style="font-size: 10px; font-weight: 600; color: ${badgeColor}; background: ${badgeBg}; padding: 2px 6px; border-radius: 4px;">
-                    ${isPaused ? '等红灯' : isCruising ? '稳态巡航' : isClimbing ? '起伏爬坡' : '正常骑行'}
-                  </span>
-                </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #64748B;">
-                  <span>时速: <b style="color: #395AA7; font-variant-numeric: tabular-nums;">${point.speed}</b> km/h</span>
-                  <span>海拔: <b style="color: #D97706; font-variant-numeric: tabular-nums;">${point.altitude}</b> m</span>
-                </div>
-              </div>`
-            )
-            .addTo(mapInstanceRef.current);
-        }
-      }
-    },
-    [effectiveRouteCoordinates]
-  );
-
-  const handleChartLeave = useCallback(() => {
-    if (scrubberMarkerRef.current) scrubberMarkerRef.current.remove();
-    if (scrubberPopupRef.current) scrubberPopupRef.current.remove();
-  }, []);
-
-  // Bidirectional Reverse Handlers: Map -> Chart
-  const handleMapHoverPoint = useCallback((chartIdx: number) => {
-    setMapHoveredIndex(chartIdx);
-  }, []);
-
-  const handleMapLeavePoint = useCallback(() => {
-    setMapHoveredIndex(null);
-  }, []);
-
-  const handleRangeZoom = useCallback(
-    (range: { startIdx: number; endIdx: number; startProgress: number; endProgress: number } | null) => {
-      setFocusedRange(range ? { startProgress: range.startProgress, endProgress: range.endProgress } : null);
-    },
-    []
-  );
-
-  const handleJumpToPoint = useCallback(
-    (point: ChartTelemetryPoint) => {
-      handleChartHover(point);
-      if (mapInstanceRef.current && point.coord) {
-        mapInstanceRef.current.easeTo({
-          center: point.coord,
-          zoom: 14.5,
-          duration: 700,
-        });
-      }
-    },
-    [handleChartHover]
-  );
-
-  const handleSelectPauseCluster = useCallback(
-    (cluster: PauseCluster) => {
-      if (mapInstanceRef.current && cluster.coord) {
-        mapInstanceRef.current.easeTo({
-          center: cluster.coord,
-          zoom: 15,
-          duration: 600,
-        });
-      }
-      setMapHoveredIndex(Math.round((cluster.coordIndex / Math.max(1, effectiveRouteCoordinates.length)) * 45));
-    },
-    [effectiveRouteCoordinates]
-  );
-
-  const handleSelectMilestone = useCallback(
-    (km: number) => {
-      const progress = km / Math.max(1, (ride?.distance_meters || 1000) / 1000);
-      setMapHoveredIndex(Math.round(progress * 45));
-    },
-    [ride]
-  );
 
   const movingAvgSpeedKmh = useMemo(() => {
     if (!ride) return 0;
@@ -496,7 +305,7 @@ export default function RideDetail() {
             onSaveTitle={saveTitleToBackend}
             onAIPolishTitle={handleAIPolishTitle}
             onApplySuggestedTitle={handleApplySuggestedTitle}
-            onCancelSuggestedTitle={() => setSuggestedTitle(null)}
+            onCancelSuggestedTitle={handleCancelSuggestedTitle}
             onUndoTitle={handleUndoTitle}
             onDelete={handleDeleteRide}
             isDeleting={isDeleting}

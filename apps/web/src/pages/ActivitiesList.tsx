@@ -15,6 +15,7 @@ import { detectCityForRide, extractCitiesFromRides } from '../utils/geoUtils';
 import { formatDuration, formatRideDate } from '../utils/cyclingCalculations';
 import { useApi } from '../hooks/useApi';
 import { getAdminToken } from '../utils/activity/adminApiClient';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 export default function ActivitiesList() {
   const navigate = useNavigate();
@@ -338,40 +339,25 @@ export default function ActivitiesList() {
       </main>
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-5">
-              <h3 className="text-base font-semibold text-slate-900 leading-tight">删除骑行记录</h3>
-              <p className="mt-2 text-sm text-slate-600">
-                确定要删除「<span className="font-medium text-slate-900">{deleteConfirmDialog.title}</span>」吗？此操作无法撤销。
-              </p>
-              {deleteError && (
-                <div className="mt-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-xs text-rose-600 font-medium leading-relaxed">
-                  {deleteError}
-                </div>
-              )}
-            </div>
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmDialog(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={executeDelete}
-                disabled={deletingId === deleteConfirmDialog.id}
-                className="px-4 py-2 text-sm font-medium text-white bg-rose-600 border border-transparent rounded-lg hover:bg-rose-700 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-              >
-                {deletingId === deleteConfirmDialog.id ? '正在删除...' : '删除记录'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={Boolean(deleteConfirmDialog)}
+        title="删除骑行记录"
+        description={
+          deleteConfirmDialog ? (
+            <>
+              确定要删除「<span className="font-medium text-slate-900">{deleteConfirmDialog.title}</span>」吗？此操作无法撤销。
+            </>
+          ) : null
+        }
+        confirmText="删除记录"
+        cancelText="取消"
+        isDanger={true}
+        isLoading={deleteConfirmDialog ? deletingId === deleteConfirmDialog.id : false}
+        loadingText="正在删除..."
+        errorMessage={deleteError}
+        onConfirm={executeDelete}
+        onClose={() => setDeleteConfirmDialog(null)}
+      />
     </div>
   );
 }

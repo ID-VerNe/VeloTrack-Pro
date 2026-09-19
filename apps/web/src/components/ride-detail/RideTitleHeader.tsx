@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import IconButton from '../common/IconButton';
+import ConfirmModal from '../common/ConfirmModal';
 import { 
   ArrowLeft, 
   Edit2, 
@@ -118,32 +119,23 @@ export default function RideTitleHeader({
         </div>
       </div>
 
-      {/* Delete Confirmation Banner */}
-      {showDeleteConfirm && (
-        <div className="p-4 bg-slate-50 flex items-center justify-between animate-in fade-in slide-in-from-top-1 duration-150 rounded">
-          <span className="text-[13px] text-slate-900 font-medium">
-            确定要删除此骑行记录吗？此操作无法撤销。
-          </span>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                onDelete?.();
-              }}
-              disabled={isDeleting}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[13px] rounded transition-colors cursor-pointer"
-            >
-              {isDeleting ? '正在删除...' : '确认删除'}
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(false)}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 text-[13px] rounded transition-colors cursor-pointer"
-            >
-              取消
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="删除骑行记录"
+        description="确定要删除此骑行记录吗？此操作无法撤销。"
+        confirmText="确认删除"
+        cancelText="取消"
+        isDanger={true}
+        isLoading={isDeleting}
+        loadingText="正在删除..."
+        errorMessage={deleteError}
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          onDelete?.();
+        }}
+        onClose={() => setShowDeleteConfirm(false)}
+      />
 
       {/* Delete Error Banner */}
       {deleteError && (
