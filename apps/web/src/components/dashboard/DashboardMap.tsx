@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Map as MapLibreMap, LngLatBounds, Marker } from 'maplibre-gl';
 import MapFloatingControls from '../common/MapFloatingControls';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import polyline from '@mapbox/polyline';
 import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
-import { matchesCityFilter } from '../../utils/geoUtils';
+import { matchesCityFilter, decodePolylineToLngLats } from '../../utils/geoUtils';
 import { adaptCoordinatesToMapStyle } from '../../utils/coordTransform';
 import { MAP_ROUTE_TOKENS } from '../../constants/designTokens';
 import {
@@ -50,16 +49,13 @@ export default function DashboardMap({
     let hasCoords = false;
 
     targetRides.forEach((ride) => {
-      if (!ride.summary_polyline) return;
-      try {
-        const rawCoords = polyline.decode(ride.summary_polyline);
-        const coords: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
-        const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
-        adaptedCoords.forEach((p) => {
-          bounds.extend(p);
-          hasCoords = true;
-        });
-      } catch {}
+      const coords = decodePolylineToLngLats(ride.summary_polyline);
+      if (coords.length === 0) return;
+      const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
+      adaptedCoords.forEach((p) => {
+        bounds.extend(p);
+        hasCoords = true;
+      });
     });
 
     if (hasCoords) {
@@ -79,14 +75,11 @@ export default function DashboardMap({
     let hasPoints = false;
 
     ridesToRender.forEach((ride) => {
-      if (!ride.summary_polyline) return;
-      try {
-        const rawCoords = polyline.decode(ride.summary_polyline);
-        if (!rawCoords || rawCoords.length === 0) return;
+      const coords = decodePolylineToLngLats(ride.summary_polyline);
+      if (coords.length === 0) return;
 
-        const coords: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
-        const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
-        const sourceId = `route-${ride.id}`;
+      const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
+      const sourceId = `route-${ride.id}`;
 
         if (!map.getSource(sourceId)) {
           map.addSource(sourceId, {
@@ -170,9 +163,6 @@ export default function DashboardMap({
           bounds.extend(c as [number, number]);
           hasPoints = true;
         });
-      } catch (e) {
-        console.error('Failed to draw route', e);
-      }
     });
 
     if (hasPoints && shouldFitBounds) {
@@ -239,16 +229,13 @@ export default function DashboardMap({
     let hasCoords = false;
 
     targetRides.forEach((ride) => {
-      if (!ride.summary_polyline) return;
-      try {
-        const rawCoords = polyline.decode(ride.summary_polyline);
-        const coords: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
-        const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
-        adaptedCoords.forEach((p) => {
-          bounds.extend(p);
-          hasCoords = true;
-        });
-      } catch {}
+      const coords = decodePolylineToLngLats(ride.summary_polyline);
+      if (coords.length === 0) return;
+      const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
+      adaptedCoords.forEach((p) => {
+        bounds.extend(p);
+        hasCoords = true;
+      });
     });
 
     if (hasCoords) {
@@ -280,30 +267,27 @@ export default function DashboardMap({
             map.setPaintProperty(coreLayer, 'line-width', 5.5);
             map.setPaintProperty(coreLayer, 'line-color', '#D97706');
 
-            if (r.summary_polyline) {
-              try {
-                const rawCoords = polyline.decode(r.summary_polyline);
-                const coords: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
-                const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
+            const coords = decodePolylineToLngLats(r.summary_polyline);
+            if (coords.length > 0) {
+              const adaptedCoords = adaptCoordinatesToMapStyle(coords, currentMapStyle);
 
-                if (adaptedCoords.length > 0) {
-                  if (!startMarkerRef.current) {
-                    const el = document.createElement('div');
-                    el.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-md animate-pulse';
-                    startMarkerRef.current = new Marker({ element: el });
-                  }
-                  startMarkerRef.current.setLngLat(adaptedCoords[0]).addTo(map);
-
-                  if (!endMarkerRef.current && coords.length > 1) {
-                    const el = document.createElement('div');
-                    el.className = 'w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-white shadow-md animate-pulse';
-                    endMarkerRef.current = new Marker({ element: el });
-                  }
-                  if (endMarkerRef.current && coords.length > 1) {
-                    endMarkerRef.current.setLngLat(adaptedCoords[adaptedCoords.length - 1]).addTo(map);
-                  }
+              if (adaptedCoords.length > 0) {
+                if (!startMarkerRef.current) {
+                  const el = document.createElement('div');
+                  el.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-md animate-pulse';
+                  startMarkerRef.current = new Marker({ element: el });
                 }
-              } catch {}
+                startMarkerRef.current.setLngLat(adaptedCoords[0]).addTo(map);
+
+                if (!endMarkerRef.current && coords.length > 1) {
+                  const el = document.createElement('div');
+                  el.className = 'w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-white shadow-md animate-pulse';
+                  endMarkerRef.current = new Marker({ element: el });
+                }
+                if (endMarkerRef.current && coords.length > 1) {
+                  endMarkerRef.current.setLngLat(adaptedCoords[adaptedCoords.length - 1]).addTo(map);
+                }
+              }
             }
           } else {
             if (map.getLayer(glowLayer)) map.setPaintProperty(glowLayer, 'line-opacity', 0.05);

@@ -29,6 +29,35 @@ const CITY_BOUNDS = [
 ];
 
 /**
+ * 安全解码 Google Encoded Polyline 字符串为 MapLibre / GeoJSON [lng, lat] 坐标数组
+ * 若输入为空、非字符串或解析失败，安全返回空数组
+ */
+export function decodePolylineToLngLats(polylineStr?: string | null): [number, number][] {
+  if (!polylineStr || typeof polylineStr !== 'string') return [];
+  try {
+    const rawCoords = polyline.decode(polylineStr);
+    const result: [number, number][] = [];
+    for (let i = 0; i < rawCoords.length; i++) {
+      const [lat, lng] = rawCoords[i];
+      if (
+        typeof lat !== 'number' ||
+        typeof lng !== 'number' ||
+        Number.isNaN(lat) ||
+        Number.isNaN(lng) ||
+        Math.abs(lat) > 90 ||
+        Math.abs(lng) > 180
+      ) {
+        return [];
+      }
+      result.push([lng, lat]);
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+/**
  * 获取骑行展示用的城市字符串（如 "深圳"、"深圳 → 东莞"、"深圳 ⇄ 东莞"）
  */
 export function detectCityForRide(ride: any): string {
@@ -41,14 +70,10 @@ export function detectCityForRide(ride: any): string {
   let lng = ride?.start_lng;
 
   if ((!lat || !lng) && ride?.summary_polyline) {
-    try {
-      const coords = polyline.decode(ride.summary_polyline);
-      if (coords.length > 0) {
-        lat = coords[0][0];
-        lng = coords[0][1];
-      }
-    } catch {
-      // fallback
+    const coords = decodePolylineToLngLats(ride.summary_polyline);
+    if (coords.length > 0) {
+      lng = coords[0][0];
+      lat = coords[0][1];
     }
   }
 

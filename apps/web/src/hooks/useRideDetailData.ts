@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import polyline from '@mapbox/polyline';
+import { decodePolylineToLngLats } from '../utils/geoUtils';
 import { getRideInsight } from '../services/aiInsights';
 import { getRiderProfile } from '../services/riderService';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
@@ -46,9 +46,7 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
       setRide(data.ride);
       setDetailPoints(Array.isArray(data.detailPoints) ? data.detailPoints : null);
       if (data.ride.summary_polyline) {
-        const rawCoords = polyline.decode(data.ride.summary_polyline);
-        const formatted: [number, number][] = rawCoords.map((p) => [p[1], p[0]]);
-        setRouteCoordinates(formatted);
+        setRouteCoordinates(decodePolylineToLngLats(data.ride.summary_polyline));
       }
       setLoadError(null);
     }

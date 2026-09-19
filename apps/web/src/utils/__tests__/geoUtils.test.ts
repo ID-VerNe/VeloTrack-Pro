@@ -6,6 +6,7 @@ import {
   getRideCities,
   isCrossCityRide,
   matchesCityFilter,
+  decodePolylineToLngLats,
 } from '../geoUtils';
 
 afterEach(() => {
@@ -165,5 +166,28 @@ describe('matchesCityFilter 城市过滤匹配', () => {
 
   it('空记录安全防御', () => {
     expect(matchesCityFilter(null, '深圳')).toBe(true);
+  });
+});
+
+describe('decodePolylineToLngLats 安全解码', () => {
+  it('正常解码 polyline 并转换为 [lng, lat] 坐标对', () => {
+    const original: [number, number][] = [
+      [22.54, 114.05],
+      [22.55, 114.06],
+    ];
+    const encoded = polyline.encode(original);
+    const decoded = decodePolylineToLngLats(encoded);
+    expect(decoded).toHaveLength(2);
+    expect(decoded[0][0]).toBeCloseTo(114.05, 4);
+    expect(decoded[0][1]).toBeCloseTo(22.54, 4);
+    expect(decoded[1][0]).toBeCloseTo(114.06, 4);
+    expect(decoded[1][1]).toBeCloseTo(22.55, 4);
+  });
+
+  it('空或非法输入时安全返回空数组', () => {
+    expect(decodePolylineToLngLats('')).toEqual([]);
+    expect(decodePolylineToLngLats(null)).toEqual([]);
+    expect(decodePolylineToLngLats(undefined)).toEqual([]);
+    expect(decodePolylineToLngLats('invalid_gibberish')).toEqual([]);
   });
 });

@@ -1,123 +1,35 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
   RefreshCw 
 } from 'lucide-react';
 import IconButton from '../components/common/IconButton';
-import { formatPeriodTitle } from '../utils/dateUtils';
 
 import PeriodSummaryCards from '../components/reports/PeriodSummaryCards';
 import PeriodTimelineChart from '../components/reports/PeriodTimelineChart';
 import PeriodInsightCard from '../components/reports/PeriodInsightCard';
 import PeriodRidesTable from '../components/reports/PeriodRidesTable';
-import {
-  computePeriodicSummary,
-  generatePeriodInsight,
-} from '../services/reportService';
-
-type PeriodType = 'week' | 'month' | 'half_year' | 'year';
+import { usePeriodicReport } from '../hooks/usePeriodicReport';
 
 export default function PeriodicReports() {
-  const [periodType, setPeriodType] = useState<PeriodType>('week');
-  const [latestActiveTimestamp, setLatestActiveTimestamp] = useState<number>(Date.now());
-  const [currentTimestamp, setCurrentTimestamp] = useState<number>(Date.now());
+  const {
+    periodType,
+    setPeriodType,
+    currentTimestamp,
+    latestActiveTimestamp,
+    reportData,
+    isLoading,
+    aiInsight,
+    isAiLoading,
+    periodTitle,
+    handlePrevPeriod,
+    handleNextPeriod,
+    handleResetToLatest,
+    handleGenerateAiInsight,
+  } = usePeriodicReport();
 
-  const [reportData, setReportData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // AI Insight State
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-
-  // Detect latest active ride timestamp from database on initial mount
-  useEffect(() => {
-    fetch('/api/rides')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.rides && data.rides.length > 0) {
-          const maxTime = Math.max(...data.rides.map((r: any) => r.start_time || 0));
-          if (maxTime > 0) {
-            setLatestActiveTimestamp(maxTime);
-            setCurrentTimestamp(maxTime);
-          }
-        }
-      })
-      .catch(console.error);
-  }, []);
-
-  const cacheKey = `velotrack_ai_insight_${periodType}_${currentTimestamp}`;
-
-  const fetchReport = useCallback(async () => {
-    setIsLoading(true);
-
-    const cachedInsight = sessionStorage.getItem(cacheKey);
-    if (cachedInsight) {
-      setAiInsight(cachedInsight);
-    } else {
-      setAiInsight(null);
-    }
-
-    try {
-      const data = await computePeriodicSummary(periodType, currentTimestamp);
-      setReportData(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [periodType, currentTimestamp, cacheKey]);
-
-  useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
-
-  const handlePrevPeriod = () => {
-    const d = new Date(currentTimestamp);
-    if (periodType === 'week') d.setDate(d.getDate() - 7);
-    else if (periodType === 'month') d.setMonth(d.getMonth() - 1);
-    else if (periodType === 'half_year') d.setMonth(d.getMonth() - 6);
-    else d.setFullYear(d.getFullYear() - 1);
-    setCurrentTimestamp(d.getTime());
-  };
-
-  const handleNextPeriod = () => {
-    if (currentTimestamp >= latestActiveTimestamp) return;
-    const d = new Date(currentTimestamp);
-    if (periodType === 'week') d.setDate(d.getDate() + 7);
-    else if (periodType === 'month') d.setMonth(d.getMonth() + 1);
-    else if (periodType === 'half_year') d.setMonth(d.getMonth() + 6);
-    else d.setFullYear(d.getFullYear() + 1);
-    setCurrentTimestamp(Math.min(latestActiveTimestamp, d.getTime()));
-  };
-
-  const handleGenerateAiInsight = async () => {
-    if (!reportData?.summary || isAiLoading) return;
-    setIsAiLoading(true);
-    try {
-      const insight = await generatePeriodInsight(
-        periodType,
-        reportData.summary,
-        reportData.rides?.length || 0
-      );
-      if (insight) {
-        setAiInsight(insight);
-        sessionStorage.setItem(cacheKey, insight);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  const periodTitle = useMemo(() => {
-    return formatPeriodTitle(
-      periodType,
-      reportData?.start_time,
-      reportData?.end_time
-    );
-  }, [periodType, reportData]);
+  const isLatest = currentTimestamp >= latestActiveTimestamp;
 
   return (
     <div className="h-full w-full bg-[#F8FAFC] flex flex-col text-slate-900 overflow-hidden">
@@ -159,30 +71,25 @@ export default function PeriodicReports() {
             </div>
 
             {/* Pagination Controls with Boundary Awareness */}
-            {(() => {
-              const isLatest = currentTimestamp >= latestActiveTimestamp;
-              return (
-                <div className="flex items-center space-x-1 border border-slate-200 rounded p-0.5 bg-white">
-                  <IconButton label="上一周期" size="sm" onClick={handlePrevPeriod}>
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </IconButton>
-                  <button
-                    onClick={() => setCurrentTimestamp(latestActiveTimestamp)}
-                    className={`px-2 py-0.5 text-xs rounded transition-colors cursor-pointer ${
-                      isLatest
-                        ? 'bg-brand-500 text-white font-medium shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                    title={isLatest ? '当前已是最新活跃周期' : '返回最新活跃周期'}
-                  >
-                    最新
-                  </button>
-                  <IconButton label="下一周期" size="sm" onClick={handleNextPeriod} disabled={isLatest}>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </IconButton>
-                </div>
-              );
-            })()}
+            <div className="flex items-center space-x-1 border border-slate-200 rounded p-0.5 bg-white">
+              <IconButton label="上一周期" size="sm" onClick={handlePrevPeriod}>
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </IconButton>
+              <button
+                onClick={handleResetToLatest}
+                className={`px-2 py-0.5 text-xs rounded transition-colors cursor-pointer ${
+                  isLatest
+                    ? 'bg-brand-500 text-white font-medium shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+                title={isLatest ? '当前已是最新活跃周期' : '返回最新活跃周期'}
+              >
+                最新
+              </button>
+              <IconButton label="下一周期" size="sm" onClick={handleNextPeriod} disabled={isLatest}>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </IconButton>
+            </div>
           </div>
         </header>
 

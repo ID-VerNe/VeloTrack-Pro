@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import polyline from '@mapbox/polyline';
-import { detectCityForRide } from '../utils/geoUtils';
+import { detectCityForRide, decodePolylineToLngLats } from '../utils/geoUtils';
 import { calculateDualSpeeds, formatFriendlyDuration } from '../utils/cyclingCalculations';
 import { BRAND_COLORS } from '../constants/designTokens';
 
@@ -36,22 +35,20 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
 
   // Calculate zero-distortion, aspect-ratio-preserved SVG path
   const { pathData, startPt, endPt } = useMemo(() => {
-    if (!ride.summary_polyline) return { pathData: null, startPt: null, endPt: null };
-    try {
-      const coords = polyline.decode(ride.summary_polyline);
-      if (!coords || coords.length === 0) return { pathData: null, startPt: null, endPt: null };
+    const coords = decodePolylineToLngLats(ride.summary_polyline);
+    if (coords.length === 0) return { pathData: null, startPt: null, endPt: null };
 
-      const width = 76;
-      const height = 52;
-      const pad = 7;
+    const width = 76;
+    const height = 52;
+    const pad = 7;
 
-      const midLat = coords.reduce((acc, c) => acc + c[0], 0) / coords.length;
-      const cosLat = Math.cos((midLat * Math.PI) / 180);
+    const midLat = coords.reduce((acc, c) => acc + c[1], 0) / coords.length;
+    const cosLat = Math.cos((midLat * Math.PI) / 180);
 
-      const projected = coords.map(([lat, lng]) => ({
-        x: lng * cosLat,
-        y: lat,
-      }));
+    const projected = coords.map(([lng, lat]) => ({
+      x: lng * cosLat,
+      y: lat,
+    }));
 
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       projected.forEach((p) => {
@@ -86,9 +83,6 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
         startPt: points[0],
         endPt: points[points.length - 1],
       };
-    } catch {
-      return { pathData: null, startPt: null, endPt: null };
-    }
   }, [ride.summary_polyline]);
 
   return (

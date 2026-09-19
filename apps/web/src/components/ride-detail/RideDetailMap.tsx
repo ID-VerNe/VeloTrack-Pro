@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Map as MapLibreMap, LngLatBounds, Marker, Popup } from 'maplibre-gl';
-import { Flame, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight } from 'lucide-react';
 import MapFloatingControls from '../common/MapFloatingControls';
+import SpeedGradientLegend from './SpeedGradientLegend';
 
 import { MAP_STYLES, type MapStyleKey } from '../../utils/mapStyles';
 import { MAP_STYLE_VISUALS } from '../../utils/mapVisualConfigs';
@@ -15,11 +16,11 @@ import {
 } from '../../utils/mapRouteLayers';
 import {
   analyzeRideTelemetry,
-  computeDistanceMeters,
   findClosestTelemetryIndex,
   type PauseCluster,
   type RideDetailPoint,
 } from '../../utils/telemetrySegments';
+import { buildRouteSpeedFeatures } from '../../utils/routeGeoJsonBuilder';
 import {
   createStartMarker,
   createFinishMarker,
@@ -93,72 +94,26 @@ export default function RideDetailMap({
 
       const pauseCoordIndices = new Set(pauseClusters.map((pc) => pc.coordIndex));
 
-      // 1. Build Multi-segment colored GeoJSON features
-      const numCoords = adaptedCoords.length;
-      const features: any[] = [];
-      let accumulatedMeters = 0;
-      let nextMilestoneKm = 5;
+      // 1. Build Multi-segment colored GeoJSON features & Milestones
+      const { features, milestones } = buildRouteSpeedFeatures(
+        adaptedCoords,
+        stepDistances,
+        pauseCoordIndices,
+        stats.movingAvgSpeedKmh,
+        stats.maxSpeedKmh,
+        avgMovingStep
+      );
 
-      for (let i = 0; i < numCoords - 1; i++) {
-        const p1 = adaptedCoords[i];
-        const p2 = adaptedCoords[i + 1];
-        const dist = computeDistanceMeters(p1, p2);
-        accumulatedMeters += dist;
-
-        const isPauseZone =
-          (stepDistances[i] !== undefined && stepDistances[i] < 3.2) ||
-          pauseCoordIndices.has(i) ||
-          pauseCoordIndices.has(i + 1);
-
-        let speedKmh = 0;
-        let segmentColor = '#94A3B8'; // Slate-400 (Pause)
-        let segmentStatus = 'paused';
-
-        if (!isPauseZone) {
-          const rawDist = stepDistances[i] || dist;
-          const normalizedSpeed = (rawDist / Math.max(1, avgMovingStep)) * stats.movingAvgSpeedKmh;
-          speedKmh = Number(Math.max(6.0, Math.min(stats.maxSpeedKmh, normalizedSpeed)).toFixed(1));
-
-          if (speedKmh >= 28) {
-            segmentColor = '#EF4444'; // Rose-500 (高速冲刺)
-            segmentStatus = 'sprint';
-          } else if (speedKmh >= 20) {
-            segmentColor = '#10B981'; // Emerald-500 (巡航区间)
-            segmentStatus = 'cruising';
-          } else {
-            segmentColor = '#F59E0B'; // Amber-500 (起步/爬坡)
-            segmentStatus = 'tempo';
-          }
-        }
-
-        features.push({
-          type: 'Feature',
-          properties: {
-            color: segmentColor,
-            speed: speedKmh,
-            status: segmentStatus,
-            segmentIndex: i,
-          },
-          geometry: {
-            type: 'LineString',
-            coordinates: [p1, p2],
-          },
-        });
-
-        // Place 5km Milestones
-        const accumulatedKm = accumulatedMeters / 1000;
-        if (accumulatedKm >= nextMilestoneKm && nextMilestoneKm < accumulatedMeters / 1000 + 5) {
-          const currentKmVal = nextMilestoneKm;
-          const mMarker = createMilestoneMarker(
-            currentKmVal,
-            p2,
-            visual.milestoneClass,
-            onSelectMilestone
-          ).addTo(map);
-          customMarkersRef.current.push(mMarker);
-          nextMilestoneKm += 5;
-        }
-      }
+      // Place 5km Milestones
+      milestones.forEach((m) => {
+        const mMarker = createMilestoneMarker(
+          m.km,
+          m.coord,
+          visual.milestoneClass,
+          onSelectMilestone
+        ).addTo(map);
+        customMarkersRef.current.push(mMarker);
+      });
 
       // Add Source
       if (map.getSource('route-source')) {
@@ -427,28 +382,7 @@ export default function RideDetailMap({
 
       {/* Speed Gradient Color Heatmap Legend */}
       {showHeatmapLegend && (
-        <div className="absolute bottom-8 left-6 z-20 bg-white/95 backdrop-blur px-4 py-2.5 rounded-lg border border-slate-200/80 flex items-center space-x-4 font-sans shadow-md">
-          <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">速度谱系:</span>
-
-          <div className="flex items-center space-x-4 text-[12px]">
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0" />
-              <span className="text-slate-600">停顿/低速</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-              <span className="text-slate-600">起步/爬坡</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-emerald-700 font-medium">巡航区间</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-              <span className="text-rose-600 font-medium">高速冲刺</span>
-            </div>
-          </div>
-        </div>
+        <SpeedGradientLegend className="absolute bottom-8 left-6 z-20" />
       )}
 
       {/* Floating Zoom & Controls (iOS style integrated capsule) */}

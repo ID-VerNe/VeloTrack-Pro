@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { computeHeatmapCalendar } from '../utils/heatmapCalendar';
 
 interface Props {
   rides: any[];
@@ -11,104 +12,10 @@ export default function ConsistencyHeatmap({ rides }: Props) {
   const [hoveredDay, setHoveredDay] = useState<{ dateStr: string; distanceKm: number; count: number } | null>(null);
 
   // Strictly compute full calendar year (Jan 1 -> Dec 31) from real rides data
-  const { weeks, months, totalYearDistanceKm, activeDaysCount } = useMemo(() => {
-    const dailyMap = new Map<string, { distanceMeters: number; count: number }>();
-    let totalMeters = 0;
-
-    rides.forEach((ride) => {
-      if (!ride.start_time) return;
-      const date = new Date(ride.start_time);
-      if (date.getFullYear() !== selectedYear) return;
-
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
-
-      const existing = dailyMap.get(dateStr) || { distanceMeters: 0, count: 0 };
-      const dist = ride.distance_meters || 0;
-      dailyMap.set(dateStr, {
-        distanceMeters: existing.distanceMeters + dist,
-        count: existing.count + 1,
-      });
-      totalMeters += dist;
-    });
-
-    // Start from Monday of the week containing Jan 1st of selectedYear
-    const jan1 = new Date(selectedYear, 0, 1);
-    const dayOfWeek = jan1.getDay(); // 0 is Sunday, 1 is Monday...
-    const dayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const startDate = new Date(selectedYear, 0, 1 + dayOffset);
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const monthFirstWeekMap = new Map<number, number>();
-    const weeksList: {
-      dateStr: string;
-      distanceKm: number;
-      count: number;
-      level: number;
-      isFuture: boolean;
-    }[][] = [];
-
-    let activeDays = 0;
-    const numWeeks = 53;
-
-    for (let w = 0; w < numWeeks; w++) {
-      const week: {
-        dateStr: string;
-        distanceKm: number;
-        count: number;
-        level: number;
-        isFuture: boolean;
-      }[] = [];
-
-      for (let d = 0; d < 7; d++) {
-        const cur = new Date(startDate);
-        cur.setDate(startDate.getDate() + (w * 7 + d));
-        const yyyy = cur.getFullYear();
-        const mm = String(cur.getMonth() + 1).padStart(2, '0');
-        const dd = String(cur.getDate()).padStart(2, '0');
-        const dateKey = `${yyyy}-${mm}-${dd}`;
-        const monthNum = cur.getMonth();
-
-        // Mark the first week this month appears in selected year
-        if (cur.getFullYear() === selectedYear && !monthFirstWeekMap.has(monthNum)) {
-          monthFirstWeekMap.set(monthNum, w);
-        }
-
-        const data = dailyMap.get(dateKey);
-        const distMeters = data ? data.distanceMeters : 0;
-        const count = data ? data.count : 0;
-        const distanceKm = Number((distMeters / 1000).toFixed(1));
-        const isFuture = dateKey > todayStr;
-
-        let level = 0;
-        if (distMeters > 0) {
-          activeDays++;
-          if (distMeters < 15000) level = 1;      // < 15 km
-          else if (distMeters < 30000) level = 2; // 15 - 30 km
-          else if (distMeters < 60000) level = 3; // 30 - 60 km
-          else level = 4;                         // >= 60 km
-        }
-
-        week.push({ dateStr: dateKey, distanceKm, count, level, isFuture });
-      }
-      weeksList.push(week);
-    }
-
-    const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-    const monthList = monthNames.map((name, i) => ({
-      name,
-      weekIndex: monthFirstWeekMap.get(i) ?? Math.round((i / 12) * 53),
-    }));
-
-    return {
-      weeks: weeksList,
-      months: monthList,
-      totalYearDistanceKm: (totalMeters / 1000).toFixed(1),
-      activeDaysCount: activeDays,
-    };
-  }, [rides, selectedYear]);
+  const { weeks, months, totalYearDistanceKm, activeDaysCount } = useMemo(
+    () => computeHeatmapCalendar(rides, selectedYear),
+    [rides, selectedYear]
+  );
 
   const availableYears = useMemo(() => {
     const yearsSet = new Set<number>();

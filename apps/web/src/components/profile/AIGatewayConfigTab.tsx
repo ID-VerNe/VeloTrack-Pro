@@ -1,114 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Check, AlertCircle, Loader2, Wifi, KeyRound, Cpu, Link2, ShieldCheck } from 'lucide-react';
 import type { AIConfig } from '../../services/aiClient';
-import {
-  getGatewayKey,
-  setGatewayKey,
-  getAIConfig,
-  updateAIConfig,
-  testGatewayConnection,
-} from '../../services/aiClient';
-import { getAdminToken, setAdminToken } from '../../utils/activity/adminApiClient';
+import { useAIGatewayConfig } from '../../hooks/useAIGatewayConfig';
 
 interface Props {
   /** 拉到最新后端配置后回调，便于父组件同步缓存 */
   onConfigUpdated?: (config: AIConfig) => void;
 }
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-type TestStatus = 'idle' | 'testing' | 'success' | 'error';
-
 export default function AIGatewayConfigTab({ onConfigUpdated }: Props) {
-  const [baseUrl, setBaseUrl] = useState('');
-  const [modelName, setModelName] = useState('glm-5.2');
-  const [apiKey, setApiKey] = useState('');
-  // key 输入框是否明文显示（默认掩码）
-  const [showKey, setShowKey] = useState(false);
-
-  // 管理令牌（ADMIN_TOKEN）
-  const [adminToken, setAdminTokenState] = useState('');
-  const [showAdminToken, setShowAdminToken] = useState(false);
-  const [adminTokenSaved, setAdminTokenSaved] = useState(false);
-
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-  const [saveError, setSaveError] = useState('');
-  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
-  const [testMessage, setTestMessage] = useState('');
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-
-  // 挂载时拉后端配置 + 读 localStorage 的 key
-  useEffect(() => {
-    getAIConfig()
-      .then((cfg) => {
-        setBaseUrl(cfg.base_url);
-        setModelName(cfg.model_name || 'glm-5.2');
-        onConfigUpdated?.(cfg);
-      })
-      .catch((err) => {
-        setSaveError(err.message || '读取配置失败');
-        setSaveStatus('error');
-      });
-    setApiKey(getGatewayKey());
-    setAdminTokenState(getAdminToken());
-  }, [onConfigUpdated]);
-
-  const handleSaveAdminToken = () => {
-    setAdminToken(adminToken.trim());
-    setAdminTokenSaved(true);
-    setTimeout(() => setAdminTokenSaved(false), 2000);
-  };
-
-  const handleSaveConfig = async () => {
-    setSaveStatus('saving');
-    setSaveError('');
-    try {
-      const cfg: AIConfig = { base_url: baseUrl.trim(), model_name: modelName.trim() };
-      await updateAIConfig(cfg);
-      onConfigUpdated?.(cfg);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2500);
-    } catch (err: any) {
-      setSaveStatus('error');
-      setSaveError(err.message || '保存失败');
-      setTimeout(() => setSaveStatus('idle'), 3500);
-    }
-  };
-
-  const handleSaveKey = () => {
-    setGatewayKey(apiKey.trim());
-    setSaveStatus('saved');
-    setSaveError('');
-    setTimeout(() => setSaveStatus('idle'), 2500);
-  };
-
-  const handleTestConnection = async () => {
-    setTestStatus('testing');
-    setTestMessage('');
-    setAvailableModels([]);
-    try {
-      const cfg: AIConfig = { base_url: baseUrl.trim(), model_name: modelName.trim() };
-      // 用输入框当前值测试（未保存也能测），key 同理
-      const keyToTest = apiKey.trim();
-      setGatewayKey(keyToTest);
-      const models = await testGatewayConnection(cfg, keyToTest);
-      setAvailableModels(models);
-      const inList = models.length === 0 || models.includes(modelName.trim());
-      if (inList) {
-        setTestStatus('success');
-        setTestMessage(
-          `连通正常，Gateway 返回 ${models.length} 个可用模型${models.length ? '：' + models.join('、') : ''}`,
-        );
-      } else {
-        setTestStatus('error');
-        setTestMessage(
-          `连通正常，但当前模型 ${modelName} 不在可用列表 [${models.join('、')}] 中，请检查模型名`,
-        );
-      }
-    } catch (err: any) {
-      setTestStatus('error');
-      setTestMessage(err.message || '连通测试失败');
-    }
-  };
+  const {
+    baseUrl,
+    setBaseUrl,
+    modelName,
+    setModelName,
+    apiKey,
+    setApiKey,
+    showKey,
+    setShowKey,
+    adminToken,
+    setAdminTokenState,
+    showAdminToken,
+    setShowAdminToken,
+    adminTokenSaved,
+    saveStatus,
+    saveError,
+    testStatus,
+    testMessage,
+    availableModels,
+    handleSaveAdminToken,
+    handleSaveConfig,
+    handleSaveKey,
+    handleTestConnection,
+  } = useAIGatewayConfig({ onConfigUpdated });
 
   const inputCls =
     'w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs font-mono';
