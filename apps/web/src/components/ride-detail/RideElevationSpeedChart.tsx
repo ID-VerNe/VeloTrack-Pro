@@ -270,28 +270,28 @@ export default function RideElevationSpeedChart({
             {isZoomed && (
               <button
                 onClick={handleResetZoom}
-                className="px-2 py-0.5 rounded text-[12px] text-black bg-black/5 hover:bg-black/10 flex items-center space-x-1 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded-md text-[12px] text-slate-700 bg-slate-100 hover:bg-slate-200 flex items-center space-x-1 transition-colors cursor-pointer border border-slate-200/60"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>复原全貌</span>
               </button>
             )}
-            <span className="text-[12px] text-black/44">
+            <span className="text-[12px] text-slate-400 font-mono">
               总历时 {stats.elapsedMins} 分钟
             </span>
           </div>
         </div>
 
         {/* Micro-segmentation summary badges */}
-        <div className="flex flex-wrap items-center gap-3 text-[13px] text-black/64 pt-1">
+        <div className="flex flex-wrap items-center gap-3 text-[13px] text-slate-600 pt-1">
           <span className="flex items-center space-x-1.5">
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-3.5 h-3.5 text-brand-500" />
             <span>踩踏: {stats.movingMins} min ({stats.movingRatioPct}%)</span>
           </span>
 
           {stats.totalPausedSecs >= 60 && (
             <span className="flex items-center space-x-1.5">
-              <PauseCircle className="w-3.5 h-3.5" />
+              <PauseCircle className="w-3.5 h-3.5 text-slate-400" />
               <span>停顿: {stats.pausedMins} min ({stats.pausedRatioPct}%)</span>
             </span>
           )}
@@ -299,7 +299,7 @@ export default function RideElevationSpeedChart({
 
         {/* Quick-Jump Key Feature Capsules */}
         <div className="flex flex-wrap items-center gap-2 pt-2 text-[12px]">
-          <span className="text-black/44 uppercase tracking-wider mr-1">特征极值:</span>
+          <span className="text-slate-400 uppercase font-mono tracking-wider mr-1 text-[11px]">特征极值:</span>
           {keyPeakIndices && (
             <>
               <button
@@ -307,10 +307,10 @@ export default function RideElevationSpeedChart({
                   const pt = telemetryPoints[keyPeakIndices.maxSpeedPointIndex];
                   if (pt) onJumpToPoint?.(pt);
                 }}
-                className="px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 text-black transition-colors flex items-center space-x-1.5 cursor-pointer"
+                className="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200/60 transition-colors flex items-center space-x-1.5 cursor-pointer font-mono"
                 title="定位至最高冲刺路段"
               >
-                <Flame className="w-3 h-3 text-black/64" />
+                <Flame className="w-3 h-3 text-rose-500" />
                 <span>冲刺峰值 {stats.maxSpeedKmh} km/h</span>
               </button>
 
@@ -319,10 +319,10 @@ export default function RideElevationSpeedChart({
                   const pt = telemetryPoints[keyPeakIndices.maxAltPointIndex];
                   if (pt) onJumpToPoint?.(pt);
                 }}
-                className="px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 text-black transition-colors flex items-center space-x-1.5 cursor-pointer"
+                className="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200/60 transition-colors flex items-center space-x-1.5 cursor-pointer font-mono"
                 title="定位至最高海拔位置"
               >
-                <Mountain className="w-3 h-3 text-black/64" />
+                <Mountain className="w-3 h-3 text-amber-500" />
                 <span>爬坡顶点 {stats.maxSpeedKmh ? (ride?.max_altitude_meters ?? 0) : 0} m</span>
               </button>
 
@@ -333,10 +333,10 @@ export default function RideElevationSpeedChart({
                     const pt = telemetryPoints.find((p) => p.coordIndex === pc?.coordIndex) || telemetryPoints[0];
                     if (pt) onJumpToPoint?.(pt);
                   }}
-                  className="px-2.5 py-1 rounded bg-black/5 hover:bg-black/10 text-black transition-colors flex items-center space-x-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200/60 transition-colors flex items-center space-x-1.5 cursor-pointer font-mono"
                   title="定位至最长红绿灯等待点"
                 >
-                  <PauseCircle className="w-3 h-3 text-black/64" />
+                  <PauseCircle className="w-3 h-3 text-slate-400" />
                   <span>最长等灯 {keyPeakIndices.longestPauseCluster.durationMins} 分钟</span>
                 </button>
               )}

@@ -50,20 +50,24 @@ route('POST', '/api/admin/rides', function (array $p) {
     $startLat = num_or_null($data['start_lat']);
     $startLng = num_or_null($data['start_lng']);
     $polyline = is_string($data['summary_polyline'] ?? null) ? $data['summary_polyline'] : null;
-    $createdAt = (int)(microtime(true) * 1000);
+    require_once __DIR__ . '/../utils/geo_resolver.php';
+    $geoInfo = resolve_ride_cities($startLat, $startLng, $polyline);
+    $city = $geoInfo['city'];
+    $citiesJson = json_encode($geoInfo['cities'], JSON_UNESCAPED_UNICODE);
+    $isCrossCity = $geoInfo['is_cross_city'] ? 1 : 0;
 
     $sql = "INSERT INTO rides (
         id, title, start_time, end_time, elapsed_time_seconds, moving_time_seconds,
         distance_meters, max_speed_kmh, avg_speed_kmh, total_ascent_meters, total_descent_meters, max_altitude_meters,
         avg_heart_rate, max_heart_rate, avg_cadence, max_cadence, calories,
         hr_z1_seconds, hr_z2_seconds, hr_z3_seconds, hr_z4_seconds, hr_z5_seconds,
-        start_lat, start_lng, summary_polyline, detail_points, created_at
+        start_lat, start_lng, summary_polyline, detail_points, city, cities, is_cross_city, created_at
     ) VALUES (
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?, ?, NULL, ?
+        ?, ?, ?, NULL, ?, ?, ?, ?
     )
     ON CONFLICT(id) DO UPDATE SET
         start_time=excluded.start_time, end_time=excluded.end_time,
@@ -76,7 +80,10 @@ route('POST', '/api/admin/rides', function (array $p) {
         hr_z1_seconds=excluded.hr_z1_seconds, hr_z2_seconds=excluded.hr_z2_seconds,
         hr_z3_seconds=excluded.hr_z3_seconds, hr_z4_seconds=excluded.hr_z4_seconds, hr_z5_seconds=excluded.hr_z5_seconds,
         start_lat=excluded.start_lat, start_lng=excluded.start_lng,
-        summary_polyline=excluded.summary_polyline
+        summary_polyline=excluded.summary_polyline,
+        city=excluded.city,
+        cities=excluded.cities,
+        is_cross_city=excluded.is_cross_city
         -- title 与 created_at 不在更新列表中，重传不覆盖用户修改
     ";
 
@@ -85,7 +92,7 @@ route('POST', '/api/admin/rides', function (array $p) {
         $distance, $maxSpeed, $avgSpeed, $ascent, $descent, $maxAlt,
         $avgHr, $maxHr, $avgCad, $maxCad, $cal,
         $z1, $z2, $z3, $z4, $z5,
-        $startLat, $startLng, $polyline, $createdAt,
+        $startLat, $startLng, $polyline, $city, $citiesJson, $isCrossCity, $createdAt,
     ];
 
     db_run($pdo, $sql, $params);

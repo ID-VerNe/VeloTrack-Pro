@@ -15,7 +15,7 @@
     --text-secondary: #475569;
     --text-muted: #94A3B8;
 
-    --brand-primary: #1E3A8A;
+    --brand-primary: #395AA7;
     --brand-subtle: #EFF6FF;
 
     --metric-speed: #0284C7;
@@ -23,7 +23,7 @@
     --metric-altitude: #D97706;
     --metric-power: #E11D48;
 
-    --radius-card: 16px;
+    --radius-card: 10px;
     --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.025);
     
     --font-sans: -apple-system, BlinkMacSystemFont, "Geist", "Inter", "SF Pro Display", sans-serif;

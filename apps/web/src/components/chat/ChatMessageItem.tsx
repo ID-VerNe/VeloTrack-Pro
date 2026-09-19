@@ -60,7 +60,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
       >
         {/* Role Avatar */}
         <div
-          className={`w-6 h-6 rounded flex items-center justify-center shrink-0 text-xs font-mono border ${
+          className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 text-xs font-mono border ${
             message.role === 'user'
               ? 'border-brand-500 bg-brand-500 text-white'
               : 'border-slate-200 bg-slate-50 text-slate-700 font-medium'
@@ -72,11 +72,11 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
         {/* Message Body */}
         <div className="flex-1 min-w-0 max-w-[92%] sm:max-w-[88%] space-y-2">
           {message.role === 'user' ? (
-            <div className="bg-brand-500 text-white rounded px-4 py-2.5 text-xs font-normal leading-relaxed inline-block shadow-2xs">
+            <div className="bg-brand-500 text-white rounded-xl px-4 py-2.5 text-xs font-normal leading-relaxed inline-block shadow-2xs">
               {message.content}
             </div>
           ) : message.isError ? (
-            <div className="bg-white border border-rose-200 rounded p-4 text-xs space-y-2 font-mono">
+            <div className="bg-white border border-rose-200 rounded-xl p-4 text-xs space-y-2 font-mono">
               <div className="flex items-center space-x-2 text-rose-700 font-medium">
                 <AlertCircle className="w-4 h-4" />
                 <span>未能获取完整推演结果</span>
@@ -84,17 +84,17 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
               <p className="text-slate-600 font-sans">{message.content}</p>
               <button
                 onClick={onRegenerate}
-                className="mt-2 px-3 py-1 bg-white hover:bg-slate-50 border border-rose-200 text-rose-700 rounded text-xs cursor-pointer flex items-center space-x-1.5 transition-colors"
+                className="mt-2 px-3 py-1 bg-white hover:bg-slate-50 border border-rose-200 text-rose-700 rounded-md text-xs cursor-pointer flex items-center space-x-1.5 transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>重新推演</span>
               </button>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200/80 rounded p-5 space-y-4">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-5 space-y-4">
               {/* Prominent Action Banner for Goal Sync */}
               {isGoalAction && (
-                <div className="bg-slate-50 border border-slate-200 rounded p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                   <div className="min-w-0">
                     <div className="font-semibold text-slate-900 text-xs">
                       阶段训练目标与量化指标已写入生效
@@ -105,7 +105,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                   </div>
                   <Link
                     to="/goals"
-                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
+                    className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-md text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
                   >
                     <span>查看目标进度</span>
                     <ArrowRight className="w-3 h-3" />
@@ -115,7 +115,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
 
               {/* Prominent Action Banner for Profile / Hardware Sync */}
               {isProfileAction && !isGoalAction && (
-                <div className="bg-slate-50 border border-slate-200 rounded p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                   <div className="min-w-0">
                     <div className="font-semibold text-slate-900 text-xs">
                       战车硬件参数与传动规格已成功更新
@@ -128,7 +128,7 @@ export default function ChatMessageItem({ message, isLoading, onRegenerate, onOp
                     <button
                       type="button"
                       onClick={onOpenProfile}
-                      className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
+                      className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-md text-xs font-mono transition-colors flex items-center space-x-1 shrink-0 cursor-pointer shadow-2xs"
                     >
                       <span>查看档案</span>
                       <ArrowRight className="w-3 h-3" />

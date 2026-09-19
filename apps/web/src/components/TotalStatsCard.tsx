@@ -35,7 +35,7 @@ export default function TotalStatsCard({ rides }: Props) {
         </div>
 
         <div className="text-right space-y-1">
-          <div className="text-xs font-mono font-medium text-slate-700 bg-slate-50 px-2.5 py-1 rounded border border-slate-200/60 inline-block tabular-nums">
+          <div className="text-xs font-mono font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200/60 inline-block tabular-nums">
             停表均速 {overallMovingAvgSpeed} km/h
           </div>
           <div className="text-[11px] text-slate-400 font-mono tabular-nums">

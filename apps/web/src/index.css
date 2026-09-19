@@ -42,7 +42,9 @@
     --metric-distance: #0F172A;
 
     /* 7. UI Tokens (Precision Engineering, 0 Drop Shadow Clutter) */
-    --radius-card: 8px;
+    --radius-control: 6px;
+    --radius-card: 10px;
+    --radius-surface: 16px;
     --radius-button: 6px;
     --shadow-card: none;
     --shadow-instrument: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
@@ -58,6 +60,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 

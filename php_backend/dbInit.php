@@ -61,16 +61,45 @@ function run_ensure_tables(PDO $pdo): void
             start_lng REAL,
             summary_polyline TEXT,
             detail_points TEXT,
+            city TEXT,
+            cities TEXT,
+            is_cross_city INTEGER DEFAULT 0,
             is_commute INTEGER DEFAULT 0,
             created_at INTEGER NOT NULL
         )
     ");
     try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)'); } catch (Throwable $e) {}
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_city ON rides(city)'); } catch (Throwable $e) {}
 
-    // 迁移：旧库可能仍有 r2 key 列、缺 detail_points 列。SQLite 3.35+ 支持 DROP COLUMN（本地 3.39.2 OK）。
+    require_once __DIR__ . '/utils/geo_resolver.php';
+
+    // 迁移：旧库可能仍有 r2 key 列、缺 detail_points 列、city 列、cities 列或 is_cross_city 列
     try { $pdo->exec('ALTER TABLE rides ADD COLUMN detail_points TEXT'); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN city TEXT'); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN cities TEXT'); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN is_cross_city INTEGER DEFAULT 0'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides DROP COLUMN detail_points_r2_key'); } catch (Throwable $e) {}
     try { $pdo->exec('ALTER TABLE rides DROP COLUMN raw_tcx_r2_key'); } catch (Throwable $e) {}
+
+    // 自动回填：为历史记录中缺失 cities 或 city 的行自动补齐城市与跨城信息
+    try {
+        $stmt = $pdo->query("SELECT id, start_lat, start_lng, summary_polyline, city, cities FROM rides WHERE cities IS NULL OR cities = '' OR city IS NULL OR city = ''");
+        $unmigrated = $stmt->fetchAll();
+        if (!empty($unmigrated)) {
+            $upd = $pdo->prepare("UPDATE rides SET city = ?, cities = ?, is_cross_city = ? WHERE id = ?");
+            foreach ($unmigrated as $r) {
+                $info = resolve_ride_cities($r['start_lat'], $r['start_lng'], $r['summary_polyline']);
+                $upd->execute([
+                    $info['city'],
+                    json_encode($info['cities'], JSON_UNESCAPED_UNICODE),
+                    $info['is_cross_city'] ? 1 : 0,
+                    $r['id']
+                ]);
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('[dbInit] auto-fill city/cities failed: ' . $e->getMessage());
+    }
 
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS privacy_zones (

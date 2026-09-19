@@ -80,9 +80,9 @@ export default function SpeedSpectrumCard({ tiers, totalDurationSeconds = 0, cla
         </span>
       </div>
 
-      {/* Proportional Segmented Progress Bar */}
+      {/* Proportional Segmented Progress Bar with dividers to eliminate Mach band bleeding */}
       <div
-        className="w-full h-3 rounded-full overflow-hidden flex bg-slate-200 shadow-inner"
+        className="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 gap-[1.5px] p-[1px] border border-slate-200/70"
         role="progressbar"
         aria-label="速度时间分段比例"
       >
@@ -93,7 +93,7 @@ export default function SpeedSpectrumCard({ tiers, totalDurationSeconds = 0, cla
             <div
               key={tier.key}
               style={{ width: `${pct}%` }}
-              className={`${tier.colorClass} h-full transition-all duration-500 hover:brightness-110 cursor-pointer relative group`}
+              className={`${tier.colorClass} h-full first:rounded-l-full last:rounded-r-full transition-all duration-500 hover:brightness-110 cursor-pointer relative group`}
               title={`${tier.label} (${tier.speedRange}): ${pct}%`}
             />
           );
@@ -111,7 +111,7 @@ export default function SpeedSpectrumCard({ tiers, totalDurationSeconds = 0, cla
           return (
             <div
               key={tier.key}
-              className={`flex flex-col items-center text-center p-1 rounded-lg transition-colors ${
+              className={`flex flex-col items-center text-center p-1.5 rounded-md transition-colors ${
                 isCruise ? 'bg-emerald-50/80 border border-emerald-200/60' : ''
               }`}
             >
@@ -124,11 +124,11 @@ export default function SpeedSpectrumCard({ tiers, totalDurationSeconds = 0, cla
               <span className={`text-xs font-bold font-mono tabular-nums leading-none ${isCruise ? 'text-emerald-700' : 'text-slate-800'}`}>
                 {pct}%
               </span>
-              <span className="text-[9px] text-slate-400 font-mono mt-0.5 scale-90">
+              <span className="text-[10px] text-slate-400 font-mono mt-0.5 tracking-tight antialiased">
                 {tier.speedRange}
               </span>
               {secs > 0 && (
-                <span className="text-[9px] text-slate-400 font-mono scale-90 -mt-0.5">
+                <span className="text-[10px] text-slate-500 font-mono font-medium tracking-tight antialiased mt-0.5">
                   {formatMins(secs)}
                 </span>
               )}

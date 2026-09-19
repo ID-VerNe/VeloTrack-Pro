@@ -18,7 +18,7 @@ export default function MobileTabBar({ onOpenProfile }: MobileTabBarProps) {
 
   return (
     <nav className="md:hidden fixed bottom-0 w-full bg-white/90 backdrop-blur border-t border-slate-200 z-50 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-14">
+      <div className="flex items-center justify-around h-14 pt-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
           const Icon = item.icon;

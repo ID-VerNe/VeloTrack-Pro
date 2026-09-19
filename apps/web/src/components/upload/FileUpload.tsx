@@ -75,7 +75,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
     <div className="flex flex-col items-center w-full space-y-5">
       {/* Drag & Drop Area */}
       <div
-        className={`relative flex flex-col items-center justify-center w-full h-[260px] border-2 border-dashed rounded-3xl transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center w-full h-[260px] border-2 border-dashed rounded-2xl transition-all duration-200 ${
           isDragActive
             ? 'border-brand-500 bg-brand-50/50 scale-[1.005]'
             : 'border-slate-300 bg-slate-50/60 hover:bg-slate-50'

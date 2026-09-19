@@ -33,7 +33,7 @@ export default function RideMetricsGrid({ ride, calories, speedDistribution }: P
   const speedDist = speedDistribution || analyzeSpeedDistribution(null, movingAvgSpeedKmh, 46, 15);
 
   return (
-    <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
       {/* 1. 总里程 */}
       <BentoMetricCard
         label="骑行总里程"

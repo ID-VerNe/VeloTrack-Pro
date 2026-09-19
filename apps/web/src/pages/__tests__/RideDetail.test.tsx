@@ -113,9 +113,11 @@ describe('RideDetail 骑行详情页面', () => {
     const confirmBtn = screen.getByRole('button', { name: '确认删除' });
     await user.click(confirmBtn);
 
-    expect(globalThis.fetch).toHaveBeenCalledWith('/api/rides/ride-001', {
-      method: 'DELETE',
-      headers: {},
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith('/api/rides/ride-001', {
+        method: 'DELETE',
+        headers: {},
+      });
     });
 
     await waitFor(() => {
@@ -149,12 +151,14 @@ describe('RideDetail 骑行详情页面', () => {
     await user.click(confirmBtn);
 
     // 验证 DELETE 请求触发且携带 Authorization 与 X-Admin-Token
-    expect(globalThis.fetch).toHaveBeenCalledWith('/api/rides/ride-001', {
-      method: 'DELETE',
-      headers: {
-        Authorization: 'Bearer test_admin_token_123',
-        'X-Admin-Token': 'test_admin_token_123',
-      },
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith('/api/rides/ride-001', {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer test_admin_token_123',
+          'X-Admin-Token': 'test_admin_token_123',
+        },
+      });
     });
 
     // 验证路由返回跳转至 /rides

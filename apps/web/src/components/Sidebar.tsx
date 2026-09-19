@@ -130,10 +130,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                       <NavLink
                         key={item.name}
                         to={item.path}
-                        className={`flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors relative ${
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors relative border-l-2 ${
                           isActive
-                            ? 'font-semibold text-brand-700 bg-brand-50 border-l-2 border-brand-500'
-                            : 'font-normal text-slate-600 hover:text-brand-600 hover:bg-slate-50'
+                            ? 'font-semibold text-brand-700 bg-brand-50 border-brand-500'
+                            : 'font-normal text-slate-600 hover:text-brand-600 hover:bg-slate-50 border-transparent'
                         }`}
                       >
                         <span className="truncate">{item.name}</span>
@@ -164,7 +164,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent('open-profile'))}
             aria-label="查看车手生物力学档案与战车硬件"
-            className="w-full text-left flex items-center justify-between p-2.5 rounded border border-slate-200/80 bg-white hover:bg-slate-50 transition-colors cursor-pointer group focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
+            className="w-full text-left flex items-center justify-between p-2.5 rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50 transition-colors cursor-pointer group focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
             title="查看车手生物力学档案与战车硬件"
           >
             <div className="flex items-center space-x-2.5 min-w-0">
@@ -183,7 +183,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
               </div>
             </div>
 
-            <div className="flex items-center text-slate-400 group-hover:text-slate-700 transition-colors">
+            <div className="flex items-center text-slate-400 group-hover:text-slate-700 transition-colors pl-1">
               <SlidersHorizontal className="w-3.5 h-3.5" />
             </div>
           </button>

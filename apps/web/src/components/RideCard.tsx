@@ -105,13 +105,19 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
       {/* Top Header Row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2 min-w-0">
-          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-slate-200 text-slate-700 bg-slate-50 shrink-0">
+          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-slate-200 text-slate-700 bg-slate-50 shrink-0 leading-none">
             {isRoad ? '公路' : '山地/骑行'}
           </span>
-          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider shrink-0">
-            {cityName}
-          </span>
-          <span className="h-2 w-[1px] bg-slate-200 shrink-0" />
+          {cityName.includes('→') || cityName.includes('⇄') ? (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/90 flex items-center space-x-1 shrink-0 leading-none">
+              <span>{cityName}</span>
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider shrink-0 leading-none">
+              {cityName}
+            </span>
+          )}
+          <span className="h-2.5 w-[1px] bg-slate-200 shrink-0" />
           <span className="font-medium text-slate-900 group-hover:text-brand-600 transition-colors text-xs truncate">
             {ride.title}
           </span>
@@ -128,7 +134,7 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
               <span>{distanceKm}</span>
               <span className="text-[10px] font-normal text-slate-400 ml-0.5 font-sans">公里</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-normal truncate max-w-[80px]">
+            <div className="text-[10px] text-slate-400 font-normal whitespace-nowrap">
               运动 {movingDurationStr}
             </div>
           </div>

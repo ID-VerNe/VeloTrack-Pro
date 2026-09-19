@@ -1,15 +1,29 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import polyline from '@mapbox/polyline';
-import { detectCityForRide, extractCitiesFromRides } from '../geoUtils';
+import {
+  detectCityForRide,
+  extractCitiesFromRides,
+  getRideCities,
+  isCrossCityRide,
+} from '../geoUtils';
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
 describe('detectCityForRide 城市识别', () => {
+  it('优先使用 ride.city 字段', () => {
+    expect(detectCityForRide({ city: '惠州', start_lat: 1.0, start_lng: 1.0 })).toBe('惠州');
+    expect(detectCityForRide({ city: '深圳' })).toBe('深圳');
+    expect(detectCityForRide({ city: '深圳 → 东莞' })).toBe('深圳 → 东莞');
+  });
+
+  it('命中惠州边界内的坐标返回 惠州', () => {
+    expect(detectCityForRide({ start_lat: 23.09, start_lng: 114.39 })).toBe('惠州');
+  });
+
   it('命中深圳边界内的坐标返回 深圳', () => {
     expect(detectCityForRide({ start_lat: 22.54, start_lng: 114.05 })).toBe('深圳');
-    // 边界值：minLat/maxLat/minLng/maxLng 均含边界
     expect(detectCityForRide({ start_lat: 22.4, start_lng: 113.7 })).toBe('深圳');
     expect(detectCityForRide({ start_lat: 22.9, start_lng: 114.6 })).toBe('深圳');
   });
@@ -19,12 +33,12 @@ describe('detectCityForRide 城市识别', () => {
   });
 
   it('没有 start 坐标时从 summary_polyline 解码得到起点', () => {
-    const polylineStr = polyline.encode([[22.54, 114.05]]); // [lat, lng]
+    const polylineStr = polyline.encode([[22.54, 114.05]]);
     expect(detectCityForRide({ summary_polyline: polylineStr })).toBe('深圳');
   });
 
   it('存在 start 坐标时优先使用 start，忽略 polyline', () => {
-    const polylineStr = polyline.encode([[39.9, 116.4]]); // 北京
+    const polylineStr = polyline.encode([[39.9, 116.4]]);
     const ride = { start_lat: 22.54, start_lng: 114.05, summary_polyline: polylineStr };
     expect(detectCityForRide(ride)).toBe('深圳');
   });
@@ -52,8 +66,26 @@ describe('detectCityForRide 城市识别', () => {
   });
 });
 
-describe('extractCitiesFromRides 城市聚合', () => {
-  it('顺序：全部城市在前、各城市按 CITY_BOUNDS 顺序、其他城市最后，计数正确', () => {
+describe('getRideCities 与 isCrossCityRide 跨城判定', () => {
+  it('正确解析显式 cities 数组', () => {
+    expect(getRideCities({ cities: ['深圳', '东莞'] })).toEqual(['深圳', '东莞']);
+  });
+
+  it('正确解析箭头连接的跨城字符串', () => {
+    expect(getRideCities({ city: '深圳 → 东莞' })).toEqual(['深圳', '东莞']);
+    expect(getRideCities({ city: '深圳 ⇄ 惠州' })).toEqual(['深圳', '惠州']);
+  });
+
+  it('正确识别跨城骑行标记', () => {
+    expect(isCrossCityRide({ is_cross_city: true })).toBe(true);
+    expect(isCrossCityRide({ city: '深圳 → 东莞' })).toBe(true);
+    expect(isCrossCityRide({ cities: ['深圳', '东莞'] })).toBe(true);
+    expect(isCrossCityRide({ city: '深圳', cities: ['深圳'] })).toBe(false);
+  });
+});
+
+describe('extractCitiesFromRides 城市聚合与多维包含', () => {
+  it('顺序：全部城市在前、各城市按标准表顺序、跨城聚合、其他城市最后，计数正确', () => {
     const rides = [
       { id: 1, start_lat: 22.54, start_lng: 114.05 }, // 深圳
       { id: 2, start_lat: 22.55, start_lng: 114.06 }, // 深圳
@@ -70,15 +102,36 @@ describe('extractCitiesFromRides 城市聚合', () => {
     expect(list[4]).toEqual({ id: '其他城市', name: '其他城市', count: 1 });
   });
 
+  it('跨城骑行进行多维包含计数，并生成独立的跨城远征选项', () => {
+    const rides = [
+      { id: 1, city: '深圳', cities: ['深圳'], is_cross_city: false },
+      { id: 2, city: '东莞', cities: ['东莞'], is_cross_city: false },
+      { id: 3, city: '深圳 → 东莞', cities: ['深圳', '东莞'], is_cross_city: true },
+    ];
+    const list = extractCitiesFromRides(rides);
+    const ids = list.map((c) => c.id);
+
+    expect(ids).toContain('深圳');
+    expect(ids).toContain('东莞');
+    expect(ids).toContain('cross_city');
+
+    // 深圳：单城 1 次 + 跨城 1 次 = 2 次
+    const sz = list.find((c) => c.id === '深圳');
+    expect(sz?.count).toBe(2);
+
+    // 东莞：单城 1 次 + 跨城 1 次 = 2 次
+    const dg = list.find((c) => c.id === '东莞');
+    expect(dg?.count).toBe(2);
+
+    // 跨城远征：1 次
+    const cross = list.find((c) => c.id === 'cross_city');
+    expect(cross?.count).toBe(1);
+    expect(cross?.name).toBe('跨城远征');
+    expect(cross?.isCrossCityCategory).toBe(true);
+  });
+
   it('空骑乘列表只返回 全部城市（计数 0）', () => {
     const list = extractCitiesFromRides([]);
     expect(list).toEqual([{ id: 'all', name: '全部城市', count: 0 }]);
-  });
-
-  it('未出现的城市不进入列表（东莞等无数据时被跳过）', () => {
-    const list = extractCitiesFromRides([{ start_lat: 22.54, start_lng: 114.05 }]);
-    const ids = list.map((c) => c.id);
-    expect(ids).not.toContain('东莞');
-    expect(ids).not.toContain('佛山');
   });
 });

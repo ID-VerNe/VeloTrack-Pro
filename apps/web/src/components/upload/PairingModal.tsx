@@ -61,11 +61,11 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
@@ -84,16 +84,16 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* QR Code Container */}
-          <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+          <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl border border-slate-100">
             {qrDataUrl ? (
-              <img src={qrDataUrl} alt="Pairing QR Code" className="w-56 h-56 rounded-xl shadow-sm border border-white" />
+              <img src={qrDataUrl} alt="Pairing QR Code" className="w-56 h-56 rounded-lg shadow-sm border border-white" />
             ) : (
               <div className="w-56 h-56 flex items-center justify-center text-xs text-slate-400">
                 正在生成二维码...
               </div>
             )}
             <p className="mt-3 text-xs text-slate-500 font-medium text-center">
-              在手机打开 VeloSync App $\rightarrow$ 点击“扫码配对电脑端”对准扫描
+              在手机打开 VeloSync App → 点击“扫码配对电脑端”对准扫描
             </p>
           </div>
 
@@ -107,7 +107,7 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
                 type="text"
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
                 placeholder="https://cycling.yuuverne.site"
               />
             </div>
@@ -121,7 +121,7 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
                   type="text"
                   value={cfClientId}
                   onChange={(e) => setCfClientId(e.target.value)}
-                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:outline-none font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:outline-none font-mono"
                   placeholder="Service Token ID"
                 />
               </div>
@@ -133,7 +133,7 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
                   type="password"
                   value={cfClientSecret}
                   onChange={(e) => setCfClientSecret(e.target.value)}
-                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:outline-none font-mono"
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:outline-none font-mono"
                   placeholder="Service Token Secret"
                 />
               </div>
@@ -152,7 +152,7 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+            className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             完成
           </button>

@@ -4,7 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import TotalStatsCard from '../components/TotalStatsCard';
 import ConsistencyHeatmap from '../components/ConsistencyHeatmap';
 import RideCard from '../components/RideCard';
-import { extractCitiesFromRides, detectCityForRide } from '../utils/geoUtils';
+import { extractCitiesFromRides, detectCityForRide, getRideCities, isCrossCityRide } from '../utils/geoUtils';
 
 import DashboardMap from '../components/dashboard/DashboardMap';
 import DashboardControls from '../components/dashboard/DashboardControls';
@@ -29,17 +29,13 @@ export default function Dashboard() {
   // Time-aware greeting
   const greetingText = useMemo(() => {
     const hour = new Date().getHours();
-    let timeGreeting = '你好';
-    if (hour < 6) timeGreeting = '夜深了';
-    else if (hour < 11) timeGreeting = '早上好';
-    else if (hour < 13) timeGreeting = '中午好';
-    else if (hour < 18) timeGreeting = '下午好';
-    else timeGreeting = '晚上好';
-    return `${timeGreeting}，${riderName}`;
+    if (hour >= 5 && hour < 12) return `早上好，${riderName}`;
+    if (hour >= 12 && hour < 18) return `下午好，${riderName}`;
+    return `晚上好，${riderName}`;
   }, [riderName]);
 
+  // 同步车手姓名（仅展示，失败优雅降级）
   useEffect(() => {
-    // 骑行列表由 useApi 统一拉取，此处仅补齐骑手昵称
     getRiderProfile()
       .then((profile) => {
         if (profile.name) setRiderName(profile.name);
@@ -51,7 +47,14 @@ export default function Dashboard() {
 
   const filteredRides = useMemo(() => {
     return rides.filter((r) => {
-      const matchCity = selectedCity === 'all' || detectCityForRide(r) === selectedCity;
+      const cities = getRideCities(r);
+      const matchCity =
+        selectedCity === 'all'
+          ? true
+          : selectedCity === 'cross_city'
+          ? isCrossCityRide(r)
+          : cities.includes(selectedCity);
+
       const matchSearch =
         !searchTerm.trim() ||
         (r.title && r.title.toLowerCase().includes(searchTerm.toLowerCase().trim()));
@@ -112,7 +115,11 @@ export default function Dashboard() {
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
-                {selectedCity === 'all' ? '全部骑行记录' : `${selectedCity} 骑行记录`} ({filteredRides.length})
+                {selectedCity === 'all'
+                  ? '全部骑行记录'
+                  : selectedCity === 'cross_city'
+                  ? '跨城远征 骑行记录'
+                  : `${selectedCity} 骑行记录`} ({filteredRides.length})
               </h2>
             </div>
 

@@ -194,7 +194,14 @@ export default function RideDetail() {
       });
       if (result.title && !result.title.includes('undefined')) {
         const polishedTitle = result.title.trim();
-        setSuggestedTitle(polishedTitle);
+        const oldTitle = ride.title;
+        setPreviousTitle(oldTitle);
+        await saveTitleToBackend(polishedTitle);
+        setSuggestedTitle(null);
+
+        setTimeout(() => {
+          setPreviousTitle((prev) => (prev === oldTitle ? null : prev));
+        }, 8000);
       }
     } catch (err) {
       console.error('Failed to polish title with AI', err);

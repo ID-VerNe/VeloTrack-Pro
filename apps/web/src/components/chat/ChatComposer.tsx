@@ -87,9 +87,9 @@ export default function ChatComposer({
               type="button"
               onClick={() => onSend()}
               disabled={!input.trim() || isLoading}
-              className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded text-xs font-mono transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center space-x-1.5 shadow-2xs"
+              className="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-md text-xs font-mono transition-colors cursor-pointer disabled:cursor-not-allowed flex items-center space-x-1.5 shadow-2xs"
             >
-              <Send className="w-3 h-3" />
+              <Send className="w-3 h-3 translate-x-[0.5px] -translate-y-[0.5px]" />
               <span>推演执行</span>
             </button>
           </div>

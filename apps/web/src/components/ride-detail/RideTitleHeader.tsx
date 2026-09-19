@@ -81,26 +81,26 @@ export default function RideTitleHeader({
           aria-label={fromLabel}
           className="hidden md:inline-flex items-center text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer group"
         >
-          <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
+          <ArrowLeft className="w-4 h-4 mr-1.5 transition-transform group-hover:-translate-x-1 translate-y-[-0.5px]" aria-hidden="true" />
           {fromLabel}
         </button>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={onExportGPX}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
             aria-label="导出 GPX 轨迹文件"
           >
-            <Download className="w-4 h-4 text-slate-600" aria-hidden="true" />
+            <Download className="w-4 h-4 text-slate-500" aria-hidden="true" />
             <span>导出 GPX</span>
           </button>
 
           <button
             onClick={onOpenProfile}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
             aria-label="查看车手生物力学档案与战车硬件"
           >
-            <User className="w-4 h-4 text-slate-600" aria-hidden="true" />
+            <User className="w-4 h-4 text-slate-500" aria-hidden="true" />
             <span>车手档案</span>
           </button>
 
@@ -108,10 +108,10 @@ export default function RideTitleHeader({
             <button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
-              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 hover:text-red-600 text-[13px] rounded transition-colors cursor-pointer flex items-center space-x-1.5 group"
+              className="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1 group"
               aria-label="删除此条骑行记录"
             >
-              <Trash2 className="w-4 h-4 text-slate-600 group-hover:text-red-500" aria-hidden="true" />
+              <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-rose-500" aria-hidden="true" />
               <span>删除</span>
             </button>
           )}
@@ -178,18 +178,18 @@ export default function RideTitleHeader({
                 }
               }}
               autoFocus
-              className="flex-1 px-3 py-2 bg-slate-50 border border-transparent focus:border-slate-200 rounded text-[24px] font-medium text-slate-900 focus:outline-none"
+              className="flex-1 px-3 py-2 bg-slate-50 border border-transparent focus:border-slate-200 rounded-lg text-[22px] sm:text-[24px] font-medium text-slate-900 focus:outline-none"
             />
             <button
               onClick={handleConfirmSave}
-              className="p-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded transition-colors cursor-pointer shadow-2xs"
+              className="p-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded-md transition-colors cursor-pointer shadow-2xs"
               aria-label="确认保存"
             >
               <Check className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
               onClick={handleCancelEdit}
-              className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded transition-colors cursor-pointer"
+              className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-md transition-colors cursor-pointer border border-slate-200/60"
               aria-label="取消修改"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -197,21 +197,21 @@ export default function RideTitleHeader({
           </div>
         ) : (
           <div className="flex items-center space-x-4 group">
-            <h1 className="text-[28px] font-medium text-slate-900 tracking-tight leading-none">
+            <h1 className="text-[24px] sm:text-[28px] font-semibold text-slate-900 tracking-tight leading-[1.2]">
               {title}
             </h1>
             <div className="flex items-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity">
-              <IconButton label="手动重命名" size="sm" onClick={handleStartEdit} className="bg-slate-50 hover:bg-slate-100 rounded">
+              <IconButton label="手动重命名" size="sm" onClick={handleStartEdit} className="bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200/60">
                 <Edit2 className="w-4 h-4 text-slate-600" aria-hidden="true" />
               </IconButton>
 
               <button
                 onClick={onAIPolishTitle}
                 disabled={isSuggestingTitle}
-                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded text-[13px] transition-colors cursor-pointer flex items-center space-x-1.5"
+                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 rounded-md text-[13px] transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
                 title="依据时间/时段/城市/强度生成规范命名"
               >
-                <Tag className={`w-3.5 h-3.5 ${isSuggestingTitle ? 'animate-spin text-slate-900' : 'text-slate-600'}`} aria-hidden="true" />
+                <Tag className={`w-3.5 h-3.5 ${isSuggestingTitle ? 'animate-spin text-slate-900' : 'text-slate-500'}`} aria-hidden="true" />
                 <span>{isSuggestingTitle ? '生成中...' : '规范路段命名'}</span>
               </button>
             </div>

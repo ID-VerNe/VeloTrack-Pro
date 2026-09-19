@@ -453,28 +453,28 @@ export default function RideDetailMap({
         </div>
       )}
 
-      {/* Floating Zoom & Controls */}
-      <div className="absolute right-6 bottom-8 z-20 flex flex-col space-y-2">
+      {/* Floating Zoom & Controls (iOS style integrated capsule) */}
+      <div className="absolute right-6 bottom-8 z-20 flex flex-col bg-white/90 backdrop-blur-md rounded-xl border border-slate-200/80 shadow-md divide-y divide-slate-200/60 overflow-hidden pointer-events-auto">
         <button
           onClick={handleFitBounds}
-          className="p-2.5 bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 rounded transition-colors shadow-sm cursor-pointer"
+          className="p-2.5 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer flex items-center justify-center"
           aria-label="适应全部轨迹"
         >
           <Maximize2 className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={handleZoomIn}
-          className="p-2.5 bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 rounded transition-colors shadow-sm cursor-pointer"
+          className="p-2.5 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer flex items-center justify-center"
           aria-label="放大"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
         </button>
         <button
           onClick={handleZoomOut}
-          className="p-2.5 bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 rounded transition-colors shadow-sm cursor-pointer"
+          className="p-2.5 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer flex items-center justify-center"
           aria-label="缩小"
         >
-          <Minus className="w-4 h-4" aria-hidden="true" />
+          <Minus className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
         </button>
       </div>
     </div>

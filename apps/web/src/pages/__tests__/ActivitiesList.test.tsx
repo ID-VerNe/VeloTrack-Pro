@@ -130,12 +130,14 @@ describe('ActivitiesList 骑行列表页面', () => {
     expect(screen.getByText('删除骑行记录')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '删除记录' }));
 
-    expect(deleteFetchMock).toHaveBeenCalledWith('/api/rides/ride-002', {
-      method: 'DELETE',
-      headers: {
-        Authorization: 'Bearer test_admin_token_123',
-        'X-Admin-Token': 'test_admin_token_123',
-      },
+    await waitFor(() => {
+      expect(deleteFetchMock).toHaveBeenCalledWith('/api/rides/ride-002', {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer test_admin_token_123',
+          'X-Admin-Token': 'test_admin_token_123',
+        },
+      });
     });
 
     // 验证列表中该项被立即移除
