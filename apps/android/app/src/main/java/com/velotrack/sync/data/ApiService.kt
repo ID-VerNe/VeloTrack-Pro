@@ -11,12 +11,25 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import com.velotrack.sync.core.GeoCalculations
+import kotlinx.serialization.ExperimentalSerializationApi
 
+@OptIn(ExperimentalSerializationApi::class)
 class ApiService(private val configRepo: ConfigRepository) {
 
+    // 与 admin web 端 MAX_DETAIL_POINTS 对齐的逐点明细降采样上限。
+    private companion object {
+        const val MAX_DETAIL_POINTS = 1500
+    }
+
+    // 与 admin web 端 JSON.stringify 行为对齐：
+    //   - encodeDefaults=true：非空默认值字段（如 hr_z*_seconds=0）照常序列化，admin 也是显式输出 0
+    //   - explicitNulls=false：可空字段为 null 时不写出，等价于 admin 的 `...(x !== undefined ? {x} : {})`
+    // 既保证主记录心率区间 0 值入库不被丢成 NULL，又让 detail-points 隐私圈擦除段不膨胀 body。
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
+        explicitNulls = false
     }
 
     private val client = OkHttpClient.Builder()
@@ -115,16 +128,18 @@ class ApiService(private val configRepo: ConfigRepository) {
 
     suspend fun uploadDetailPoints(rideId: String, points: List<GeoPoint>): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val detailItems = points.map { pt ->
+            // 与 admin web 端 MAX_DETAIL_POINTS=1500 对齐：降采样后再序列化，
+            // 避免长骑行全量上传撑爆共享虚拟主机的 post_max_size / 超时。
+            val sampled = GeoCalculations.downsamplePoints(points, MAX_DETAIL_POINTS)
+            val detailItems = sampled.map { pt ->
                 DetailPointItem(
                     t = pt.time,
                     lat = pt.lat,
                     lng = pt.lng,
-                    ele = pt.altitude,
-                    dist = pt.distance,
+                    altitude = pt.altitude,
                     hr = pt.hr,
-                    cad = pt.cadence,
-                    spd = pt.speed
+                    cadence = pt.cadence,
+                    speed = pt.speed
                 )
             }
             val payload = DetailPointsPayload(points = detailItems)

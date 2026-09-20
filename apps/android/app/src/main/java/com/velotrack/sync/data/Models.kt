@@ -66,16 +66,17 @@ data class RideUploadPayload(
     @SerialName("summary_polyline") val summaryPolyline: String? = null
 )
 
+// 逐点明细短字段名与 web/admin 端 DetailPoint 契约对齐（telemetrySegments.ts 读取 la/ln/al/cd/sp）。
+// dist web 端不读，删除以减小体积。
 @Serializable
 data class DetailPointItem(
     val t: Long,
-    val lat: Double? = null,
-    val lng: Double? = null,
-    val ele: Double? = null,
-    val dist: Double? = null,
+    @SerialName("la") val lat: Double? = null,
+    @SerialName("ln") val lng: Double? = null,
+    @SerialName("al") val altitude: Double? = null,
     val hr: Int? = null,
-    val cad: Int? = null,
-    val spd: Double? = null
+    @SerialName("cd") val cadence: Int? = null,
+    @SerialName("sp") val speed: Double? = null
 )
 
 @Serializable
