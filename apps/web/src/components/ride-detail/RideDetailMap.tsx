@@ -135,7 +135,7 @@ export default function RideDetailMap({
       // Clean up previous event listeners on route-hit-target
       layerListenersRef.current.forEach(({ event, layerId, listener }) => {
         try {
-          map.off(event, layerId, listener);
+          (map as any).off(event, layerId, listener);
         } catch (_) {}
       });
       layerListenersRef.current = [];
@@ -297,7 +297,7 @@ export default function RideDetailMap({
     return () => {
       layerListenersRef.current.forEach(({ event, layerId, listener }) => {
         try {
-          mapRef.current?.off(event, layerId, listener);
+          (mapRef.current as any)?.off(event, layerId, listener);
         } catch (_) {}
       });
       layerListenersRef.current = [];

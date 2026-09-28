@@ -13,6 +13,7 @@
     "noUncheckedIndexedAccess": false,
 
     /* 共享包路径映射:Vite alias 与 TS paths 双向对齐,确保 tsc --noEmit 也能解析 */
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@velotrack/core": ["../../packages/core/src/index.ts"],
