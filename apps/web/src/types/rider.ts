@@ -8,12 +8,12 @@ export interface RiderProfile {
   resting_hr: number;
   ftp_watts: number;
   current_bike: string;
-  gear_ratio?: string;
+  chainring: number;
+  cogs: number[];
+  wheel_spec: string;
   tires?: string;
   bike_weight_kg?: number;
-  bike_specs: string;
   custom_specs?: string | Record<string, any>;
-  injuries_notes: string;
   primary_goal: string;
   updated_at?: number;
 }

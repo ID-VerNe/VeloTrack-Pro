@@ -71,7 +71,7 @@ describe('RideMetricsGrid', () => {
       summary_text: '测试稳态巡航',
     };
 
-    render(<RideMetricsGrid ride={ride} calories={600} speedDistribution={mockSpeedDist} />);
+    render(<RideMetricsGrid ride={ride} calories={600} speedDistribution={mockSpeedDist} gear={{ chainring: 46, cruisingCog: 15 }} />);
     expect(screen.getByText('稳态平路巡航')).toBeInTheDocument();
     expect(screen.getByText('25.4')).toBeInTheDocument();
     expect(screen.getByText(/46\/15T 踏频 ~89.6 rpm/)).toBeInTheDocument();

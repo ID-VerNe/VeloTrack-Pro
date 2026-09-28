@@ -1,3 +1,5 @@
+import animate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -36,13 +38,23 @@ export default {
         card: 'var(--radius-card)',
       },
       boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
         card: 'var(--shadow-card)',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      spacing: {
+        '4.5': '1.125rem',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],
         tabular: ['var(--font-tabular)'],
+      },
+      transitionTimingFunction: {
+        'apple-spring': 'cubic-bezier(0.32, 0.72, 0, 1)',
       }
     },
   },
-  plugins: [],
+  plugins: [animate],
 }

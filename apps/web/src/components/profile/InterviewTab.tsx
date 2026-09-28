@@ -19,7 +19,7 @@ interface InterviewMessage {
 const DEFAULT_INTERVIEW_WELCOME: InterviewMessage = {
   id: 'welcome',
   role: 'assistant',
-  content: '### 车手与硬件配置向导就绪\n\n可直接输入身体指标或战车改件（例如：“更新 46T 牙盘 + 11-28T 7速飞轮”、“已换装马牌 2.0 外胎，胎压 75psi”），系统将对数据库进行 **分立硬件局部精准维护**，完整保留既有配件。',
+  content: '### 车手与硬件配置向导就绪\n\n可直接输入身体指标或战车改件（例如：“更新了牙盘齿数和飞轮”、“换装了新外胎，胎压已调”），系统将对数据库进行 **分立硬件局部精准维护**，完整保留既有配件。',
 };
 
 export default function InterviewTab({ profile, onProfileUpdated }: Props) {
@@ -95,20 +95,20 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
             <div className="text-slate-500 text-xs font-semibold">车型 / 车重</div>
-            <div className="font-bold text-slate-900 truncate" title={`${profile.current_bike} (${profile.bike_weight_kg || 11.5}kg)`}>
-              {profile.current_bike?.split(' ')[0] || '大行P8'} · {profile.bike_weight_kg || 11.5}kg
+            <div className="font-bold text-slate-900 truncate" title={`${profile.current_bike || '未配置'} (${profile.bike_weight_kg || 11.5}kg)`}>
+              {profile.current_bike || '未配置'} · {profile.bike_weight_kg || 11.5}kg
             </div>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
             <div className="text-slate-500 text-xs font-semibold">齿比 / 外胎</div>
-            <div className="font-bold text-slate-900 truncate text-xs" title={`${profile.gear_ratio || '46T/11-28T'} | ${profile.tires || '马牌2.0'}`}>
-              {profile.gear_ratio?.split(' ')[0] || '46T/11-28T'} · {profile.tires?.split(' ')[0] || '马牌2.0'}
+            <div className="font-bold text-slate-900 truncate text-xs" title={`${profile.chainring || '?'}T · ${profile.tires || '未配置'}`}>
+              {profile.chainring ? `${profile.chainring}T` : '?'} · {profile.tires?.split(' ')[0] || '未配置'}
             </div>
           </div>
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
-            <div className="text-slate-500 text-xs font-semibold">伤病状态</div>
-            <div className="font-bold text-slate-700 truncate" title={profile.injuries_notes}>
-              {profile.injuries_notes && !profile.injuries_notes.includes('无') ? '已登记' : '暂无伤病'}
+            <div className="text-slate-500 text-xs font-semibold">核心目标</div>
+            <div className="font-bold text-slate-700 truncate text-xs" title={profile.primary_goal}>
+              {profile.primary_goal || '未设定'}
             </div>
           </div>
         </div>
@@ -169,25 +169,25 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
       <div className="p-4 bg-white border-t border-slate-200 shrink-0 space-y-2.5">
         <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
           <button
-            onClick={() => handleSend('我的车齿比改成了46T牙盘+11-28T 7速飞轮')}
+            onClick={() => handleSend('我更新了传动齿比，前牙盘和后飞轮数据已通过档案表填入')}
             className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
-            ⚙️ 更新46T/11-28T齿比
+            ⚙️ 更新传动齿比
           </button>
           <button
-            onClick={() => handleSend('外胎保持马牌 contact urban 2.0 轮胎，胎压75-80psi')}
+            onClick={() => handleSend('外胎型号与胎压已通过档案表填入')}
             className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
-            🛞 确认马牌2.0外胎
+            🛞 确认外胎配置
           </button>
           <button
-            onClick={() => handleSend('我给车加装了平踏，整车重量11.5kg')}
+            onClick={() => handleSend('我加装了新脚踏，整车重量已在档案表更新')}
             className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
-            🚲 更新车重与脚踏
+            🚲 更新车重与配件
           </button>
           <button
-            onClick={() => handleSend('膝盖暂无伤病，保持85+rpm高踏频')}
+            onClick={() => handleSend('关节暂无伤病，保持85+rpm高踏频')}
             className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
           >
             🩹 确认健康状态
@@ -207,7 +207,7 @@ export default function InterviewTab({ profile, onProfileUpdated }: Props) {
                 handleSend();
               }
             }}
-            placeholder="输入你的硬件或身体参数（如：我改了46T牙盘，外胎仍是马牌2.0）..."
+            placeholder="输入你的硬件或身体参数（如：我换了新牙盘，飞轮和外胎在档案表已填）..."
             className="flex-1 px-2.5 py-1 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none"
             disabled={isInterviewing}
           />

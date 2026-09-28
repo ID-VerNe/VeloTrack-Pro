@@ -11,7 +11,11 @@ export type { TCXPoint, ParsedTCX };
 /**
  * 解析 TCX XML 原始文本并提取轨迹数据
  */
-export function parseTCX(xmlString: string, title: string = '骑行记录'): ParsedTCX {
+export function parseTCX(
+  xmlString: string,
+  title: string = '骑行记录',
+  opts?: { userMaxHr?: number; userRestingHr?: number }
+): ParsedTCX {
   const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true });
   const doc = parser.parse(xmlString);
 
@@ -20,7 +24,11 @@ export function parseTCX(xmlString: string, title: string = '骑行记录'): Par
 
   const points: TCXPoint[] = [];
   let laps = activity.Lap;
-  if (!Array.isArray(laps)) laps = [laps];
+  if (laps == null) {
+    laps = [];
+  } else if (!Array.isArray(laps)) {
+    laps = [laps];
+  }
 
   let totalCalories = 0;
   let lapDistanceMeters = 0;
@@ -102,5 +110,7 @@ export function parseTCX(xmlString: string, title: string = '骑行记录'): Par
     explicitElapsedTimeSeconds: lapTotalTimeSeconds,
     explicitDistanceMeters: lapDistanceMeters,
     explicitCalories: totalCalories,
+    userMaxHr: opts?.userMaxHr,
+    userRestingHr: opts?.userRestingHr,
   });
 }

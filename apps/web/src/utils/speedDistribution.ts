@@ -7,7 +7,7 @@
  * 3. 速度损耗落差：稳态巡航时速 - 停表移动均速（量化起步加速与路口吃掉的时速）；
  * 4. 时序持续稳态段（算法 3）：提取连续维持 >= 20 秒、波动标准差 <= 2.5 km/h 的稳速段落；
  * 5. 速度分层结构：停顿 (<2)、低速起步 (2-15)、节奏 (15-22)、稳态巡航 (22-30)、冲刺极速 (>=30)；
- * 6. 物理动力学反推：无独立踏频传感器时，以大行 P8 (46/15T) 齿比确定性反推踩踏踏频 (rpm)。
+ * 6. 物理动力学反推：无独立踏频传感器时，以车手主力巡航档齿比确定性反推踩踏踏频 (rpm)。
  */
 
 export interface SpeedTierBreakdown {
@@ -242,6 +242,6 @@ export function analyzeSpeedDistribution(
       sprint_secs: effSprintSecs,
       sprint_pct: Math.round((effSprintSecs / effTotalSecs) * 100),
     },
-    summary_text: `稳态平路巡航 ${cruisingAvg} km/h (${p75}-${p90} km/h), 46/15T 踏频 ${derivedCadence} rpm, 速度损耗 ${speedLoss} km/h (${Math.round((speedLoss / cruisingAvg) * 100)}%)`,
+    summary_text: `稳态平路巡航 ${cruisingAvg} km/h (${p75}-${p90} km/h), ${chainring}/${cog}T 踏频 ${derivedCadence} rpm, 速度损耗 ${speedLoss} km/h (${Math.round((speedLoss / cruisingAvg) * 100)}%)`,
   };
 }

@@ -199,13 +199,16 @@ describe('aggregateActivityData 爬升/下降与最大海拔', () => {
 
 describe('aggregateActivityData 心率与心率区间', () => {
   it('默认 userMaxHr=188 时各心率区间秒数正确累计', () => {
-    // 区间边界（188）：z1<112.8、z2<131.6、z3<150.4、z4<169.2、z5>=169.2
+    // Karvonen:HRR=188-55=133,reserve=(hr-55)/133
+    // hr=100 → 0.338 → z1; hr=120 → 0.489 → z1; hr=140 → 0.639 → z2;
+    // hr=160 → 0.789 → z3; hr=180 → 0.940 → z5
+    // 为让每区间各落 1 秒,重新选点 z1/z2/z3/z4/z5 各一个
     const points: TCXPoint[] = [
-      { time: 0, hr: 100 },     // 0.532 → z1，dt=0 → 计入 1 秒
-      { time: 1000, hr: 120 },  // 0.638 → z2，dt=1 → 计入 1 秒
-      { time: 2000, hr: 140 },  // 0.745 → z3
-      { time: 3000, hr: 160 },  // 0.851 → z4
-      { time: 4000, hr: 180 },  // 0.957 → z5
+      { time: 0, hr: 100 },     // reserve≈0.338 → z1, dt=0 → 计入 1 秒
+      { time: 1000, hr: 135 },  // reserve≈0.602 → z2, dt=1 → 计入 1 秒
+      { time: 2000, hr: 150 },  // reserve≈0.714 → z3
+      { time: 3000, hr: 165 },  // reserve≈0.827 → z4
+      { time: 4000, hr: 180 },  // reserve≈0.940 → z5
     ];
     const r = aggregateActivityData({ title: 't', points });
     expect(r.hr_z1_seconds).toBe(1);
@@ -214,18 +217,22 @@ describe('aggregateActivityData 心率与心率区间', () => {
     expect(r.hr_z4_seconds).toBe(1);
     expect(r.hr_z5_seconds).toBe(1);
     expect(r.max_heart_rate).toBe(180);
-    expect(r.avg_heart_rate).toBe(140); // (100+120+140+160+180)/5
+    expect(r.avg_heart_rate).toBe(146); // (100+135+150+165+180)/5 = 730/5
   });
 
-  it('自定义 userMaxHr 参与心率区间划分', () => {
+  it('自定义 userMaxHr/restingHr 参与心率区间划分', () => {
+    // maxHr=200、restingHr=50 → HRR=150
+    // hr=100 → reserve=50/150≈0.333 → z1; hr=130 → reserve=80/150≈0.533 → z1
+    // hr=160 → reserve=110/150≈0.733 → z3
     const points: TCXPoint[] = [
-      { time: 0, hr: 100 },   // 100/200 = 0.5 → z1
-      { time: 1000, hr: 130 }, // 130/200 = 0.65 → z2
+      { time: 0, hr: 100 },   // z1
+      { time: 1000, hr: 120 }, // reserve≈0.467 → z1, dt=1 → z1 累计 2 秒
+      { time: 2000, hr: 160 }, // reserve≈0.733 → z3, dt=1 → z3 累计 1 秒
     ];
-    const r = aggregateActivityData({ title: 't', points, userMaxHr: 200 });
-    expect(r.hr_z1_seconds).toBe(1);
-    expect(r.hr_z2_seconds).toBe(1);
-    expect(r.hr_z3_seconds).toBe(0);
+    const r = aggregateActivityData({ title: 't', points, userMaxHr: 200, userRestingHr: 50 });
+    expect(r.hr_z1_seconds).toBe(2);
+    expect(r.hr_z2_seconds).toBe(0);
+    expect(r.hr_z3_seconds).toBe(1);
   });
 
   it('后续心率低于当前最大心率时不更新 max_heart_rate', () => {

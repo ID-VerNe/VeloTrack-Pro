@@ -15,7 +15,7 @@ export default function BentoMetricCard({ value, unit, label, subLabel, classNam
         {label}
       </div>
       
-      <div className="flex items-baseline gap-1.5 text-[26px] sm:text-[28px] font-semibold text-slate-900 leading-none tabular-nums font-mono">
+      <div className="flex items-baseline gap-1.5 text-[26px] sm:text-[28px] font-semibold text-slate-900 leading-none tabular-nums font-mono tracking-[-0.025em]">
         <span>{value}</span>
         {unit && (
           <span className="text-[12px] font-normal text-slate-400 whitespace-nowrap font-sans translate-y-[-0.5px]">

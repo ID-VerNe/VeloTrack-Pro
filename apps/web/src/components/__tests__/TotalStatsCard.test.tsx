@@ -39,4 +39,12 @@ describe('TotalStatsCard', () => {
     render(<TotalStatsCard rides={bigRides} />);
     expect(screen.getByText('1,200')).toBeInTheDocument();
   });
+
+  it('传入 scopeLabel 时正确渲染筛选范围徽标', () => {
+    render(<TotalStatsCard rides={rides} scopeLabel="深圳" />);
+    expect(screen.getByText('深圳')).toBeInTheDocument();
+    expect(screen.getByText('累计遥测总里程')).toBeInTheDocument();
+    expect(screen.getByText('60.0')).toBeInTheDocument();
+  });
 });
+

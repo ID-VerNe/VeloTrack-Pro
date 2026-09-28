@@ -5,28 +5,38 @@ import com.velotrack.sync.data.RideUploadPayload
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.InputStream
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 object TcxParser {
 
-    private val isoFormats = arrayOf(
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") },
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") },
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US),
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-    )
-
     private fun parseIsoTime(timeStr: String): Long {
-        for (format in isoFormats) {
-            try {
-                return format.parse(timeStr)?.time ?: continue
-            } catch (_: Exception) {}
-        }
+        try {
+            return Instant.parse(timeStr).toEpochMilli()
+        } catch (_: Exception) {}
+        try {
+            return java.time.OffsetDateTime.parse(timeStr).toInstant().toEpochMilli()
+        } catch (_: Exception) {}
+        try {
+            return LocalDateTime.parse(timeStr).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        } catch (_: Exception) {}
         return System.currentTimeMillis()
     }
 
-    fun parse(inputStream: InputStream, defaultTitle: String = "骑行记录"): Pair<RideUploadPayload, List<GeoPoint>> {
+    /**
+     * 解析 TCX 流并聚合成上传负载 + 逐点明细。
+     * userMaxHr / userRestingHr 来自车手档案(/api/ai/rider/profile)注入用户自定义心率，
+     * 默认 188/55 兜底，绝不在此硬编码实际业务值。
+     */
+    fun parse(
+        inputStream: InputStream,
+        defaultTitle: String = "骑行记录",
+        userMaxHr: Int = 188,
+        userRestingHr: Int = 55
+    ): Pair<RideUploadPayload, List<GeoPoint>> {
         val factory = XmlPullParserFactory.newInstance()
         factory.isNamespaceAware = false
         val parser = factory.newPullParser()
@@ -35,7 +45,7 @@ object TcxParser {
         val points = mutableListOf<GeoPoint>()
         var currentPoint: GeoPoint? = null
         var currentTag = ""
-        var textContent = ""
+        val textBuffer = StringBuilder()
 
         var explicitTotalTime: Long? = null
         var explicitDistance: Long? = null
@@ -49,6 +59,7 @@ object TcxParser {
             when (eventType) {
                 XmlPullParser.START_TAG -> {
                     currentTag = parser.name
+                    textBuffer.setLength(0)
                     if (currentTag.equals("Trackpoint", ignoreCase = true)) {
                         insideTrackpoint = true
                         currentPoint = GeoPoint(time = 0L)
@@ -57,10 +68,11 @@ object TcxParser {
                     }
                 }
                 XmlPullParser.TEXT -> {
-                    textContent = parser.text.trim()
+                    textBuffer.append(parser.text)
                 }
                 XmlPullParser.END_TAG -> {
                     val endTag = parser.name
+                    val textContent = textBuffer.toString().trim()
                     if (insideTrackpoint && currentPoint != null) {
                         when {
                             endTag.equals("Time", ignoreCase = true) -> {
@@ -134,7 +146,7 @@ object TcxParser {
                         }
                     }
                     currentTag = ""
-                    textContent = ""
+                    textBuffer.setLength(0)
                 }
             }
             eventType = parser.next()
@@ -145,7 +157,9 @@ object TcxParser {
             points = points,
             explicitElapsedTimeSeconds = explicitTotalTime,
             explicitDistanceMeters = explicitDistance,
-            explicitCalories = explicitCalories
+            explicitCalories = explicitCalories,
+            userMaxHr = userMaxHr,
+            userRestingHr = userRestingHr
         )
     }
 }

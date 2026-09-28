@@ -12,6 +12,14 @@
     "strict": true,
     "noUncheckedIndexedAccess": false,
 
+    /* 共享包路径映射:Vite alias 与 TS paths 双向对齐,确保 tsc --noEmit 也能解析 */
+    "baseUrl": ".",
+    "paths": {
+      "@velotrack/core": ["../../packages/core/src/index.ts"],
+      "@velotrack/core/geo": ["../../packages/core/src/geo.ts"],
+      "@velotrack/core/hr": ["../../packages/core/src/hr.ts"]
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

@@ -25,8 +25,9 @@ describe('Sidebar 导航侧边栏', () => {
     resting_hr: 55,
     ftp_watts: 165,
     current_bike: '大行 P8',
-    bike_specs: '',
-    injuries_notes: '无',
+    chainring: 46,
+    cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+    wheel_spec: '20x2.0',
     primary_goal: '巡航 20km/h',
   };
 

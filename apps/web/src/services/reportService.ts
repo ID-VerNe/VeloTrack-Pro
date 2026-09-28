@@ -223,10 +223,15 @@ export async function generatePeriodInsight(
   ridesCount: number
 ): Promise<string> {
   const { getAIConfig, callAICompletion, parseAIResponse } = await import('./aiClient');
-  const { getRiderContextPrompt } = await import('./riderService');
+  const { getRiderContextPrompt, getRiderProfile } = await import('./riderService');
 
   const config = await getAIConfig();
   const riderContext = await getRiderContextPrompt();
+  const profile = await getRiderProfile();
+  const cogRange = profile.cogs.length > 0
+    ? `${profile.cogs.reduce((min, c) => Math.min(min, c), Infinity)}-${profile.cogs.reduce((max, c) => Math.max(max, c), -Infinity)}T ${profile.cogs.length}速`
+    : '未配置';
+  const gearDesc = `${profile.chainring}T / ${cogRange}`;
 
   const typeNames: Record<string, string> = {
     week: '周度', month: '月度', half_year: '半年度', year: '年度',
@@ -244,7 +249,7 @@ ${riderContext}
 （深入评价本${typeLabel}的总里程 ${summary.total_distance_km}km、有效运动时间 ${(summary.moving_time_seconds / 3600).toFixed(1)}小时、停顿时间 ${(summary.paused_time_seconds / 3600).toFixed(1)}小时、总爬升 ${summary.total_ascent_meters}m、活动频次与环比增减情况，评估体能增长与耐力储备）
 
 ### 踏频节奏与体能/膝盖恢复诊断
-（结合战车46T/11-28T 7速齿比、【停表纯骑行均速 ${summary.moving_avg_speed_kmh || summary.avg_speed_kmh}km/h】与【总均速 ${summary.elapsed_avg_speed_kmh || summary.avg_speed_kmh}km/h】，重点分析踩踏做功效率与右膝半月板受力防护，诊断疲劳积累情况）
+（结合战车${gearDesc}齿比、【停表纯骑行均速 ${summary.moving_avg_speed_kmh || summary.avg_speed_kmh}km/h】与【总均速 ${summary.elapsed_avg_speed_kmh || summary.avg_speed_kmh}km/h】，重点分析踩踏做功效率与关节受力防护，诊断疲劳积累情况）
 
 ### 下一周期针对性训练课表
 （根据车手核心训练目标，给出下一周期的具体阶段性训练指导：包括高踏频有氧基底训练、爬坡齿比建议与恢复安排）

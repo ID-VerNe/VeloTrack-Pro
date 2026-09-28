@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import IconButton from '../common/IconButton';
 import RideHeaderToolbar from './RideHeaderToolbar';
 import RideTitleBanners from './RideTitleBanners';
-import { Edit2, Check, X, Tag } from 'lucide-react';
+import { Edit2, Check, X, Tag, Loader2 } from 'lucide-react';
 
 interface Props {
   title: string;
@@ -121,7 +121,7 @@ export default function RideTitleHeader({
           </div>
         ) : (
           <div className="flex items-center space-x-4 group">
-            <h1 className="text-[24px] sm:text-[28px] font-semibold text-slate-900 tracking-tight leading-[1.2]">
+            <h1 className="text-[24px] sm:text-[28px] font-semibold text-slate-900 tracking-[-0.025em] leading-[1.1]">
               {title}
             </h1>
             <div className="flex items-center space-x-2 opacity-70 group-hover:opacity-100 transition-opacity">
@@ -132,10 +132,14 @@ export default function RideTitleHeader({
               <button
                 onClick={onAIPolishTitle}
                 disabled={isSuggestingTitle}
-                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 rounded-md text-[13px] transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
+                className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-md text-[13px] active:scale-[0.98] transition-all duration-100 ease-out cursor-pointer flex items-center space-x-1.5 border border-slate-200/60 disabled:opacity-50 disabled:active:scale-100"
                 title="依据时间/时段/城市/强度生成规范命名"
               >
-                <Tag className={`w-3.5 h-3.5 ${isSuggestingTitle ? 'animate-spin text-slate-900' : 'text-slate-500'}`} aria-hidden="true" />
+                {isSuggestingTitle ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-900" aria-hidden="true" />
+                ) : (
+                  <Tag className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                )}
                 <span>{isSuggestingTitle ? '生成中...' : '规范路段命名'}</span>
               </button>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Smartphone, X, Check, Copy } from 'lucide-react';
 import { getAdminToken } from '../utils/apiClient';
@@ -15,6 +15,13 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
   const [cfClientSecret, setCfClientSecret] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<NodeJS.Timeout | number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,6 +33,7 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
 
   useEffect(() => {
     if (!isOpen) return;
+    let active = true;
     const payload = JSON.stringify({
       baseUrl: baseUrl.trim(),
       adminToken: adminToken.trim(),
@@ -41,8 +49,14 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
         light: '#FFFFFF',
       },
     })
-      .then((url) => setQrDataUrl(url))
+      .then((url) => {
+        if (active) setQrDataUrl(url);
+      })
       .catch((err) => console.error('Failed to generate QR code', err));
+
+    return () => {
+      active = false;
+    };
   }, [baseUrl, adminToken, cfClientId, cfClientSecret, isOpen]);
 
   if (!isOpen) return null;
@@ -55,13 +69,14 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
       cfClientSecret: cfClientSecret.trim(),
     });
     navigator.clipboard.writeText(payload);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform-gpu duration-300 ease-apple-spring animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
@@ -75,7 +90,8 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+            aria-label="关闭对话框"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 active:scale-[0.92] transition-all duration-100 ease-out cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -93,7 +109,7 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
               </div>
             )}
             <p className="mt-3 text-xs text-slate-500 font-medium text-center">
-              打开手机 VeloSync App $\rightarrow$ 点击“扫码配对电脑端”对准本码
+              打开手机 VeloSync App → 点击“扫码配对电脑端”对准本码
             </p>
           </div>
 
@@ -142,17 +158,19 @@ export function PairingModal({ isOpen, onClose }: PairingModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
           <button
             onClick={handleCopyPayload}
-            className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors"
+            className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-800 active:scale-[0.97] transition-all duration-100 ease-out cursor-pointer"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? '已复制文本' : '复制配对 JSON'}</span>
+            <span className="w-4 h-4 flex items-center justify-center shrink-0">
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500 -translate-x-[0.5px]" /> : <Copy className="w-3.5 h-3.5" />}
+            </span>
+            <span className="tabular-nums">{copied ? '已复制文本' : '复制配对 JSON'}</span>
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors"
+            className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 active:scale-[0.98] rounded-xl transition-all duration-100 ease-out cursor-pointer"
           >
             完成
           </button>

@@ -115,6 +115,7 @@ route('POST', '/api/admin/rides/:id/detail-points', function (array $p) {
     if (!is_array($decoded) || !isset($decoded['points']) || !is_array($decoded['points'])) {
         send_error('detail points 必须是 {v, points} JSON', 400);
     }
-    db_run($pdo, 'UPDATE rides SET detail_points = ? WHERE id = ?', [$raw, $p['id']]);
-    send_json(['success' => true]);
+    $now = (int)(microtime(true) * 1000);
+    db_run($pdo, 'UPDATE rides SET detail_points = ?, updated_at = ? WHERE id = ?', [$raw, $now, $p['id']]);
+    send_json(['success' => true, 'updated_at' => $now]);
 });

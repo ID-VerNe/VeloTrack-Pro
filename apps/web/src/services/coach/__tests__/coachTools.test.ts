@@ -1,5 +1,23 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { COACH_TOOLS, executeCoachTool } from '../coachTools';
+
+// coachTools 内部调用 getRiderProfile 取传动与生理基准，stub fetch 返回结构化档案
+const stubFetch = () =>
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url === '/api/ai/rider/profile') {
+      return new Response(JSON.stringify({
+        profile: {
+          name: 'VerNe', gender: 'male', weight_kg: 75, height_cm: 173, max_hr: 188, resting_hr: 55,
+          ftp_watts: 165, current_bike: '大行 P8', chainring: 46,
+          cogs: '[11,13,15,17,19,21,24,28]', wheel_spec: '20x2.0',
+          bike_weight_kg: 11.5, custom_specs: '{}', primary_goal: '',
+        },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({}), { status: 200 });
+  }));
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('COACH_TOOLS', () => {
   it('包含 4 个核心工具声明', () => {
@@ -14,6 +32,7 @@ describe('COACH_TOOLS', () => {
 
 describe('executeCoachTool', () => {
   it('执行运动学计算 - gear_cadence_speed', async () => {
+    stubFetch();
     const res = await executeCoachTool('calculate_cycling_kinematics', {
       operation: 'gear_cadence_speed',
       chainring: 46,
@@ -27,6 +46,7 @@ describe('executeCoachTool', () => {
   });
 
   it('执行运动学计算 - climbing_power', async () => {
+    stubFetch();
     const res = await executeCoachTool('calculate_cycling_kinematics', {
       operation: 'climbing_power',
       rider_weight_kg: 75,

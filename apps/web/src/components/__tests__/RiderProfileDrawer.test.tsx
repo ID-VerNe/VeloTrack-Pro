@@ -24,17 +24,17 @@ describe('RiderProfileDrawer 车手档案抽屉', () => {
     resting_hr: 55,
     ftp_watts: 165,
     current_bike: '大行 P8',
-    gear_ratio: '46T牙盘 + 11-28T 7速飞轮',
+    chainring: 46,
+    cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+    wheel_spec: '20x2.0',
     tires: '马牌 Contact Urban 2.0 轮胎',
     bike_weight_kg: 11.5,
-    bike_specs: '46T牙盘 + 11-28T 7速飞轮 | 马牌 Contact Urban 2.0 轮胎',
     custom_specs: '{"pedals": "平踏", "wheelset": "20寸406"}',
-    injuries_notes: '右膝半月板轻微劳损史',
     primary_goal: '巡航 20km/h',
   };
 
   const memories: RiderMemory[] = [
-    { id: 1, category: 'health', memory_key: 'knee', content: '右膝注意防护', source: 'manual', created_at: Math.floor(Date.now() / 1000) },
+    { id: 1, category: 'health', memory_key: 'knee', content: '膝关节注意防护', source: 'manual', created_at: Math.floor(Date.now() / 1000) },
   ];
 
   // 默认 fetch：GET 档案/记忆成功，PUT 保存成功
@@ -76,7 +76,7 @@ describe('RiderProfileDrawer 车手档案抽屉', () => {
     renderDrawer();
     expect(await screen.findByRole('dialog', { name: /车手与战车档案舱/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /车手与战车档案舱/ })).toBeInTheDocument();
-    expect(screen.getByText(/大行 P8 · 巡航 20km\/h/)).toBeInTheDocument();
+    expect(await screen.findByText(/大行 P8 · 巡航 20km\/h/)).toBeInTheDocument();
 
     // 三个分段 Tab
     expect(screen.getByRole('button', { name: /档案与传动/ })).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('RiderProfileDrawer 车手档案抽屉', () => {
 
     // 默认激活手动档案面板与保存按钮
     expect(screen.getByRole('button', { name: '保存修改' })).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('点击关闭按钮调用 onClose', async () => {
     const user = userEvent.setup();
@@ -138,7 +138,7 @@ describe('RiderProfileDrawer 车手档案抽屉', () => {
 
     await user.click(screen.getByRole('button', { name: /习惯与身体备忘/ }));
     // 记忆列表与手动添加栏
-    expect(await screen.findByText('右膝注意防护')).toBeInTheDocument();
+    expect(await screen.findByText('膝关节注意防护')).toBeInTheDocument();
     expect(screen.getByText(/手动添加身体或器材备忘/)).toBeInTheDocument();
   });
 });

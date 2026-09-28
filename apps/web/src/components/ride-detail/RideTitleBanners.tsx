@@ -46,7 +46,7 @@ export default function RideTitleBanners({
 
       {/* Undo Notification Banner */}
       {previousTitle && (
-        <div className="p-4 bg-brand-900 text-white rounded flex items-center justify-between text-[13px] border border-brand-800 shadow-sm animate-in fade-in slide-in-from-top-1 duration-150 mt-4">
+        <div className="p-4 bg-brand-900 text-slate-100/90 rounded-xl flex items-center justify-between text-[13px] border border-brand-800/80 shadow-sm animate-in fade-in slide-in-from-top-1 duration-150 mt-4 antialiased tracking-[0.01em]">
           <span>标题已更新。原标题：「{previousTitle}」</span>
           <button
             onClick={onUndoTitle}

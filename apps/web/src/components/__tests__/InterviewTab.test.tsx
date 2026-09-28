@@ -29,10 +29,10 @@ describe('InterviewTab AI 访谈', () => {
     resting_hr: 55,
     ftp_watts: 165,
     current_bike: '大行 P8',
-    gear_ratio: '46T牙盘 + 11-28T 7速飞轮',
+    chainring: 46,
+    cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+    wheel_spec: '20x2.0',
     tires: '马牌 2.0',
-    bike_specs: '',
-    injuries_notes: '暂无',
     primary_goal: '',
   };
 
@@ -60,10 +60,10 @@ describe('InterviewTab AI 访谈', () => {
     expect(screen.getByRole('heading', { name: /车手与硬件配置向导就绪/ })).toBeInTheDocument();
     expect(screen.getByText('体重')).toBeInTheDocument();
     expect(screen.getByText('75 kg')).toBeInTheDocument();
-    // HUD 中车型/齿比以「大行 · 11.5kg」「46T牙盘 · 马牌2.0」的合成文本渲染，需模糊匹配
-    expect(screen.getByText(/大行/)).toBeInTheDocument();
-    expect(screen.getByText(/46T牙盘/)).toBeInTheDocument();
-    expect(screen.getByText('暂无伤病')).toBeInTheDocument();
+    // HUD 展示当前车型与齿比真实值（读 profile）
+    expect(screen.getByText(/大行 P8/)).toBeInTheDocument();
+    expect(screen.getByText(/46T/)).toBeInTheDocument();
+    expect(screen.getByText('未设定')).toBeInTheDocument();
   });
 
   it('输入内容后点击发送调用 interviewChat 并渲染助手回复', async () => {
@@ -87,11 +87,11 @@ describe('InterviewTab AI 访谈', () => {
     vi.mocked(interviewChat).mockResolvedValue({ reply: 'ok', updatedFields: {} });
     renderTab();
 
-    await user.click(screen.getByText(/更新46T\/11-28T齿比/));
-    expect(await screen.findByText('我的车齿比改成了46T牙盘+11-28T 7速飞轮')).toBeInTheDocument();
+    await user.click(screen.getByText(/更新传动齿比/));
+    expect(await screen.findByText('我更新了传动齿比，前牙盘和后飞轮数据已通过档案表填入')).toBeInTheDocument();
     await waitFor(() => expect(interviewChat).toHaveBeenCalledTimes(1));
     expect(interviewChat).toHaveBeenCalledWith(
-      '我的车齿比改成了46T牙盘+11-28T 7速飞轮',
+      '我更新了传动齿比，前牙盘和后飞轮数据已通过档案表填入',
       expect.any(Array)
     );
   });
@@ -101,16 +101,16 @@ describe('InterviewTab AI 访谈', () => {
     const onProfileUpdated = vi.fn();
     vi.mocked(interviewChat).mockResolvedValue({
       reply: '已更新',
-      updatedFields: { gear_ratio: '46T/11-28T' },
+      updatedFields: { chainring: 53 },
     });
     renderTab({ onProfileUpdated });
 
     const input = screen.getByPlaceholderText(/输入你的硬件或身体参数/);
-    await user.type(input, '齿比改成46T');
+    await user.type(input, '牙盘换成53T');
     await user.keyboard('{Enter}');
 
     await waitFor(() => expect(onProfileUpdated).toHaveBeenCalledTimes(1));
-    expect(screen.getByText(/已写入数据库: gear_ratio/)).toBeInTheDocument();
+    expect(screen.getByText(/已写入数据库: chainring/)).toBeInTheDocument();
   });
 
   it('空输入时点击发送不触发 interviewChat', async () => {

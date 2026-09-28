@@ -10,6 +10,8 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   label: string;
   /** 尺寸档位：xs=24px(AA下限，仅限行内小胶囊) / sm=32px 密集工具栏 / md=36px 常规 / lg=44px(AAA推荐) */
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  /** 光学微调偏移：针对单向箭头、不规则图标进行中心微补偿 */
+  opticalOffset?: 'none' | 'left' | 'right' | 'up' | 'down';
   /** 危险操作样式（删除等），hover 变红 */
   danger?: boolean;
 }
@@ -21,9 +23,18 @@ const SIZE_CLASSES: Record<NonNullable<IconButtonProps['size']>, string> = {
   lg: 'h-11 w-11',
 };
 
+const OPTICAL_OFFSETS: Record<NonNullable<IconButtonProps['opticalOffset']>, string> = {
+  none: '',
+  left: '-translate-x-[0.5px]',
+  right: 'translate-x-[0.5px]',
+  up: '-translate-y-[0.5px]',
+  down: 'translate-y-[0.5px]',
+};
+
 export default function IconButton({
   label,
   size = 'md',
+  opticalOffset = 'none',
   danger = false,
   className = '',
   children,
@@ -37,19 +48,22 @@ export default function IconButton({
       className={`
         inline-flex shrink-0 items-center justify-center rounded-lg
         ${SIZE_CLASSES[size]}
-        transition-colors duration-150 cursor-pointer
+        transition-all duration-150 ease-out cursor-pointer transform-gpu
+        active:scale-[0.95]
         ${
           danger
-            ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
-            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50 active:bg-rose-100'
+            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200'
         }
         focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60
-        disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500
+        disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-500 disabled:active:scale-100
         ${className}
       `}
       {...rest}
     >
-      {children}
+      <span className={`inline-flex items-center justify-center ${OPTICAL_OFFSETS[opticalOffset]}`}>
+        {children}
+      </span>
     </button>
   );
 }

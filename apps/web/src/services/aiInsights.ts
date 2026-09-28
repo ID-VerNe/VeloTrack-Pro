@@ -7,12 +7,14 @@
  */
 
 import { getAIConfig, callAICompletion, sha256, parseAIResponse } from './aiClient';
-import { getRiderProfile, getRiderContextPrompt } from './riderService';
+import { authFetch } from '../utils/activity/adminApiClient';
+import { getRiderProfile, getRiderContextPrompt, getRiderMemories } from './riderService';
 import { calculateDualSpeeds } from '../utils/cyclingCalculations';
 import {
   calculateClimbingPower,
   calculateGearCadenceSpeed,
   calculateHeartRateZones,
+  deriveCogsFromTarget,
 } from '../utils/cyclingPhysicsEngine';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
 
@@ -22,9 +24,9 @@ export interface RideInsightResult {
   warning?: string;
 }
 
-export async function getRideInsight(rideId: string, force = false): Promise<RideInsightResult> {
+export async function getRideInsight(rideId: string, force = false, signal?: AbortSignal): Promise<RideInsightResult> {
   // 1. 取骑行主记录
-  const rideRes = await fetch(`/api/rides/${rideId}`);
+  const rideRes = await fetch(`/api/rides/${rideId}`, { signal });
   if (!rideRes.ok) {
     throw new Error('加载骑行数据失败：HTTP ' + rideRes.status);
   }
@@ -52,8 +54,11 @@ export async function getRideInsight(rideId: string, force = false): Promise<Rid
   const elapsedMins = (elapsedSec / 60).toFixed(1);
   const pausedMins = (pausedSec / 60).toFixed(1);
 
-  // 速度分层与稳态巡航特征提取
-  const speedDist = analyzeSpeedDistribution(detailPoints, movingAvgSpeedKmh, 46, 15);
+  // 速度分层与稳态巡航特征提取（传动从 profile 读取，反推踏频）
+  const { cruisingCog } = deriveCogsFromTarget(
+    profile.chainring, profile.cogs, profile.wheel_spec, 25.5
+  );
+  const speedDist = analyzeSpeedDistribution(detailPoints, movingAvgSpeedKmh, profile.chainring, cruisingCog);
   const cruisingSpeedKmh = speedDist.cruising_avg_speed_kmh;
 
   // 2. 确定性物理计算
@@ -66,9 +71,9 @@ export async function getRideInsight(rideId: string, force = false): Promise<Rid
   });
 
   const gearResult = calculateGearCadenceSpeed({
-    chainring: 46,
-    cogs: [11, 13, 15, 17, 19, 21, 24, 28],
-    wheelSpec: '20x2.0',
+    chainring: profile.chainring,
+    cogs: profile.cogs,
+    wheelSpec: profile.wheel_spec,
     targetSpeedKmh: cruisingSpeedKmh,
   });
 
@@ -78,7 +83,7 @@ export async function getRideInsight(rideId: string, force = false): Promise<Rid
     currentAvgHr: ride.avg_heart_rate,
   });
 
-  // 3. content_hash 校验缓存
+  // 3. content_hash 校验缓存（拼入 health memory 指纹：删记忆 → 指纹变 → 缓存失效 → 复盘重算）
   // 近 7 天负荷：前端拉全量 rides 本地过滤（/api/rides 不支持 since/until 参数）
   const sevenDaysAgo = ride.start_time - 7 * 24 * 3600 * 1000;
   let recentDistKm = '0';
@@ -97,7 +102,19 @@ export async function getRideInsight(rideId: string, force = false): Promise<Rid
     console.error('Failed to load recent rides for insight hash', e);
   }
 
-  const contentString = `${ride.id}|${distKm}|${movingAvgSpeedKmh}|${elapsedAvgSpeedKmh}|${ride.max_speed_kmh}|${ride.total_ascent_meters}|${movingMins}|${pausedMins}|${recentDistKm}|${recentCount}`;
+  let healthMemoryFp = '';
+  try {
+    const allMems = await getRiderMemories(true);
+    const healthMems = allMems
+      .filter((m) => m.category === 'health' || m.category === 'physiology')
+      .map((m) => m.content)
+      .sort();
+    healthMemoryFp = healthMems.join('||');
+  } catch (e) {
+    console.error('Failed to load health memories for insight hash', e);
+  }
+
+  const contentString = `${ride.id}|${distKm}|${movingAvgSpeedKmh}|${elapsedAvgSpeedKmh}|${ride.max_speed_kmh}|${ride.total_ascent_meters}|${movingMins}|${pausedMins}|${recentDistKm}|${recentCount}|${healthMemoryFp}`;
   const contentHash = await sha256(contentString);
 
   // 4. 取缓存
@@ -131,10 +148,10 @@ ${riderContext}
 【必须完整输出以下三大核心板块（严禁漏掉任何一个板块）】：
 
 ### 配速与骑行节奏分析
-（严格解耦【稳态平路巡航时速】与【综合停表均速】。肯定车手在稳态巡航时保持 46/15T @ 88-95 rpm 的科学黄金踏频与膝盖保护，绝非重档死蹬。详细分析低速起步与红绿灯造成的速度损耗落差，给出红绿灯起步提前降轻档提频、平路进入巡航后再挂 46/15T 的专业控速指导）
+（严格解耦【稳态平路巡航时速】与【综合停表均速】。肯定车手在稳态巡航时保持科学黄金踏频区间与膝盖保护。详细分析低速起步与红绿灯造成的速度损耗落差，给出红绿灯起步提前降轻档提频、平路进入巡航后再挂主力档位锁住高效踏频的专业控速指导）
 
 ### 地形适应与体能消耗
-（必须直接引用物理引擎计算的【重力势能做功与爬升均摊功率】，重点分析右膝半月板受力与防劳损保护情况，结合 Karvonen 生理区间评估有氧负荷）
+（必须直接引用物理引擎计算的【重力势能做功与爬升均摊功率】，结合车手健康与伤病底线评估关节负荷与防劳损保护，结合 Karvonen 生理区间评估有氧负荷）
 
 ### 下阶段训练与恢复建议
 （结合车手阶段目标，给出 2-3 条明确、可落地的单次训练目标：如平路高踏频专项、齿比选择与恢复注意事项）
@@ -148,7 +165,7 @@ ${riderContext}
 - 纯运动时间: ${movingMins} 分钟
 - 总历时时间: ${elapsedMins} 分钟（含停顿/红绿灯 ${pausedMins} 分钟）
 - 稳态平路巡航时速: ${speedDist.cruising_avg_speed_kmh} km/h (P75-P90 核心巡航区间: ${speedDist.cruising_range_kmh[0]} - ${speedDist.cruising_range_kmh[1]} km/h)
-- 46/15T 巡航反推踏频: ${speedDist.derived_cadence_rpm} rpm (${speedDist.cadence_zone_status === 'golden' ? '✅ 完全处于 85-95 rpm 黄金高效有氧保护区间，绝非重档死蹬' : `${speedDist.derived_cadence_rpm} rpm`})
+- ${profile.chainring}/${cruisingCog}T 巡航反推踏频: ${speedDist.derived_cadence_rpm} rpm (${speedDist.cadence_zone_status === 'golden' ? '✅ 完全处于 85-95 rpm 黄金高效有氧保护区间，绝非重档死蹬' : `${speedDist.derived_cadence_rpm} rpm`})
 - 综合停表均速: ${movingAvgSpeedKmh} km/h (纯踩踏做功均速，受起步与红绿灯拉低)
 - 速度落差损耗: ${speedDist.speed_loss_kmh} km/h (损耗占比: ${speedDist.speed_loss_pct}%)
 - 综合总均速: ${elapsedAvgSpeedKmh} km/h (门到门总耗时均速)
@@ -156,7 +173,7 @@ ${riderContext}
 - 累计爬升高度: ${ride.total_ascent_meters || 0} 米
 - 速度分层耗时占比: 停顿 ${speedDist.speed_tiers.paused_pct}%, 低速起步 ${speedDist.speed_tiers.low_speed_pct}%, 节奏过渡 ${speedDist.speed_tiers.tempo_pct}%, 稳态巡航 ${speedDist.speed_tiers.cruising_pct}%, 冲刺极速 ${speedDist.speed_tiers.sprint_pct}%
 - 【物理引擎 - 爬坡做功】: 克服重力势能做功约 ${climbResult.gravity_work_kj} kJ，爬升均摊功率约 ${climbResult.gravity_power_watts} W (${climbResult.gravity_w_per_kg} W/kg，约占 FTP ${climbResult.ftp_percentage || 16}%)，负荷评级: ${climbResult.intensity_rating}
-- 【物理引擎 - 齿比匹配】: 稳态巡航 ${cruisingSpeedKmh}km/h 最优档位推荐: ${gearResult.recommended_cruising_cog?.cog ? `46/${gearResult.recommended_cruising_cog.cog}T (@ ${gearResult.recommended_cruising_cog.required_cadence_rpm} rpm)` : '46/15T 或 46/17T'}
+- 【物理引擎 - 齿比匹配】: 稳态巡航 ${cruisingSpeedKmh}km/h 最优档位推荐: ${gearResult.recommended_cruising_cog?.cog ? `${profile.chainring}/${gearResult.recommended_cruising_cog.cog}T (@ ${gearResult.recommended_cruising_cog.required_cadence_rpm} rpm)` : `${profile.chainring}/${cruisingCog}T`}
 - 【物理引擎 - 心率区间】: Zone 2 黄金有氧区间为 ${hrResult.zones.zone2_endurance.min}-${hrResult.zones.zone2_endurance.max} bpm
 - 近 7 天训练负荷: 完成 ${recentCount} 次骑行，累计 ${recentDistKm} 公里。
 
@@ -184,7 +201,7 @@ ${riderContext}
 
   // 6. 写缓存
   try {
-    await fetch(`/api/ai/rides/${rideId}/insight`, {
+    await authFetch(`/api/ai/rides/${rideId}/insight`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content_hash: contentHash, insight }),

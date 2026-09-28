@@ -87,8 +87,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnSaveConfig.setOnClickListener {
+            var rawBaseUrl = binding.etBaseUrl.text.toString().trim()
+            if (rawBaseUrl.isNotEmpty() && !rawBaseUrl.startsWith("http://", ignoreCase = true) && !rawBaseUrl.startsWith("https://", ignoreCase = true)) {
+                rawBaseUrl = "https://$rawBaseUrl"
+            }
             val config = AppConfig(
-                baseUrl = binding.etBaseUrl.text.toString().trim(),
+                baseUrl = rawBaseUrl,
                 adminToken = cleanToken(binding.etAdminToken.text.toString()),
                 cfClientId = cleanToken(binding.etCfClientId.text.toString()),
                 cfClientSecret = cleanToken(binding.etCfClientSecret.text.toString())

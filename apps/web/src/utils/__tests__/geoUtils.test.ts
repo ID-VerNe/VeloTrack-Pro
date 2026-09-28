@@ -25,9 +25,10 @@ describe('detectCityForRide 城市识别', () => {
   });
 
   it('命中深圳边界内的坐标返回 深圳', () => {
+    // SSOT 对齐边界:深圳 maxLat=22.88、maxLng=114.65
     expect(detectCityForRide({ start_lat: 22.54, start_lng: 114.05 })).toBe('深圳');
-    expect(detectCityForRide({ start_lat: 22.4, start_lng: 113.7 })).toBe('深圳');
-    expect(detectCityForRide({ start_lat: 22.9, start_lng: 114.6 })).toBe('深圳');
+    expect(detectCityForRide({ start_lat: 22.45, start_lng: 113.75 })).toBe('深圳');
+    expect(detectCityForRide({ start_lat: 22.88, start_lng: 114.60 })).toBe('深圳');
   });
 
   it('命中广州边界内的坐标返回 广州', () => {

@@ -44,7 +44,7 @@ export default function AddMemoryForm({ onAddMemory }: AddMemoryFormProps) {
 
         <input
           type="text"
-          placeholder="例如：右膝曾有劳损，需维持 85rpm 以上高踏频..."
+          placeholder="例如：偏好夜间骑行、平路绿道，常用中轻档高踏频巡航..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"

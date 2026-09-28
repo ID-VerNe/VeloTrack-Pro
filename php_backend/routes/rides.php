@@ -25,8 +25,9 @@ route('GET', '/api/rides', function (array $p) {
     send_json(['rides' => $rows]);
 });
 
-// GET /api/migrate-cities — 重新用高德官方多边形与跨城算法校准所有骑行记录
+// GET /api/migrate-cities — 重新用高德官方多边形与跨城算法校准所有骑行记录 (管理员专享)
 route('GET', '/api/migrate-cities', function (array $p) {
+    check_auth();
     @set_time_limit(0);
     $pdo = get_db_connection();
     require_once __DIR__ . '/../utils/geo_resolver.php';

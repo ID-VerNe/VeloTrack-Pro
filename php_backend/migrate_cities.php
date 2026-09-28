@@ -3,6 +3,11 @@
 // php_backend/migrate_cities.php
 // 历史骑行记录城市与跨城字段回填迁移脚本
 
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    exit('Forbidden: CLI execution only' . PHP_EOL);
+}
+
 @set_time_limit(0);
 
 require_once __DIR__ . '/database.php';

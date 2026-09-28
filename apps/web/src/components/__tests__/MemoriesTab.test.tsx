@@ -15,7 +15,7 @@ describe('MemoriesTab 语义记忆列表', () => {
   const now = Date.now();
 
   const makeMemories = (): RiderMemory[] => [
-    { id: 1, category: 'health', memory_key: 'knee', content: '右膝注意防护', source: 'manual', created_at: Math.floor(now / 1000) },
+    { id: 1, category: 'health', memory_key: 'knee', content: '膝关节注意防护', source: 'manual', created_at: Math.floor(now / 1000) },
     { id: 2, category: 'gear', memory_key: 'chainring', content: '46T牙盘体验良好', source: 'coach', created_at: Math.floor(now / 1000) },
     { id: 3, category: 'habit', memory_key: 'morning', content: '喜欢早间骑行', source: 'manual', created_at: Math.floor(now / 1000) },
   ];
@@ -32,7 +32,7 @@ describe('MemoriesTab 语义记忆列表', () => {
 
   it('渲染记忆条目与分类徽标/来源标签', () => {
     renderTab();
-    expect(screen.getByText('右膝注意防护')).toBeInTheDocument();
+    expect(screen.getByText('膝关节注意防护')).toBeInTheDocument();
     expect(screen.getByText('46T牙盘体验良好')).toBeInTheDocument();
     expect(screen.getByText('喜欢早间骑行')).toBeInTheDocument();
     // 分类名同时出现在过滤按钮与条目徽标中，断言至少存在
@@ -52,12 +52,12 @@ describe('MemoriesTab 语义记忆列表', () => {
     // 过滤到 战车调校：只显示 gear 分类
     await user.click(screen.getByRole('button', { name: /战车调校/ }));
     expect(screen.getByText('46T牙盘体验良好')).toBeInTheDocument();
-    expect(screen.queryByText('右膝注意防护')).not.toBeInTheDocument();
+    expect(screen.queryByText('膝关节注意防护')).not.toBeInTheDocument();
     expect(screen.queryByText('喜欢早间骑行')).not.toBeInTheDocument();
 
     // 过滤到 身体底线：只显示 health
     await user.click(screen.getByRole('button', { name: /身体底线/ }));
-    expect(screen.getByText('右膝注意防护')).toBeInTheDocument();
+    expect(screen.getByText('膝关节注意防护')).toBeInTheDocument();
     expect(screen.queryByText('46T牙盘体验良好')).not.toBeInTheDocument();
   });
 
@@ -101,12 +101,12 @@ describe('MemoriesTab 语义记忆列表', () => {
     renderTab({ onAddMemory });
 
     await user.selectOptions(screen.getByRole('combobox'), 'gear');
-    await user.type(screen.getByPlaceholderText(/例如：右膝曾有劳损/), '换了新飞轮');
+    await user.type(screen.getByPlaceholderText(/例如：偏好夜间骑行/), '换了新飞轮');
     await user.click(screen.getByRole('button', { name: '添加' }));
 
     await waitFor(() => expect(onAddMemory).toHaveBeenCalledTimes(1));
     expect(onAddMemory).toHaveBeenCalledWith('gear', '换了新飞轮');
-    expect(screen.getByPlaceholderText(/例如：右膝曾有劳损/)).toHaveValue('');
+    expect(screen.getByPlaceholderText(/例如：偏好夜间骑行/)).toHaveValue('');
   });
 
   it('添加中显示 loading 文案且按钮禁用', async () => {
@@ -115,7 +115,7 @@ describe('MemoriesTab 语义记忆列表', () => {
     const onAddMemory = vi.fn(() => new Promise<void>(() => {}));
     renderTab({ onAddMemory });
 
-    await user.type(screen.getByPlaceholderText(/例如：右膝曾有劳损/), '新记忆');
+    await user.type(screen.getByPlaceholderText(/例如：偏好夜间骑行/), '新记忆');
     await user.click(screen.getByRole('button', { name: '添加' }));
 
     expect(await screen.findByText('添加中...')).toBeInTheDocument();

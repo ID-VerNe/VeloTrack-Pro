@@ -2,9 +2,10 @@ import React from 'react';
 
 interface Props {
   rides: any[];
+  scopeLabel?: string;
 }
 
-export default function TotalStatsCard({ rides }: Props) {
+export default function TotalStatsCard({ rides, scopeLabel }: Props) {
   const totalDistMeters = rides.reduce((acc, r) => acc + (r.distance_meters || 0), 0);
   const dynamicDistance = totalDistMeters / 1000;
   
@@ -24,13 +25,18 @@ export default function TotalStatsCard({ rides }: Props) {
       {/* Primary Telemetry Header */}
       <div className="flex items-start justify-between border-b border-slate-100 pb-5">
         <div>
-          <div className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
-            累计遥测总里程
+          <div className="flex items-center space-x-1.5 text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+            <span>累计遥测总里程</span>
+            {scopeLabel && (
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 border border-brand-200/60 font-semibold normal-case">
+                {scopeLabel}
+              </span>
+            )}
           </div>
 
-          <div className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight mt-1 font-mono tabular-nums flex items-baseline">
+          <div className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-[-0.03em] mt-1 font-mono tabular-nums flex items-baseline">
             <span>{displayDistance}</span>
-            <span className="text-xs font-normal ml-1.5 text-slate-400 font-sans">公里</span>
+            <span className="text-xs font-normal ml-1 text-slate-400 font-sans -translate-y-[0.5px]">公里</span>
           </div>
         </div>
 

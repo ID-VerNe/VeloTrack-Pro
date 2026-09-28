@@ -1,12 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { computeHeatmapCalendar } from '../utils/heatmapCalendar';
 
 interface Props {
   rides: any[];
+  scopeLabel?: string;
 }
 
-export default function ConsistencyHeatmap({ rides }: Props) {
+export default function ConsistencyHeatmap({ rides, scopeLabel }: Props) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [hoveredDay, setHoveredDay] = useState<{ dateStr: string; distanceKm: number; count: number } | null>(null);
@@ -30,6 +31,13 @@ export default function ConsistencyHeatmap({ rides }: Props) {
     return Array.from(yearsSet).sort((a, b) => b - a);
   }, [rides]);
 
+  // 当筛选条件变更导致当前选中年份在可选列表中不存在时，平滑重置为最新可用年份
+  useEffect(() => {
+    if (!availableYears.includes(selectedYear) && availableYears.length > 0) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
+
   const getCellColor = (level: number, isFuture: boolean) => {
     if (level === 1) return 'bg-brand-200';
     if (level === 2) return 'bg-brand-300';
@@ -44,9 +52,16 @@ export default function ConsistencyHeatmap({ rides }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
-            年度骑行打卡日历
-          </h3>
+          <div className="flex items-center space-x-1.5">
+            <h3 className="text-[10px] font-mono font-medium text-slate-400 uppercase tracking-widest">
+              年度骑行打卡日历
+            </h3>
+            {scopeLabel && (
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 border border-brand-200/60 font-semibold normal-case">
+                {scopeLabel}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-600 font-mono mt-0.5 tabular-nums">
             {activeDaysCount} 天活跃骑行 • 全年累计 {totalYearDistanceKm} 公里
           </p>

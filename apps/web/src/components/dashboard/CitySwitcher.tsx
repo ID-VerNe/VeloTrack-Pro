@@ -51,7 +51,7 @@ export default function CitySwitcher({
   }, [availableCities, selectedCity]);
 
   return (
-    <div className="flex items-center space-x-1 bg-white/95 backdrop-blur-md p-1 rounded-lg border border-slate-200/90 shadow-2xs">
+    <div className="flex items-center space-x-1 bg-white/80 backdrop-blur-lg p-1 rounded-lg border border-slate-200/90 shadow-2xs">
       {primaryCities.map((city) => {
         const isSelected = selectedCity === city.id;
         const isCross = city.isCrossCityCategory;

@@ -11,12 +11,12 @@ export const INITIAL_RIDER_PROFILE: RiderProfile = {
   resting_hr: 55,
   ftp_watts: 165,
   current_bike: '大行 P8',
-  gear_ratio: '46T牙盘 + 11-28T 7速飞轮',
+  chainring: 46,
+  cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+  wheel_spec: '20x2.0',
   tires: '马牌 Contact Urban 2.0 轮胎 (75-80 psi)',
   bike_weight_kg: 11.5,
-  bike_specs: '46T牙盘 + 11-28T 7速飞轮 | 马牌 Contact Urban 2.0 轮胎',
   custom_specs: '{"pedals": "平踏", "wheelset": "20寸406"}',
-  injuries_notes: '右膝半月板轻微劳损史，需维持85-95rpm高踏频防护',
   primary_goal: '',
 };
 
@@ -34,7 +34,20 @@ export function useRiderProfileDrawer(isOpen: boolean) {
     try {
       const res = await fetch('/api/ai/rider/profile');
       const data = await res.json();
-      if (data.profile) setProfile(data.profile);
+      if (data.profile) {
+        let parsedCogs = data.profile.cogs;
+        if (typeof parsedCogs === 'string' && parsedCogs.trim() !== '') {
+          try {
+            parsedCogs = JSON.parse(parsedCogs);
+          } catch (_) {
+            parsedCogs = INITIAL_RIDER_PROFILE.cogs;
+          }
+        }
+        if (!Array.isArray(parsedCogs)) {
+          parsedCogs = INITIAL_RIDER_PROFILE.cogs;
+        }
+        setProfile({ ...data.profile, cogs: parsedCogs });
+      }
       if (data.memories) setMemories(data.memories);
     } catch (err) {
       console.error('Failed to load profile:', err);

@@ -12,7 +12,11 @@ export type { ParsedTCX, TCXPoint };
 /**
  * 解析 GPX XML 原始文本并提取轨迹数据
  */
-export function parseGPX(xmlString: string, title: string = '骑行记录'): ParsedTCX {
+export function parseGPX(
+  xmlString: string,
+  title: string = '骑行记录',
+  opts?: { userMaxHr?: number; userRestingHr?: number }
+): ParsedTCX {
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', removeNSPrefix: true });
   const doc = parser.parse(xmlString);
 
@@ -82,16 +86,22 @@ export function parseGPX(xmlString: string, title: string = '骑行记录'): Par
     explicitDistanceMeters: totalDistance,
     cumulativeClimbMeters: cumulativeClimb,
     cumulativeDecreaseMeters: cumulativeDecrease,
+    userMaxHr: opts?.userMaxHr,
+    userRestingHr: opts?.userRestingHr,
   });
 }
 
 /**
  * 统一文件解析入口，自动识别 GPX / TCX 格式
  */
-export function parseActivityFile(content: string, fileName: string): ParsedTCX {
+export function parseActivityFile(
+  content: string,
+  fileName: string,
+  opts?: { userMaxHr?: number; userRestingHr?: number }
+): ParsedTCX {
   const cleanTitle = fileName.replace(/\.(tcx|gpx)$/i, '');
   if (content.includes('<gpx') || fileName.toLowerCase().endsWith('.gpx')) {
-    return parseGPX(content, cleanTitle);
+    return parseGPX(content, cleanTitle, opts);
   }
-  return parseTCX(content, cleanTitle);
+  return parseTCX(content, cleanTitle, opts);
 }

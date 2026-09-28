@@ -39,7 +39,7 @@ export default function RideHeaderToolbar({
         <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={onExportGPX}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 hover:text-slate-900 text-[13px] rounded-md active:scale-[0.98] transition-all duration-100 ease-out cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
             aria-label="导出 GPX 轨迹文件"
           >
             <Download className="w-4 h-4 text-slate-500" aria-hidden="true" />
@@ -48,7 +48,7 @@ export default function RideHeaderToolbar({
 
           <button
             onClick={onOpenProfile}
-            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
+            className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 hover:text-slate-900 text-[13px] rounded-md active:scale-[0.98] transition-all duration-100 ease-out cursor-pointer flex items-center space-x-1.5 border border-slate-200/60"
             aria-label="查看车手生物力学档案与战车硬件"
           >
             <User className="w-4 h-4 text-slate-500" aria-hidden="true" />
@@ -59,7 +59,7 @@ export default function RideHeaderToolbar({
             <button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={isDeleting}
-              className="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-[13px] rounded-md transition-colors cursor-pointer flex items-center space-x-1 group"
+              className="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:bg-rose-100 active:scale-[0.98] text-[13px] rounded-md transition-all duration-100 ease-out cursor-pointer flex items-center space-x-1 group"
               aria-label="删除此条骑行记录"
             >
               <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-rose-500" aria-hidden="true" />

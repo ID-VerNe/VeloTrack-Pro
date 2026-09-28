@@ -100,11 +100,11 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
         <div className="flex flex-col items-center text-center space-y-3 p-6 pointer-events-none w-full max-w-md">
           {status === 'idle' && (
             <>
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center text-slate-400">
+              <div className="w-14 h-14 rounded-xl bg-white shadow-2xs border border-slate-200/80 flex items-center justify-center text-slate-400">
                 {stagedFiles.length > 0 ? (
                   <Layers className="w-7 h-7 text-blue-600 stroke-[1.8]" />
                 ) : (
-                  <UploadCloud className="w-7 h-7 text-slate-400 stroke-[1.8]" />
+                  <UploadCloud className="w-7 h-7 text-slate-400 stroke-[1.8] -translate-y-[1px]" />
                 )}
               </div>
               <div>
@@ -125,7 +125,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
             <div className="w-full space-y-3">
               <RefreshCw className="w-10 h-10 text-blue-600 animate-spin stroke-[2] mx-auto" />
               <div>
-                <p className="text-base font-bold text-blue-600">
+                <p className="text-base font-bold text-blue-600 tabular-nums">
                   正在处理批量同步 ({batchProgress.current} / {batchProgress.total})...
                 </p>
                 <p className="text-xs text-slate-500 font-medium truncate max-w-xs mx-auto mt-0.5">
@@ -136,7 +136,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
               {/* Progress Bar */}
               <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
                 <div 
-                  className="bg-blue-600 h-full transition-all duration-300 rounded-full"
+                  className="bg-blue-600 h-full transition-[width] duration-200 ease-apple-spring rounded-full"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -202,8 +202,9 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
                 <button
                   type="button"
                   onClick={() => handleRemoveFile(idx)}
-                  className="text-slate-400 hover:text-rose-600 p-1 transition-colors cursor-pointer shrink-0"
+                  className="relative text-slate-400 hover:text-rose-600 p-1.5 transition-colors cursor-pointer shrink-0 rounded-lg hover:bg-rose-50/80 active:scale-90 after:absolute after:-inset-2 after:content-['']"
                   title="移除该文件"
+                  aria-label="移除该文件"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -218,7 +219,7 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
         type="button"
         onClick={handleTriggerUpload}
         disabled={stagedFiles.length === 0 || status === 'parsing' || status === 'uploading'}
-        className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-95 disabled:shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center space-x-2"
+        className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/25 transition-all transform active:scale-[0.97] disabled:shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center space-x-2 select-none"
       >
         {status === 'uploading' || status === 'parsing' ? (
           <>

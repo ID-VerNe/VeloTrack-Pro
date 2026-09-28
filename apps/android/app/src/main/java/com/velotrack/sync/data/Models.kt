@@ -83,3 +83,9 @@ data class DetailPointItem(
 data class DetailPointsPayload(
     val points: List<DetailPointItem>
 )
+
+@Serializable
+data class RiderProfile(
+    @SerialName("max_hr") val maxHr: Int? = null,
+    @SerialName("resting_hr") val restingHr: Int? = null
+)

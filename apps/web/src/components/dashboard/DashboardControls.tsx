@@ -73,7 +73,7 @@ export default function DashboardControls({
             spellCheck={false}
             data-1p-ignore="true"
             data-lpignore="true"
-            className="w-full pl-8 pr-7 py-1.5 bg-white/95 backdrop-blur-md rounded-lg text-base sm:text-xs font-normal text-slate-800 placeholder-slate-400 border border-slate-200/90 shadow-2xs focus:outline-none focus:border-slate-400 transition-colors"
+            className="w-full pl-8 pr-7 py-1.5 bg-white/80 backdrop-blur-lg rounded-lg text-base sm:text-xs font-normal text-slate-800 placeholder-slate-400 border border-slate-200/90 shadow-2xs focus:outline-none focus:border-slate-400 transition-colors"
           />
           {searchTerm && (
             <IconButton
@@ -101,7 +101,7 @@ export default function DashboardControls({
         <div ref={styleMenuRef} className="relative">
           <button
             onClick={() => setIsStyleMenuOpen(!isStyleMenuOpen)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md hover:bg-white text-slate-800 rounded-lg text-xs font-normal border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-white/80 backdrop-blur-lg hover:bg-white text-slate-800 rounded-lg text-xs font-normal border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
           >
             <span aria-hidden="true">{MAP_STYLES[currentMapStyle]?.icon || '🗺️'}</span>
             <span>{MAP_STYLES[currentMapStyle]?.name || '切换底图'}</span>
@@ -118,7 +118,7 @@ export default function DashboardControls({
                       onMapStyleChange(key);
                       setIsStyleMenuOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs active:scale-[0.98] transition-all duration-100 ease-out cursor-pointer ${
                       isCurrent
                         ? 'bg-brand-50 text-brand-700 font-semibold'
                         : 'text-slate-600 hover:bg-slate-50'

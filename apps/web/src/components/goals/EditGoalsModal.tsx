@@ -162,7 +162,7 @@ export default function EditGoalsModal({
               rows={2}
               value={form.coachNotes || ''}
               onChange={(e) => setForm({ ...form, coachNotes: e.target.value })}
-              placeholder="例如：保持85-95rpm高踏频，平路以46x19T为主，保护膝盖稳定提速"
+              placeholder="例如：保持85-95rpm高踏频，平路以中轻档为主，保护关节稳定提速"
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 resize-none"
             />
           </div>

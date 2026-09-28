@@ -71,13 +71,13 @@ export default function PeriodicReports() {
             </div>
 
             {/* Pagination Controls with Boundary Awareness */}
-            <div className="flex items-center space-x-1 border border-slate-200 rounded p-0.5 bg-white">
-              <IconButton label="上一周期" size="sm" onClick={handlePrevPeriod}>
+            <div className="flex items-center space-x-1 border border-slate-200 rounded-lg p-1 bg-white shadow-2xs">
+              <IconButton label="上一周期" size="sm" opticalOffset="left" onClick={handlePrevPeriod}>
                 <ChevronLeft className="w-3.5 h-3.5" />
               </IconButton>
               <button
                 onClick={handleResetToLatest}
-                className={`px-2 py-0.5 text-xs rounded transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 text-xs rounded-md transition-all duration-100 ease-out cursor-pointer active:scale-[0.98] ${
                   isLatest
                     ? 'bg-brand-500 text-white font-medium shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -86,7 +86,7 @@ export default function PeriodicReports() {
               >
                 最新
               </button>
-              <IconButton label="下一周期" size="sm" onClick={handleNextPeriod} disabled={isLatest}>
+              <IconButton label="下一周期" size="sm" opticalOffset="right" onClick={handleNextPeriod} disabled={isLatest}>
                 <ChevronRight className="w-3.5 h-3.5" />
               </IconButton>
             </div>

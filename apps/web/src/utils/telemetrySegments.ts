@@ -151,7 +151,7 @@ export function analyzeRideTelemetry(
     for (let s = 0; s < numChartPoints; s++) {
       const dp = usableDetail[s];
       const progress = numChartPoints > 1 ? s / (numChartPoints - 1) : 0;
-      const coordIdx = Math.min(numCoords - 1, Math.floor(progress * Math.max(1, numCoords - 1)));
+      const coordIdx = numCoords > 0 ? Math.min(numCoords - 1, Math.floor(progress * Math.max(1, numCoords - 1))) : 0;
 
       // 累计距离：基于明细自身坐标（隐私圈内无坐标段距离不增长）
       if (dp.la !== undefined && dp.ln !== undefined) {

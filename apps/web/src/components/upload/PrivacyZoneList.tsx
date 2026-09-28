@@ -41,7 +41,7 @@ export function PrivacyZoneList({ zones, activeZoneIds, onToggleZone }: PrivacyZ
                   <h4 className="text-xs font-bold text-slate-800">{zone.name}</h4>
                   <div className="flex items-center space-x-2 mt-1">
                     <span className="text-[10px] text-slate-400 font-medium tabular-nums">
-                      {zone.latitude.toFixed(4)}°, {zone.longitude.toFixed(4)}°
+                      {Number(zone.latitude).toFixed(4)}°, {Number(zone.longitude).toFixed(4)}°
                     </span>
                     <span className="text-[9px] font-bold text-brand-700 bg-brand-50 px-1.5 py-0.5 rounded-full">
                       {zone.radius_meters}米 保护半径
@@ -51,15 +51,17 @@ export function PrivacyZoneList({ zones, activeZoneIds, onToggleZone }: PrivacyZ
 
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={isActive}
                   onClick={() => onToggleZone(zone.id)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                  className={`group relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-apple-spring focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                     isActive ? 'bg-brand-500' : 'bg-slate-300'
                   }`}
                   title={isActive ? '点击停用该隐私脱敏区' : '点击启用该隐私脱敏区'}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
-                      isActive ? 'translate-x-4' : 'translate-x-0'
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition-all duration-200 ease-apple-spring group-active:w-5 ${
+                      isActive ? 'translate-x-4 group-active:translate-x-3' : 'translate-x-0'
                     }`}
                   />
                 </button>

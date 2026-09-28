@@ -110,15 +110,18 @@ object GeoCalculations {
     }
 
     /**
-     * 心率区间划分 (Z1 ~ Z5)
+     * 心率区间划分 (Z1 ~ Z5) — Karvonen 储备心率模型
+     * HRR = maxHR - restingHr,区间边界 = restingHr + HRR * 比例 (0.60/0.70/0.80/0.90)
+     * 与 web 端 geoCalculations.calculateHRZones 对齐
      */
-    fun calculateHRZone(hr: Int, maxHR: Int = 188): Int {
-        val percent = hr.toDouble() / maxHR
+    fun calculateHRZone(hr: Int, maxHR: Int = 188, restingHr: Int = 55): Int {
+        val hrr = (maxHR - restingHr).coerceAtLeast(1)
+        val reserve = (hr - restingHr).toDouble() / hrr
         return when {
-            percent < 0.6 -> 1
-            percent < 0.7 -> 2
-            percent < 0.8 -> 3
-            percent < 0.9 -> 4
+            reserve < 0.60 -> 1
+            reserve < 0.70 -> 2
+            reserve < 0.80 -> 3
+            reserve < 0.90 -> 4
             else -> 5
         }
     }

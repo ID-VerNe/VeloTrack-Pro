@@ -46,11 +46,15 @@ function read_json_body(): array
 }
 
 // ---------------------------------------------------------------------------
-// 自举表
+// 数据库连接与模式版本惰性升级 (基于 user_version，零锁竞争)
 // ---------------------------------------------------------------------------
 
 $pdo = get_db_connection();
-ensure_tables($pdo);
+define('CURRENT_SCHEMA_VERSION', 2);
+$currentVersion = (int)$pdo->query('PRAGMA user_version')->fetchColumn();
+if ($currentVersion < CURRENT_SCHEMA_VERSION) {
+    ensure_tables($pdo);
+}
 
 // ---------------------------------------------------------------------------
 // 鉴权：Bearer token，hash_equals 防时序。未配置 ADMIN_TOKEN = 开放模式（本地开发）。

@@ -20,7 +20,7 @@ const DEFAULT_TARGETS: UserTargets = {
   targetAvgSpeedKmh: 18.0,
   monthlyDistanceKm: 180.0,
   annualDistanceKm: 1000.0,
-  coachNotes: '换档至46/17T（第3档），绿灯路段锁90rpm巡航23km/h，红灯停车挂轻档准备起步。',
+  coachNotes: '绿灯路段锁90rpm高踏频巡航，红灯停车前提前降轻档准备起步。',
 };
 
 export default function TrainingGoals() {

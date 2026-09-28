@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Sliders, Check, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Sliders, Check, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { getAdminToken } from '../utils/apiClient';
 
 export function AIConfigCard() {
@@ -11,11 +11,21 @@ export function AIConfigCard() {
   const [testMessage, setTestMessage] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState('');
+  const timerRef = useRef<NodeJS.Timeout | number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const headers: Record<string, string> = {};
     const token = getAdminToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      headers['X-Admin-Token'] = token;
+    }
     fetch('/api/ai/config', { headers })
       .then((res) => res.json())
       .then((data) => {
@@ -40,7 +50,10 @@ export function AIConfigCard() {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       const token = getAdminToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['X-Admin-Token'] = token;
+      }
       const res = await fetch('/api/ai/config', {
         method: 'PUT',
         headers,
@@ -51,12 +64,14 @@ export function AIConfigCard() {
         throw new Error(data.error || `HTTP ${res.status}`);
       }
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2500);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setSaveStatus('idle'), 2500);
     } catch (err: any) {
       console.error(err);
       setSaveStatus('error');
       setSaveError(err.message || '保存失败');
-      setTimeout(() => setSaveStatus('idle'), 3500);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setSaveStatus('idle'), 3500);
     }
   };
 
@@ -81,13 +96,17 @@ export function AIConfigCard() {
         </div>
 
         <div className="text-slate-400">
-          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-300 ease-apple-spring ${
+              isOpen ? 'rotate-180 -translate-y-[0.5px]' : 'translate-y-[0.5px]'
+            }`}
+          />
         </div>
       </button>
 
       {/* Accordion Content */}
       {isOpen && (
-        <div className="px-6 pb-6 pt-2 border-t border-slate-200/60 space-y-4">
+        <div className="px-6 pb-6 pt-2 border-t border-slate-200/60 space-y-4 animate-in fade-in duration-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Base URL */}
             <div>

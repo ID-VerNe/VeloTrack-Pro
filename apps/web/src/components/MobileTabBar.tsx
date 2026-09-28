@@ -17,7 +17,7 @@ export default function MobileTabBar({ onOpenProfile }: MobileTabBarProps) {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 w-full bg-white/90 backdrop-blur border-t border-slate-200 z-50 pb-[env(safe-area-inset-bottom)]">
+    <nav className="md:hidden fixed bottom-0 w-full bg-white/80 backdrop-blur-lg border-t border-slate-200/80 z-50 pb-[env(safe-area-inset-bottom)] transition-colors">
       <div className="flex items-center justify-around h-14 pt-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
@@ -26,8 +26,8 @@ export default function MobileTabBar({ onOpenProfile }: MobileTabBarProps) {
             <NavLink
               key={item.name}
               to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-                isActive ? 'text-brand-600' : 'text-slate-500 hover:text-slate-600'
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-[0.92] transition-all duration-100 ease-out transform-gpu ${
+                isActive ? 'text-brand-600' : 'text-slate-500 hover:text-slate-600 active:text-slate-900'
               }`}
             >
               <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />

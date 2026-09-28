@@ -42,7 +42,7 @@ export default function MapFloatingControls({
         aria-label="缩小"
         title="缩小"
       >
-        <Minus className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
+        <Minus className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
   );

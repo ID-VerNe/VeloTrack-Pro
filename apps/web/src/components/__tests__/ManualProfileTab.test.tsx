@@ -20,11 +20,11 @@ describe('ManualProfileTab 手动档案编辑', () => {
     resting_hr: 55,
     ftp_watts: 165,
     current_bike: '大行 P8',
-    gear_ratio: '46T牙盘 + 11-28T 7速飞轮',
+    chainring: 46,
+    cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+    wheel_spec: '20x2.0',
     tires: '马牌 Contact Urban 2.0 轮胎',
-    bike_specs: '',
     custom_specs: '{"pedals": "平踏", "wheelset": "20寸406"}',
-    injuries_notes: '右膝轻微劳损',
     primary_goal: '巡航 20km/h',
     ...overrides,
   });
@@ -55,9 +55,9 @@ describe('ManualProfileTab 手动档案编辑', () => {
     expect(screen.getByDisplayValue('75')).toHaveValue(75);
     expect(screen.getByDisplayValue('188')).toHaveValue(188);
     expect(screen.getByDisplayValue('大行 P8')).toHaveValue('大行 P8');
-    expect(screen.getByDisplayValue('46T牙盘 + 11-28T 7速飞轮')).toHaveValue('46T牙盘 + 11-28T 7速飞轮');
+    expect(screen.getByDisplayValue('46')).toHaveValue(46);
+    expect(screen.getByDisplayValue('11,13,15,17,19,21,24,28')).toHaveValue('11,13,15,17,19,21,24,28');
     expect(screen.getByDisplayValue('马牌 Contact Urban 2.0 轮胎')).toHaveValue('马牌 Contact Urban 2.0 轮胎');
-    expect(screen.getByDisplayValue('右膝轻微劳损')).toHaveValue('右膝轻微劳损');
     expect(screen.getByDisplayValue('巡航 20km/h')).toHaveValue('巡航 20km/h');
   });
 

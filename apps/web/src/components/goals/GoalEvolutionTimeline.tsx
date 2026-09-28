@@ -65,14 +65,14 @@ export default function GoalEvolutionTimeline({ milestones }: Props) {
                     </span>
 
                     {isLatest && (
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-brand-500 text-white flex items-center space-x-1 shadow-2xs">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-500 text-white flex items-center space-x-1 shadow-2xs">
                         <CheckCircle2 className="w-2.5 h-2.5" />
                         <span>当前生效中</span>
                       </span>
                     )}
 
                     <span
-                      className="text-[10px] px-1.5 py-0.2 rounded border border-slate-200 bg-slate-50 text-slate-600"
+                      className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600"
                     >
                       <span>{isCoach ? '系统自适应调优' : '车手手动设定'}</span>
                     </span>

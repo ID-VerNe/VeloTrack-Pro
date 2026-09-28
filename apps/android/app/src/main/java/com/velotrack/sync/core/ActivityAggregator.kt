@@ -2,7 +2,9 @@ package com.velotrack.sync.core
 
 import com.velotrack.sync.data.GeoPoint
 import com.velotrack.sync.data.RideUploadPayload
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -18,7 +20,8 @@ object ActivityAggregator {
         explicitCalories: Long? = null,
         cumulativeClimbMeters: Long = 0,
         cumulativeDecreaseMeters: Long = 0,
-        userMaxHr: Int = 188
+        userMaxHr: Int = 188,
+        userRestingHr: Int = 55
     ): Pair<RideUploadPayload, List<GeoPoint>> {
         if (points.isEmpty()) {
             throw IllegalArgumentException("No trackpoints found in activity file.")
@@ -70,8 +73,9 @@ object ActivityAggregator {
 
             pt.altitude?.let { alt ->
                 if (alt > maxAltitude) maxAltitude = alt
-                if (cumulativeClimbMeters == 0L && prev?.altitude != null) {
-                    val diff = alt - prev.altitude!!
+                val prevAlt = prev?.altitude
+                if (cumulativeClimbMeters == 0L && prevAlt != null) {
+                    val diff = alt - prevAlt
                     if (diff > 0) totalAscent += diff
                     else if (diff < 0) totalDescent += abs(diff)
                 }
@@ -91,7 +95,7 @@ object ActivityAggregator {
                 if (hr > maxHeartRate) maxHeartRate = hr
                 sumHr += hr
                 countHr++
-                val zone = GeoCalculations.calculateHRZone(hr, userMaxHr)
+                val zone = GeoCalculations.calculateHRZone(hr, userMaxHr, userRestingHr)
                 val addSec = max(1L, dtSeconds.roundToLong())
                 hrZones[zone - 1] += addSec
             }
@@ -123,10 +127,17 @@ object ActivityAggregator {
         val startLng = validGps.firstOrNull()?.lng
 
         val sampled = GeoCalculations.downsamplePoints(validGps)
-        val polyline = PolylineEncoder.encode(sampled.map { Pair(it.lat!!, it.lng!!) })
+        val polyline = PolylineEncoder.encode(sampled.mapNotNull { pt ->
+            val lat = pt.lat
+            val lng = pt.lng
+            if (lat != null && lng != null) Pair(lat, lng) else null
+        })
 
         val finalTitle = title.ifBlank {
-            val dateStr = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(Date(startTime))
+            val dateStr = DateTimeFormatter
+                .ofPattern("yyyy/MM/dd")
+                .withZone(ZoneId.systemDefault())
+                .format(Instant.ofEpochMilli(startTime))
             "骑行 $dateStr"
         }
 

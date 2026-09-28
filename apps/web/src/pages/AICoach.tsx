@@ -63,7 +63,7 @@ export default function AICoach() {
             <div 
               role="status" 
               aria-live="polite" 
-              className="absolute top-16 right-6 z-50 bg-brand-900 text-white p-3.5 rounded border border-brand-800 shadow-lg animate-in slide-in-from-top-3 duration-200 flex items-center space-x-3 max-w-md font-mono"
+              className="absolute top-16 right-6 z-50 bg-brand-900 text-slate-100/90 p-3.5 rounded-xl border border-brand-800/80 shadow-lg animate-in slide-in-from-top-3 duration-200 flex items-center space-x-3 max-w-md font-mono antialiased tracking-[0.01em]"
             >
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium leading-tight">{toast.title}</div>

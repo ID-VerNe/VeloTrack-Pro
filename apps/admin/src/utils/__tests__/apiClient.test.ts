@@ -4,6 +4,7 @@ import {
   setAdminToken,
   uploadRide,
   fetchPrivacyZones,
+  fetchRiderProfile,
   suggestRideTitle,
 } from '../apiClient';
 import type { ParsedTCX } from '../tcxParser';
@@ -180,5 +181,47 @@ describe('suggestRideTitle AI 命名（已迁移到 web 端，admin 桩函数）
 
     await expect(suggestRideTitle(suggestInput)).resolves.toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchRiderProfile 车手档案心率注入', () => {
+  it('成功时返回 max_hr / resting_hr', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ profile: { max_hr: 190, resting_hr: 60 } }),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(fetchRiderProfile()).resolves.toEqual({ max_hr: 190, resting_hr: 60 });
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/ai/rider/profile',
+      expect.objectContaining({ signal: expect.anything() })
+    );
+  });
+
+  it('响应非 ok 时返回 null(调用方用默认 188/55 兜底)', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(fetchRiderProfile()).resolves.toBeNull();
+  });
+
+  it('profile 缺失时返回 null', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(fetchRiderProfile()).resolves.toBeNull();
+  });
+
+  it('fetch 抛异常时返回 null,不向上传播', async () => {
+    const mockFetch = vi.fn().mockRejectedValue(new Error('network down'));
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(fetchRiderProfile()).resolves.toBeNull();
   });
 });

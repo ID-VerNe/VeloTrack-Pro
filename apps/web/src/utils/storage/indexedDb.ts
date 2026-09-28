@@ -84,7 +84,13 @@ export function openDb(): Promise<IDBDatabase> {
       };
 
       request.onblocked = () => {
-        console.warn('[IndexedDB] Database open blocked by another tab');
+        console.warn('[IndexedDB] Database open blocked by another connection, rejecting after timeout...');
+        setTimeout(() => {
+          if (dbPromise) {
+            dbPromise = null;
+            reject(new Error('IndexedDB open blocked timeout'));
+          }
+        }, 3000);
       };
     } catch (err) {
       dbPromise = null;
@@ -120,6 +126,8 @@ export async function getAllLocalRides(): Promise<any[]> {
       };
 
       req.onerror = () => resolve([]);
+      tx.onabort = () => resolve([]);
+      tx.onerror = () => resolve([]);
     });
   } catch {
     return [];
@@ -141,6 +149,7 @@ export async function saveLocalRides(rides: any[]): Promise<void> {
       }
 
       tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
       tx.onerror = () => reject(tx.error);
     });
   } catch (err) {
@@ -158,6 +167,7 @@ export async function deleteLocalRide(id: string): Promise<void> {
       tx.objectStore('ride_details').delete(id);
 
       tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
       tx.onerror = () => reject(tx.error);
     });
   } catch (err) {
@@ -196,6 +206,7 @@ export async function updateLocalRideTitle(id: string, newTitle: string, clientU
       };
 
       tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
       tx.onerror = () => reject(tx.error);
     });
   } catch (err) {
@@ -225,6 +236,8 @@ export async function getLocalRideDetail(id: string): Promise<{ ride: any; detai
       };
 
       req.onerror = () => resolve(null);
+      tx.onabort = () => resolve(null);
+      tx.onerror = () => resolve(null);
     });
   } catch {
     return null;
@@ -251,6 +264,7 @@ export async function saveLocalRideDetail(id: string, ride: any, detailPoints: a
       tx.objectStore('rides').put(ride);
 
       tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
       tx.onerror = () => reject(tx.error);
     });
   } catch (err) {

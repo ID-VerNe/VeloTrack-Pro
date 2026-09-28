@@ -6,7 +6,7 @@ describe('AddMemoryForm', () => {
   it('renders correctly with disabled submit button initially', () => {
     render(<AddMemoryForm onAddMemory={vi.fn()} />);
 
-    expect(screen.getByPlaceholderText(/例如：右膝曾有劳损/)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/例如：偏好夜间骑行/)).toBeInTheDocument();
     const submitBtn = screen.getByRole('button', { name: '添加' });
     expect(submitBtn).toBeDisabled();
   });
@@ -15,7 +15,7 @@ describe('AddMemoryForm', () => {
     const onAddMemory = vi.fn().mockResolvedValue(undefined);
     render(<AddMemoryForm onAddMemory={onAddMemory} />);
 
-    const input = screen.getByPlaceholderText(/例如：右膝曾有劳损/);
+    const input = screen.getByPlaceholderText(/例如：偏好夜间骑行/);
     const select = screen.getByRole('combobox');
     const submitBtn = screen.getByRole('button', { name: '添加' });
 

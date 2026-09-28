@@ -70,22 +70,22 @@ function run_ensure_tables(PDO $pdo): void
             deleted_at INTEGER
         )
     ");
-    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)'); } catch (Throwable $e) {}
-    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_city ON rides(city)'); } catch (Throwable $e) {}
-    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_sync ON rides(updated_at, deleted_at)'); } catch (Throwable $e) {}
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)'); } catch (Throwable $e) { error_log('[dbInit] idx_rides_start_time: ' . $e->getMessage()); }
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_city ON rides(city)'); } catch (Throwable $e) { error_log('[dbInit] idx_rides_city: ' . $e->getMessage()); }
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_sync ON rides(updated_at, deleted_at)'); } catch (Throwable $e) { error_log('[dbInit] idx_rides_sync: ' . $e->getMessage()); }
 
     require_once __DIR__ . '/utils/geo_resolver.php';
 
     // 迁移：旧库可能仍有 r2 key 列、缺 detail_points 列、city 列、cities 列、is_cross_city 列、或增量同步字段
-    try { $pdo->exec('ALTER TABLE rides ADD COLUMN detail_points TEXT'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides ADD COLUMN city TEXT'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides ADD COLUMN cities TEXT'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides ADD COLUMN is_cross_city INTEGER DEFAULT 0'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides ADD COLUMN updated_at INTEGER'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides ADD COLUMN deleted_at INTEGER'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides DROP COLUMN detail_points_r2_key'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rides DROP COLUMN raw_tcx_r2_key'); } catch (Throwable $e) {}
-    try { $pdo->exec("UPDATE rides SET updated_at = COALESCE(created_at, CAST(strftime('%s', 'now') AS INTEGER) * 1000) WHERE updated_at IS NULL"); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN detail_points TEXT'); } catch (Throwable $e) { error_log('[dbInit] add detail_points: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN city TEXT'); } catch (Throwable $e) { error_log('[dbInit] add city: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN cities TEXT'); } catch (Throwable $e) { error_log('[dbInit] add cities: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN is_cross_city INTEGER DEFAULT 0'); } catch (Throwable $e) { error_log('[dbInit] add is_cross_city: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN updated_at INTEGER'); } catch (Throwable $e) { error_log('[dbInit] add updated_at: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides ADD COLUMN deleted_at INTEGER'); } catch (Throwable $e) { error_log('[dbInit] add deleted_at: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides DROP COLUMN detail_points_r2_key'); } catch (Throwable $e) { error_log('[dbInit] drop detail_points_r2_key: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rides DROP COLUMN raw_tcx_r2_key'); } catch (Throwable $e) { error_log('[dbInit] drop raw_tcx_r2_key: ' . $e->getMessage()); }
+    try { $pdo->exec("UPDATE rides SET updated_at = COALESCE(created_at, CAST(strftime('%s', 'now') AS INTEGER) * 1000) WHERE updated_at IS NULL"); } catch (Throwable $e) { error_log('[dbInit] backfill updated_at: ' . $e->getMessage()); }
 
     // 自动回填：为历史记录中缺失 cities 或 city 的行自动补齐城市与跨城信息
     try {
@@ -169,22 +169,29 @@ function run_ensure_tables(PDO $pdo): void
             resting_hr INTEGER NOT NULL DEFAULT 55,
             ftp_watts INTEGER NOT NULL DEFAULT 165,
             current_bike TEXT NOT NULL DEFAULT '大行 P8',
-            gear_ratio TEXT DEFAULT '46T牙盘 + 11-28T 7速飞轮',
+            chainring INTEGER NOT NULL DEFAULT 46,
+            cogs TEXT NOT NULL DEFAULT '[11,13,15,17,19,21,24,28]',
+            wheel_spec TEXT NOT NULL DEFAULT '20x2.0',
             tires TEXT DEFAULT '马牌 Contact Urban 2.0 轮胎 (75-80 psi)',
             bike_weight_kg REAL DEFAULT 11.5,
-            bike_specs TEXT NOT NULL DEFAULT '46T牙盘 + 11-28T 7速飞轮 | 马牌 Contact Urban 2.0 轮胎',
             custom_specs TEXT DEFAULT '{\"pedals\": \"平踏\", \"wheelset\": \"20寸406\"}',
-            injuries_notes TEXT NOT NULL DEFAULT '右膝半月板轻微劳损史，需维持85-95rpm高踏频防护',
             primary_goal TEXT NOT NULL DEFAULT 'W1-2稳扎16km/h均速门槛，建立高踏频肌肉记忆，向20km/h进发',
             updated_at INTEGER NOT NULL DEFAULT (unixepoch())
         )
     ");
 
     // rider_profile 增量列（旧库补列）
-    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN gear_ratio TEXT'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN tires TEXT'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN bike_weight_kg REAL'); } catch (Throwable $e) {}
-    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN custom_specs TEXT'); } catch (Throwable $e) {}
+    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN tires TEXT'); } catch (Throwable $e) { error_log('[dbInit] rider_profile add tires: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN bike_weight_kg REAL'); } catch (Throwable $e) { error_log('[dbInit] rider_profile add bike_weight_kg: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN custom_specs TEXT'); } catch (Throwable $e) { error_log('[dbInit] rider_profile add custom_specs: ' . $e->getMessage()); }
+    // 结构化传动字段（替代自由文本 gear_ratio/bike_specs）
+    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN chainring INTEGER NOT NULL DEFAULT 46'); } catch (Throwable $e) { error_log('[dbInit] rider_profile add chainring: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN cogs TEXT NOT NULL DEFAULT \'[11,13,15,17,19,21,24,28]\''); } catch (Throwable $e) { error_log('[dbInit] rider_profile add cogs: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rider_profile ADD COLUMN wheel_spec TEXT NOT NULL DEFAULT \'20x2.0\''); } catch (Throwable $e) { error_log('[dbInit] rider_profile add wheel_spec: ' . $e->getMessage()); }
+    // 迁移：移除已废弃的 injuries_notes / gear_ratio / bike_specs 列
+    try { $pdo->exec('ALTER TABLE rider_profile DROP COLUMN injuries_notes'); } catch (Throwable $e) { error_log('[dbInit] rider_profile drop injuries_notes: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rider_profile DROP COLUMN gear_ratio'); } catch (Throwable $e) { error_log('[dbInit] rider_profile drop gear_ratio: ' . $e->getMessage()); }
+    try { $pdo->exec('ALTER TABLE rider_profile DROP COLUMN bike_specs'); } catch (Throwable $e) { error_log('[dbInit] rider_profile drop bike_specs: ' . $e->getMessage()); }
 
     // rider_memories 重建式迁移：移除限制性 CHECK，加 importance
     migrate_rider_memories($pdo);
@@ -224,7 +231,7 @@ function run_ensure_tables(PDO $pdo): void
             target_avg_speed_kmh REAL NOT NULL DEFAULT 18.0,
             monthly_distance_km REAL NOT NULL DEFAULT 180.0,
             annual_distance_km REAL NOT NULL DEFAULT 1000.0,
-            coach_notes TEXT DEFAULT '换档至46/17T（第3档），绿灯路段锁90rpm巡航23km/h，红灯停车挂轻档准备起步。',
+            coach_notes TEXT DEFAULT '绿灯路段锁90rpm高踏频巡航，红灯停车前提前降轻档准备起步。',
             updated_at INTEGER NOT NULL DEFAULT (unixepoch())
         )
     ");
@@ -236,13 +243,13 @@ function run_ensure_tables(PDO $pdo): void
     ");
 
     $pdo->exec("
-        INSERT OR IGNORE INTO rider_profile (id, name, gender, weight_kg, height_cm, max_hr, resting_hr, ftp_watts, current_bike, gear_ratio, tires, bike_weight_kg, bike_specs, custom_specs, injuries_notes, primary_goal)
-        VALUES (1, 'VerNe Yuu', 'male', 75.0, 173.0, 188, 55, 165, '大行 P8', '46T牙盘 + 11-28T 7速飞轮', '马牌 Contact Urban 2.0 轮胎 (75-80 psi)', 11.5, '46T牙盘 + 11-28T 7速飞轮 | 马牌 Contact Urban 2.0 轮胎', '{\"pedals\": \"平踏\", \"wheelset\": \"20寸406\"}', '右膝半月板轻微劳损史，需维持85-95rpm高踏频防护', 'W1-2稳扎16km/h均速门槛，建立高踏频肌肉记忆，向20km/h进发')
+        INSERT OR IGNORE INTO rider_profile (id, name, gender, weight_kg, height_cm, max_hr, resting_hr, ftp_watts, current_bike, chainring, cogs, wheel_spec, tires, bike_weight_kg, custom_specs, primary_goal)
+        VALUES (1, 'VerNe Yuu', 'male', 75.0, 173.0, 188, 55, 165, '大行 P8', 46, '[11,13,15,17,19,21,24,28]', '20x2.0', '马牌 Contact Urban 2.0 轮胎 (75-80 psi)', 11.5, '{\"pedals\": \"平踏\", \"wheelset\": \"20寸406\"}', 'W1-2稳扎16km/h均速门槛，建立高踏频肌肉记忆，向20km/h进发')
     ");
 
     $pdo->exec("
         INSERT OR IGNORE INTO training_goals (id, weekly_distance_km, target_avg_speed_kmh, monthly_distance_km, annual_distance_km, coach_notes)
-        VALUES (1, 60.0, 18.0, 180.0, 1000.0, '换档至46/17T（第3档），绿灯路段锁90rpm巡航23km/h，红灯停车挂轻档准备起步。')
+        VALUES (1, 60.0, 18.0, 180.0, 1000.0, '绿灯路段锁90rpm高踏频巡航，红灯停车前提前降轻档准备起步。')
     ");
 
     // 清理脏数据（长段落 dump）
@@ -258,7 +265,12 @@ function run_ensure_tables(PDO $pdo): void
     seed_rider_memories_if_empty($pdo);
     seed_goal_milestones_if_empty($pdo);
 
-    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)'); } catch (Throwable $e) {}
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_start_time ON rides(start_time)'); } catch (Throwable $e) { error_log('[dbInit] idx_rides_start_time note: ' . $e->getMessage()); }
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_rides_sync ON rides(updated_at, deleted_at)'); } catch (Throwable $e) { error_log('[dbInit] idx_rides_sync note: ' . $e->getMessage()); }
+    try { $pdo->exec('CREATE INDEX IF NOT EXISTS idx_ai_messages_session ON ai_messages(session_id, role, created_at)'); } catch (Throwable $e) { error_log('[dbInit] idx_ai_messages_session note: ' . $e->getMessage()); }
+
+    $schemaVersion = defined('CURRENT_SCHEMA_VERSION') ? CURRENT_SCHEMA_VERSION : 2;
+    $pdo->exec("PRAGMA user_version = {$schemaVersion}");
 }
 
 /**
@@ -269,25 +281,34 @@ function migrate_rider_memories(PDO $pdo): void
     try {
         $row = db_first($pdo, "SELECT sql FROM sqlite_master WHERE type='table' AND name='rider_memories'");
         if ($row && str_contains($row['sql'] ?? '', 'CHECK(category IN')) {
-            $pdo->exec("
-                CREATE TABLE rider_memories_v2 (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    category TEXT NOT NULL,
-                    memory_key TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    source TEXT NOT NULL DEFAULT 'manual',
-                    importance INTEGER NOT NULL DEFAULT 3,
-                    is_active INTEGER NOT NULL DEFAULT 1,
-                    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-                    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-                )
-            ");
-            $pdo->exec("
-                INSERT INTO rider_memories_v2 (id, category, memory_key, content, source, is_active, created_at, updated_at)
-                SELECT id, category, memory_key, content, source, is_active, created_at, updated_at FROM rider_memories
-            ");
-            $pdo->exec('DROP TABLE rider_memories');
-            $pdo->exec('ALTER TABLE rider_memories_v2 RENAME TO rider_memories');
+            $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
+            try {
+                $pdo->exec("
+                    CREATE TABLE rider_memories_v2 (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        category TEXT NOT NULL,
+                        memory_key TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        source TEXT NOT NULL DEFAULT 'manual',
+                        importance INTEGER NOT NULL DEFAULT 3,
+                        is_active INTEGER NOT NULL DEFAULT 1,
+                        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+                        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+                    )
+                ");
+                $pdo->exec("
+                    INSERT INTO rider_memories_v2 (id, category, memory_key, content, source, is_active, created_at, updated_at)
+                    SELECT id, category, memory_key, content, source, is_active, created_at, updated_at FROM rider_memories
+                ");
+                $pdo->exec('DROP TABLE rider_memories');
+                $pdo->exec('ALTER TABLE rider_memories_v2 RENAME TO rider_memories');
+                $pdo->exec('COMMIT');
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->exec('ROLLBACK');
+                }
+                throw $e;
+            }
         }
     } catch (Throwable $e) {
         error_log('[dbInit] rider_memories migration note: ' . $e->getMessage());
@@ -303,12 +324,11 @@ function seed_rider_memories_if_empty(PDO $pdo): void
             $stmt = $pdo->prepare("
                 INSERT INTO rider_memories (category, memory_key, content, source, importance, is_active, created_at, updated_at)
                 VALUES
-                  ('health', 'knee_safety_rule', '右膝半月板有劳损史，踏频低于80rpm容易酸痛，红灯起步须提前降档轻蹬，切忌大齿比重踏。', 'coach', 5, 1, ?, ?),
-                  ('gear', 'p8_sweetspot_gear', '大行P8巡航甜点：46x18T/17T搭配90rpm踏频（时速约20~23km/h）最顺畅省力；马牌2.0胎压维持75-80psi。', 'coach', 4, 1, ?, ?),
+                  ('gear', 'sweetspot_cadence_gear', '巡航甜点：主力档位搭配90rpm踏频最顺畅省力，外胎维持推荐胎压区间。', 'coach', 4, 1, ?, ?),
                   ('habit', 'night_ride_preference', '骑行时段主要在夜间与傍晚，偏好照明良好、红绿灯较少的平路绿道。', 'manual', 3, 1, ?, ?),
                   ('preference', 'cadence_focus_style', '训练偏好：优先打磨稳定踏频基底与 Zone 2 有氧心率，循序渐进提速，排斥激进过量。', 'coach', 4, 1, ?, ?)
             ");
-            $stmt->execute([$now - 86400 * 3, $now, $now - 86400 * 2, $now, $now - 86400, $now, $now, $now]);
+            $stmt->execute([$now - 86400 * 2, $now, $now - 86400, $now, $now, $now]);
         }
     } catch (Throwable $e) {
         error_log('[dbInit] seed rider_memories note: ' . $e->getMessage());

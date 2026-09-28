@@ -18,12 +18,12 @@ export interface RiderProfileData {
   resting_hr: number;
   ftp_watts: number;
   current_bike: string;
-  gear_ratio?: string;
+  chainring: number;
+  cogs: number[];
+  wheel_spec: string;
   tires?: string;
   bike_weight_kg?: number;
-  bike_specs: string;
   custom_specs?: string | Record<string, any>;
-  injuries_notes: string;
   primary_goal: string;
   updated_at?: number;
 }
@@ -48,6 +48,8 @@ export interface GoalMilestone {
   created_at?: number;
 }
 
+const DEFAULT_COGS = [11, 13, 15, 17, 19, 21, 24, 28];
+
 const DEFAULT_PROFILE: RiderProfileData = {
   name: 'VerNe Yuu',
   gender: 'male',
@@ -57,14 +59,25 @@ const DEFAULT_PROFILE: RiderProfileData = {
   resting_hr: 55,
   ftp_watts: 165,
   current_bike: '大行 P8',
-  gear_ratio: '46T牙盘 + 11-28T 7速飞轮',
+  chainring: 46,
+  cogs: DEFAULT_COGS,
+  wheel_spec: '20x2.0',
   tires: '马牌 Contact Urban 2.0 轮胎 (75-80 psi)',
   bike_weight_kg: 11.5,
-  bike_specs: '46T牙盘 + 11-28T 7速飞轮 | 马牌 Contact Urban 2.0 轮胎',
   custom_specs: '{"pedals": "平踏", "wheelset": "20寸406"}',
-  injuries_notes: '右膝半月板轻微劳损史，需维持85-95rpm高踏频防护',
   primary_goal: 'W1-2稳扎16km/h均速门槛，建立高踏频肌肉记忆，向20km/h进发',
 };
+
+function parseCogs(raw: unknown): number[] {
+  if (Array.isArray(raw)) return raw.map((n) => Number(n)).filter((n) => !isNaN(n) && n > 0);
+  if (typeof raw === 'string' && raw.trim() !== '') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parseCogs(parsed);
+    } catch {}
+  }
+  return DEFAULT_COGS;
+}
 
 export async function getRiderProfile(): Promise<RiderProfileData> {
   const res = await fetch('/api/ai/rider/profile');
@@ -75,6 +88,9 @@ export async function getRiderProfile(): Promise<RiderProfileData> {
   return {
     ...DEFAULT_PROFILE,
     ...profile,
+    chainring: Number(profile.chainring) || 46,
+    cogs: parseCogs(profile.cogs),
+    wheel_spec: profile.wheel_spec || '20x2.0',
     bike_weight_kg: Number(profile.bike_weight_kg) || 11.5,
     custom_specs: profile.custom_specs || '{"pedals": "平踏", "wheelset": "20寸406"}',
   };
@@ -102,7 +118,7 @@ export async function getTrainingGoals(): Promise<TrainingGoalsData> {
       target_avg_speed_kmh: 18.0,
       monthly_distance_km: 180.0,
       annual_distance_km: 1000.0,
-      coach_notes: '换档至46/17T（第3档），绿灯路段锁90rpm巡航23km/h，红灯停车挂轻档准备起步。',
+      coach_notes: '绿灯路段锁90rpm高踏频巡航，红灯停车前提前降轻档准备起步。',
     };
   }
   const data = await res.json();
@@ -112,7 +128,7 @@ export async function getTrainingGoals(): Promise<TrainingGoalsData> {
     target_avg_speed_kmh: Number(g.target_avg_speed_kmh) || 18.0,
     monthly_distance_km: Number(g.monthly_distance_km) || 180.0,
     annual_distance_km: Number(g.annual_distance_km) || 1000.0,
-    coach_notes: g.coach_notes || '换档至46/17T（第3档），绿灯路段锁90rpm巡航23km/h，红灯停车挂轻档准备起步。',
+    coach_notes: g.coach_notes || '绿灯路段锁90rpm高踏频巡航，红灯停车前提前降轻档准备起步。',
     updated_at: g.updated_at,
   };
 }

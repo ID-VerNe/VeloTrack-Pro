@@ -1,3 +1,5 @@
+import animate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -52,8 +54,15 @@ export default {
         button: 'var(--radius-button)',
       },
       boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
         card: 'var(--shadow-card)',
         instrument: 'var(--shadow-instrument)',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      spacing: {
+        '4.5': '1.125rem',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],
@@ -63,8 +72,11 @@ export default {
       fontSize: {
         micro: ['10px', { lineHeight: '1.4', letterSpacing: '0.06em' }],
         '2xs': ['11px', { lineHeight: '1.2', letterSpacing: '0.02em' }],
+      },
+      transitionTimingFunction: {
+        'apple-spring': 'cubic-bezier(0.32, 0.72, 0, 1)',
       }
     },
   },
-  plugins: [],
+  plugins: [animate],
 }

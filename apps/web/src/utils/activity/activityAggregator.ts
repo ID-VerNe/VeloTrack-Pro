@@ -48,6 +48,7 @@ export interface ActivityAggregationOptions {
   cumulativeClimbMeters?: number;
   cumulativeDecreaseMeters?: number;
   userMaxHr?: number;
+  userRestingHr?: number;
 }
 
 /**
@@ -63,6 +64,7 @@ export function aggregateActivityData(options: ActivityAggregationOptions): Pars
     cumulativeClimbMeters = 0,
     cumulativeDecreaseMeters = 0,
     userMaxHr = 188,
+    userRestingHr = 55,
   } = options;
 
   if (!points || points.length === 0) {
@@ -132,7 +134,7 @@ export function aggregateActivityData(options: ActivityAggregationOptions): Pars
       sum_hr += pt.hr;
       count_hr++;
 
-      const zone = calculateHRZones(pt.hr, userMaxHr);
+      const zone = calculateHRZones(pt.hr, userMaxHr, userRestingHr);
       hrZones[zone] += Math.round(dtSeconds || 1);
     }
 

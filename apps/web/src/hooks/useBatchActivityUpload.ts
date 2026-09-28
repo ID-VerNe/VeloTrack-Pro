@@ -10,6 +10,7 @@ import { parseActivityFile } from '../utils/activity/activityParser';
 import { scrubPrivacyZones } from '../utils/activity/privacyScrubber';
 import { uploadRide } from '../utils/activity/adminApiClient';
 import { suggestRideTitle } from '../services/aiInsights';
+import { getRiderProfile } from '../services/riderService';
 
 export interface UseBatchActivityUploadParams {
   zones: PrivacyZone[];
@@ -45,6 +46,17 @@ export function useBatchActivityUpload({
     let failedCount = 0;
     const errors: string[] = [];
 
+    // 拉取车手档案以注入用户自定义心率(默认 188/55 兜底)
+    let userMaxHr: number | undefined;
+    let userRestingHr: number | undefined;
+    try {
+      const profile = await getRiderProfile();
+      userMaxHr = profile.max_hr;
+      userRestingHr = profile.resting_hr;
+    } catch (err) {
+      console.error('Failed to load rider profile for HR zones, falling back to defaults:', err);
+    }
+
     setBatchProgress({
       total: files.length,
       current: 0,
@@ -66,7 +78,10 @@ export function useBatchActivityUpload({
       try {
         setUploadStatus('parsing');
         const text = await file.text();
-        const rawData = parseActivityFile(text, file.name);
+        const rawData = parseActivityFile(text, file.name, {
+          userMaxHr,
+          userRestingHr,
+        });
         const scrubbedData = scrubPrivacyZones(rawData, activeZones);
         setUploadStatus('uploading');
 
@@ -88,9 +103,15 @@ export function useBatchActivityUpload({
         await uploadRide(scrubbedData);
         successCount++;
       } catch (err: any) {
-        console.error(`Failed to upload ${file.name}:`, err);
-        failedCount++;
-        errors.push(`${file.name}: ${err.message || '文件解析或上传错误'}`);
+        if (err?.code === 'DETAIL_POINTS_MISSING') {
+          // 主记录已入库，仅明细缺失：计入成功但标注 warning
+          successCount++;
+          errors.push(`${file.name}: ${err.message}`);
+        } else {
+          console.error(`Failed to upload ${file.name}:`, err);
+          failedCount++;
+          errors.push(`${file.name}: ${err.message || '文件解析或上传错误'}`);
+        }
       }
 
       setBatchProgress({
@@ -102,12 +123,16 @@ export function useBatchActivityUpload({
       });
     }
 
-    if (failedCount === 0) {
+    if (failedCount === 0 && errors.length === 0) {
       setUploadStatus('success');
       setTimeout(() => {
         setUploadStatus('idle');
         setBatchProgress(undefined);
       }, 4000);
+    } else if (successCount > 0 && failedCount === 0) {
+      // 全部主记录成功，但部分明细缺失(warning)
+      setUploadStatus('success');
+      setErrorMessage(`已导入 ${successCount} 个活动。${errors.slice(0, 3).join('; ')}`);
     } else if (successCount > 0) {
       setUploadStatus('success');
       setErrorMessage(`已成功导入 ${successCount} 个活动，${failedCount} 个文件失败。`);

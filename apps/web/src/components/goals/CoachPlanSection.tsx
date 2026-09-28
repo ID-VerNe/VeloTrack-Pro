@@ -29,7 +29,7 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
       target: '50 km (包含 1 次 30km 长距离)',
       ratio: '起伏路及时挂 24T/28T 飞轮',
       zone: 'Zone 3 甜点突破',
-      note: '单次突破 30+km，遇缓坡前提早 20 米降档，保护半月板',
+      note: '单次突破 30+km，遇缓坡前提早 20 米降档，保护膝关节',
     },
     {
       week: '第 4 周',
@@ -50,10 +50,10 @@ export default function CoachPlanSection({ coachNotes, onAskCoach }: Props) {
             <span className="text-[10px] text-slate-400 uppercase tracking-widest">
               指导原则
             </span>
-            <span className="text-slate-400 text-[11px]">大行 P8 传动比适配</span>
+            <span className="text-slate-400 text-[11px]">战车传动比适配</span>
           </div>
           <p className="text-xs text-slate-800 leading-relaxed font-normal">
-            "{coachNotes || '保持85-95rpm高踏频，平路以46x19T为主，保护膝盖稳定提速'}"
+            "{coachNotes || '保持85-95rpm高踏频，平路以中轻档为主，保护关节稳定提速'}"
           </p>
         </div>
 

@@ -7,6 +7,7 @@
 
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
 import { calculateDualSpeeds } from '../utils/cyclingCalculations';
+import { deriveCogsFromTarget } from '../utils/cyclingPhysicsEngine';
 import {
   getRiderProfile,
   getRiderMemories,
@@ -55,7 +56,7 @@ export async function getRiderContextPrompt(): Promise<string> {
   const maxSprint = rides.reduce((acc, r) => Math.max(acc, r.max_speed_kmh || 0), 0);
   const longestRide = rides.reduce((acc, r) => Math.max(acc, (r.distance_meters || 0) / 1000), 0);
 
-  const latestRideTime = Math.max(...rides.map((r) => r.start_time || 0), 0);
+  const latestRideTime = rides.reduce((max, r) => Math.max(max, r.start_time || 0), 0);
   const refDate = new Date(latestRideTime > 0 ? latestRideTime : Date.now());
   const day = refDate.getDay();
   const diffToMonday = (day === 0 ? -6 : 1) - day;
@@ -114,11 +115,14 @@ export async function getRiderContextPrompt(): Promise<string> {
     const recentMovingAvg = (weekRides.length > 0 && thisWeekMovingSpeed > 0)
       ? thisWeekMovingSpeed
       : (overallMovingAvgSpeed > 0 ? overallMovingAvgSpeed : 18.0);
-    const speedDist = analyzeSpeedDistribution(detailPoints, recentMovingAvg, 46, 15);
+    const { cruisingCog } = deriveCogsFromTarget(
+      profile.chainring, profile.cogs, profile.wheel_spec, recentMovingAvg
+    );
+    const speedDist = analyzeSpeedDistribution(detailPoints, recentMovingAvg, profile.chainring, cruisingCog);
 
     cruisingSection = `\n\n【真实运动学速度分层与稳态巡航特征（核心巡航与踏频事实）】：
 - ⚡ 稳态平路巡航时速 (Cruising Speed): ${speedDist.cruising_avg_speed_kmh} km/h (P75-P90 核心巡航区间: ${speedDist.cruising_range_kmh[0]} - ${speedDist.cruising_range_kmh[1]} km/h)
-- ⚙️ 46/15T 主力档位物理反推踩踏踏频: ${speedDist.derived_cadence_rpm} rpm (${speedDist.cadence_zone_status === 'golden' ? '✅ 完全处于 85-95 rpm 黄金高效有氧保护区间，齿比与踏频匹配极佳，绝非重档死蹬' : `${speedDist.derived_cadence_rpm} rpm`})
+- ⚙️ ${profile.chainring}/${cruisingCog}T 主力档位物理反推踩踏踏频: ${speedDist.derived_cadence_rpm} rpm (${speedDist.cadence_zone_status === 'golden' ? '✅ 完全处于 85-95 rpm 黄金高效有氧保护区间，齿比与踏频匹配极佳，绝非重档死蹬' : `${speedDist.derived_cadence_rpm} rpm`})
 - ⏱️ 综合停表均速 (Moving Avg Speed): ${recentMovingAvg} km/h
 - 🚦 速度落差与红绿灯/起步损耗 (Speed Loss): ${speedDist.speed_loss_kmh} km/h (落差占比: ${speedDist.speed_loss_pct}%)
 - ⏱️ 时序持续稳态段落 (算法 3 提取): 成功维持 ${speedDist.sustained_segments_count} 段连续 >=20s 稳速巡航 (平均稳态速度: ${speedDist.sustained_avg_speed_kmh} km/h)
@@ -128,13 +132,16 @@ export async function getRiderContextPrompt(): Promise<string> {
     console.error('Failed to compute cruising speed in getRiderContextPrompt', e);
   }
 
+  const cogRange = profile.cogs.length > 0
+    ? `${profile.cogs.reduce((min, c) => Math.min(min, c), Infinity)}-${profile.cogs.reduce((max, c) => Math.max(max, c), -Infinity)}T ${profile.cogs.length}速`
+    : '未配置';
   return `【车手专属生理与战车基底档案】：
 - 车手: ${profile.name}（性别: ${profile.gender === 'female' ? '女' : '男'}，体重: ${profile.weight_kg}kg，身高: ${profile.height_cm}cm）
 - 生理基准: 最大心率 ${profile.max_hr} bpm, 静息心率 ${profile.resting_hr} bpm, FTP: ${profile.ftp_watts} W
 - 主力战车: ${profile.current_bike} (净重 ${profile.bike_weight_kg || 11.5} kg)
-- 齿比与外胎: ${profile.gear_ratio || '46T牙盘 + 11-28T 7速飞轮'} · ${profile.tires || '马牌 Contact Urban 2.0 轮胎 (75-80 psi)'}
-- 器材综合配置: ${profile.bike_specs}
-- 伤病概况: ${profile.injuries_notes || '暂无急性伤病'}
+- 传动齿比: ${profile.chainring}T 牙盘 / 飞轮 ${cogRange} · 轮径 ${profile.wheel_spec}
+- 外胎: ${profile.tires || '未配置'}
+- 器材综合配置: ${profile.chainring}T牙盘 / 飞轮 ${cogRange} | 轮径 ${profile.wheel_spec}${profile.tires ? ` | ${profile.tires}` : ''}
 
 【系统当前生效量化目标】：
 - 单周目标里程: ${goals.weekly_distance_km} km (本周已完成: ${thisWeekKm} km, 完成度: ${weeklyCompletionPct}%)
@@ -149,6 +156,5 @@ ${milestoneSection}【车手真实数据库近期实战状态（双均速与踩�
 - 累计纯运动踩踏: ${totalMovingHours} 小时，累计门到门历时: ${totalElapsedHours} 小时，累计停顿: ${totalPausedHours} 小时 (做功占比: ${totalMovingRatioPct}%)
 - 历史整体【停表运动均速】: ${overallMovingAvgSpeed} km/h · 历史整体【总历时均速】: ${overallElapsedAvgSpeed} km/h
 - 历史最佳【停表均速】: ${bestMovingAvgSpeed} km/h · 冲刺最高极速: ${maxSprint.toFixed(1)} km/h · 最长单次: ${longestRide.toFixed(1)} km
-- 本周实战数据: ${weekRides.length} 次骑行，累计 ${thisWeekKm} km。纯运动时间 ${(thisWeekMovingSec / 60).toFixed(1)} 分，停顿 ${(thisWeekPausedSec / 60).toFixed(1)} 分。本周【停表均速】: ${thisWeekMovingSpeed} km/h，【总均速】: ${thisWeekElapsedSpeed} km/h
-- 近期身体适应度: 【良好·具备进阶潜力】（右膝无急性剧痛报告，高踏频打磨中）${cruisingSection}`;
+- 本周实战数据: ${weekRides.length} 次骑行，累计 ${thisWeekKm} km。纯运动时间 ${(thisWeekMovingSec / 60).toFixed(1)} 分，停顿 ${(thisWeekPausedSec / 60).toFixed(1)} 分。本周【停表均速】: ${thisWeekMovingSpeed} km/h，【总均速】: ${thisWeekElapsedSpeed} km/h${cruisingSection}`;
 }

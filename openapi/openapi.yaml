@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: VeloTrack Pro REST API
+  version: 1.0.0
+  description: |
+    VeloTrack Pro 骑行追踪平台后端契约(单一事实源)。
+    由 php_backend 实现,被 apps/web / apps/admin / apps/android 三端消费。
+    所有日期时间字段为 Unix 毫秒时间戳(number),坐标系为 GCJ-02 火星坐标。
+servers:
+  - url: /
+    description: 同源部署(Cloudflare Worker / PHP 虚拟主机)
+paths:
+  /api/admin/rides:
+    post:
+      operationId: upsertRide
+      summary: 主记录入库(去重 upsert,按 id=start_time 比对)
+      tags: [rides]
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideUploadPayload'
+      responses:
+        '200':
+          description: 入库成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ride_id: { type: string }
+                  city: { type: string }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          description: 请求体超过 post_max_size
+
+  /api/admin/rides/{rideId}/detail-points:
+    post:
+      operationId: uploadDetailPoints
+      summary: 逐点明细入库(降采样后存 detail_points TEXT 列)
+      tags: [rides]
+      security:
+        - adminToken: []
+      parameters:
+        - name: rideId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetailPointsPayload'
+      responses:
+        '200': { description: 明细入库成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/admin/privacy-zones:
+    get:
+      operationId: listPrivacyZones
+      summary: 拉取隐私圈配置
+      tags: [privacy]
+      security:
+        - adminToken: []
+      responses:
+        '200':
+          description: 隐私圈列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+                    items: { $ref: '#/components/schemas/PrivacyZone' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/ai/rider/profile:
+    get:
+      operationId: getRiderProfile
+      summary: 拉取车手档案(含心率参数,供三端心率区间注入)
+      tags: [rider]
+      security: []
+      responses:
+        '200':
+          description: 车手档案
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile: { $ref: '#/components/schemas/RiderProfile' }
+    put:
+      operationId: updateRiderProfile
+      summary: 局部合并更新车手档案
+      tags: [rider]
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RiderProfileUpdate' }
+      responses:
+        '200':
+          description: 更新后的档案
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile: { $ref: '#/components/schemas/RiderProfile' }
+
+  /api/ai/suggest-title:
+    post:
+      operationId: suggestRideTitle
+      summary: AI 智能规范命名(失败静默降级为本地规则命名)
+      tags: [ai]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_time, distance_km, avg_speed_kmh, total_ascent_meters]
+              properties:
+                start_time: { type: integer, description: 'Unix 毫秒' }
+                distance_km: { type: number }
+                avg_speed_kmh: { type: number }
+                total_ascent_meters: { type: integer }
+      responses:
+        '200':
+          description: 建议标题
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title: { type: string }
+
+components:
+  securitySchemes:
+    adminToken:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: '与 Authorization: Bearer 同值,Apache/FastCGI 主机用 X-Admin-Token 降级'
+  responses:
+    Unauthorized:
+      description: 鉴权未通过
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }
+    RideUploadPayload:
+      type: object
+      required: [id, title, start_time, end_time, elapsed_time_seconds, distance_meters]
+      properties:
+        id: { type: string, description: '去重键,= start_time 字符串' }
+        title: { type: string }
+        start_time: { type: integer, description: 'Unix 毫秒' }
+        end_time: { type: integer }
+        elapsed_time_seconds: { type: integer }
+        moving_time_seconds: { type: integer }
+        distance_meters: { type: integer }
+        max_speed_kmh: { type: number }
+        avg_speed_kmh: { type: number }
+        total_ascent_meters: { type: integer }
+        total_descent_meters: { type: integer }
+        max_altitude_meters: { type: integer }
+        avg_heart_rate: { type: integer }
+        max_heart_rate: { type: integer }
+        avg_cadence: { type: integer }
+        max_cadence: { type: integer }
+        calories: { type: integer, nullable: true }
+        hr_z1_seconds: { type: integer }
+        hr_z2_seconds: { type: integer }
+        hr_z3_seconds: { type: integer }
+        hr_z4_seconds: { type: integer }
+        hr_z5_seconds: { type: integer }
+        start_lat: { type: number, nullable: true }
+        start_lng: { type: number, nullable: true }
+        summary_polyline: { type: string, nullable: true }
+    DetailPoint:
+      type: object
+      properties:
+        t: { type: integer, description: 'Unix 毫秒' }
+        la: { type: number, nullable: true, description: '纬度(隐私圈内点缺省)' }
+        ln: { type: number, nullable: true, description: '经度' }
+        al: { type: number, nullable: true, description: '海拔 m' }
+        hr: { type: integer, nullable: true, description: '心率 bpm' }
+        cd: { type: integer, nullable: true, description: '踏频 rpm' }
+        sp: { type: number, nullable: true, description: '瞬时速度 km/h' }
+    DetailPointsPayload:
+      type: object
+      required: [v, points]
+      properties:
+        v: { type: integer, enum: [1] }
+        points:
+          type: array
+          items: { $ref: '#/components/schemas/DetailPoint' }
+    PrivacyZone:
+      type: object
+      required: [id, name, latitude, longitude, radius_meters]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        radius_meters: { type: number }
+    RiderProfile:
+      type: object
+      properties:
+        name: { type: string }
+        gender: { type: string }
+        weight_kg: { type: number }
+        height_cm: { type: number }
+        max_hr: { type: integer, description: '最大心率,默认 188' }
+        resting_hr: { type: integer, description: '静息心率,默认 55' }
+        ftp_watts: { type: integer }
+        current_bike: { type: string }
+        chainring: { type: integer }
+        cogs: { type: array, items: { type: integer } }
+        wheel_spec: { type: string }
+        primary_goal: { type: string }
+    RiderProfileUpdate:
+      type: object
+      description: 任意字段的部分更新
+      additionalProperties: true

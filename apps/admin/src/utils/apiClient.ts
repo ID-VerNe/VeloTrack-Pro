@@ -29,11 +29,18 @@ export function setAdminToken(token: string) {
 }
 
 /** 统一带鉴权头与超时的 fetch 封装 */
-async function authFetch(url: string, init: RequestInit = {}, timeoutMs = 30000): Promise<Response> {
+export async function authFetch(url: string, init: RequestInit = {}, timeoutMs = 30000): Promise<Response> {
   const headers = new Headers(init.headers || {});
   const token = getAdminToken();
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-  return fetch(url, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+    headers.set('X-Admin-Token', token);
+  }
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const combinedSignal = init.signal
+    ? (typeof AbortSignal.any === 'function' ? AbortSignal.any([init.signal, timeoutSignal]) : init.signal)
+    : timeoutSignal;
+  return fetch(url, { ...init, headers, signal: combinedSignal });
 }
 
 /**
@@ -81,12 +88,16 @@ export async function uploadRide(ride: ParsedTCX): Promise<void> {
     throw new Error(`Upload failed: ${text}`);
   }
 
-  // 逐点明细（已脱敏：圈内点坐标为空）降采样后存 SQLite detail_points 列
+  // 逐点明细（已脱敏：圈内点坐标为空）降采样后存 SQLite detail_points 列。
+  // 区分处理：明细失败不阻断主记录（已入库），但向上回传一个 warning 标记，
+  // 由 UI 层向用户标注「明细缺失，详情页将退化为示意曲线」。
   try {
     await uploadDetailPoints(ride);
-  } catch (err) {
-    // 明细上传失败不阻断主记录入库：详情页将降级为示意曲线
-    console.error('逐点明细入库失败，本次骑行详情将使用示意曲线：', err);
+  } catch (err: any) {
+    // 重新抛出为带标记的 warning，供调用方区分主记录成功 vs 明细缺失
+    const warning = new Error(`明细点位入库失败，本次骑行详情将使用示意曲线：${err?.message || err}`);
+    (warning as any).code = 'DETAIL_POINTS_MISSING';
+    throw warning;
   }
 }
 
@@ -122,5 +133,25 @@ export async function suggestRideTitle(_input: {
   total_ascent_meters: number;
 }): Promise<string | null> {
   return null;
+}
+
+/**
+ * 拉取车手档案以注入用户自定义心率(max_hr / resting_hr)。
+ * 失败时返回 null,调用方用默认 188/55 兜底。
+ */
+export async function fetchRiderProfile(): Promise<{ max_hr?: number; resting_hr?: number } | null> {
+  try {
+    const res = await authFetch('/api/ai/rider/profile');
+    if (!res.ok) return null;
+    const data = await res.json();
+    const profile = data?.profile;
+    if (!profile) return null;
+    return {
+      max_hr: typeof profile.max_hr === 'number' ? profile.max_hr : undefined,
+      resting_hr: typeof profile.resting_hr === 'number' ? profile.resting_hr : undefined,
+    };
+  } catch {
+    return null;
+  }
 }
 

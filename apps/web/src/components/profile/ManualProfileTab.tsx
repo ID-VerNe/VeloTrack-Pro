@@ -1,5 +1,5 @@
 import React from 'react';
-import { HeartPulse, Bike, AlertTriangle, Target, Cog, Disc } from 'lucide-react';
+import { HeartPulse, Bike, Target, Cog, Disc } from 'lucide-react';
 import type { RiderProfile } from '../../types/rider';
 import CustomSpecsEditor from './CustomSpecsEditor';
 
@@ -95,7 +95,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
             <label htmlFor="profile_bike" className="block text-xs font-semibold text-slate-500 mb-1">主力战车型号</label>
             <input id="profile_bike"
               type="text"
-              placeholder="例如：大行 P8 20寸折叠车"
+              placeholder="例如：20寸折叠车 / 公路车 / 山地车"
               value={profile.current_bike || ''}
               onChange={(e) => updateField('current_bike', e.target.value)}
               className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
@@ -115,18 +115,47 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
         </div>
 
         <div className="space-y-2.5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="profile_chainring" className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
+                <Cog className="w-3.5 h-3.5 mr-1 text-slate-500" aria-hidden="true" />
+                <span>前牙盘齿数</span>
+              </label>
+              <input id="profile_chainring"
+                type="number"
+                step="1"
+                placeholder="例如：46"
+                value={profile.chainring ?? ''}
+                onChange={(e) => updateField('chainring', parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
+              />
+            </div>
+            <div>
+              <label htmlFor="profile_cogs" className="block text-xs font-semibold text-slate-500 mb-1">后飞轮齿数 (逗号分隔)</label>
+              <input id="profile_cogs"
+                type="text"
+                placeholder="例如：11,13,15,17,19,21,24,28"
+                value={Array.isArray(profile.cogs) ? profile.cogs.join(',') : typeof profile.cogs === 'string' ? (profile.cogs as string).replace(/^\[|\]$/g, '') : ''}
+                onChange={(e) => updateField('cogs', e.target.value.split(',').map((n) => parseInt(n.trim())).filter((n) => !isNaN(n) && n > 0))}
+                className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
+              />
+            </div>
+          </div>
+
           <div>
-            <label htmlFor="profile_gears" className="block text-xs font-semibold text-slate-500 mb-1 flex items-center">
-              <Cog className="w-3.5 h-3.5 mr-1 text-slate-500" aria-hidden="true" />
-              <span>齿比与传动系统 (独立维护)</span>
-            </label>
-            <input id="profile_gears"
-              type="text"
-              placeholder="例如：46T牙盘 + 11-28T 7速飞轮"
-              value={profile.gear_ratio || ''}
-              onChange={(e) => updateField('gear_ratio', e.target.value)}
+            <label htmlFor="profile_wheelspec" className="block text-xs font-semibold text-slate-500 mb-1">轮径规格</label>
+            <select id="profile_wheelspec"
+              value={profile.wheel_spec || '20x2.0'}
+              onChange={(e) => updateField('wheel_spec', e.target.value)}
               className="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 shadow-2xs"
-            />
+            >
+              <option value="20x2.0">20x2.0 (406 折叠车)</option>
+              <option value="20x1-1/8">20x1-1/8 (451 小轮)</option>
+              <option value="700x25c">700x25c (公路车)</option>
+              <option value="700x28c">700x28c (耐力公路)</option>
+              <option value="700x32c">700x32c (Gravel)</option>
+              <option value="26x1.95">26x1.95 (山地车)</option>
+            </select>
           </div>
 
           <div>
@@ -153,19 +182,7 @@ export default function ManualProfileTab({ profile, onChange }: Props) {
 
       {/* Health & Goals Card */}
       <div className="bg-slate-50/80 rounded-2xl p-4.5 border border-slate-200/80 space-y-3 shadow-2xs">
-        <div className="flex items-center space-x-2 text-xs font-bold text-amber-700">
-          <AlertTriangle className="w-4 h-4" />
-          <span>既往旧伤与身体禁忌备忘</span>
-        </div>
-        <textarea
-          rows={2}
-          placeholder="例如：右膝半月板有劳损历史，需避免大齿比重踏..."
-          value={profile.injuries_notes || ''}
-          onChange={(e) => updateField('injuries_notes', e.target.value)}
-          className="w-full px-3 py-2 bg-white rounded-xl border border-amber-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-2xs"
-        />
-
-        <div className="flex items-center space-x-2 text-xs font-bold text-emerald-700 pt-2 border-t border-slate-200/60">
+        <div className="flex items-center space-x-2 text-xs font-bold text-emerald-700">
           <Target className="w-4 h-4" />
           <span>阶段核心训练目标</span>
         </div>

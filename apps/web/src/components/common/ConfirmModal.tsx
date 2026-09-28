@@ -52,14 +52,14 @@ export default function ConfirmModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform-gpu duration-300 ease-apple-spring animate-in fade-in zoom-in-95 border border-slate-100">
         <div className="px-6 py-5">
           <div className="flex items-center gap-2.5">
             {isDanger && (
               <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+                <AlertTriangle className="w-4 h-4 text-rose-600 -translate-y-[1px]" aria-hidden="true" />
               </div>
             )}
             <h3 id="confirm-modal-title" className="text-base font-semibold text-slate-900 leading-tight">
@@ -79,12 +79,12 @@ export default function ConfirmModal({
           )}
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+        <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end space-x-3">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98] transition-all duration-100 ease-out cursor-pointer disabled:opacity-50 disabled:active:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             {cancelText}
           </button>
@@ -92,10 +92,10 @@ export default function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50 ${
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg active:scale-[0.98] transition-all duration-100 ease-out cursor-pointer shadow-xs disabled:opacity-50 disabled:active:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
               isDanger
-                ? 'bg-rose-600 hover:bg-rose-700 border border-transparent'
-                : 'bg-brand-600 hover:bg-brand-700 border border-transparent'
+                ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 border border-transparent focus-visible:ring-rose-500'
+                : 'bg-brand-600 hover:bg-brand-700 active:bg-brand-800 border border-transparent focus-visible:ring-brand-500'
             }`}
           >
             {isLoading ? loadingText : confirmText}

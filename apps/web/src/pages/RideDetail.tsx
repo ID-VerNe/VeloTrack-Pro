@@ -47,6 +47,8 @@ export default function RideDetail() {
     routeCoordinates,
     detailPoints,
     loadError,
+    riderWeight,
+    gear,
     aiInsight,
     aiLoading,
     isCached,
@@ -165,6 +167,14 @@ export default function RideDetail() {
 
       {/* 2. Right Analytical Bento Dashboard */}
       <div className="w-full md:w-[520px] xl:w-[560px] flex-1 md:h-full bg-white border-t md:border-t-0 md:border-l border-slate-200 flex flex-col z-10 shrink-0 overflow-hidden">
+        {/* Mobile Sheet Grab Indicator */}
+        <div 
+          className="md:hidden w-full flex items-center justify-center pt-2.5 pb-1 touch-none select-none"
+          aria-label="面板拖拽指示条"
+        >
+          <div className="w-10 h-1.5 rounded-full bg-slate-300 active:bg-slate-400 transition-colors" />
+        </div>
+
         {/* Top Sticky Header */}
         <header className="px-4 md:px-4 md:px-8 py-4 md:py-8 bg-white shrink-0">
           <RideTitleHeader
@@ -194,6 +204,7 @@ export default function RideDetail() {
             ride={ride}
             calories={calories}
             speedDistribution={speedDist}
+            gear={gear ? { chainring: gear.chainring, cruisingCog: gear.cruisingCog } : undefined}
           />
 
           {/* Speed Spectrum Breakdown Bar */}

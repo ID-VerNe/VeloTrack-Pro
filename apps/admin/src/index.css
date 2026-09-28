@@ -30,12 +30,28 @@
     --font-tabular: "Geist", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-canvas: #090D16;
+      --bg-surface: #111827;
+      --bg-subtle: #1F2937;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-default: rgba(255, 255, 255, 0.16);
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --brand-primary: #3B82F6;
+      --brand-subtle: rgba(59, 130, 246, 0.12);
+    }
+  }
+
   body {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 }
 
@@ -46,3 +62,37 @@
     font-family: var(--font-tabular);
   }
 }
+
+/* Apple HIG System Accessibility Fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-blur-none,
+  .backdrop-blur-xs,
+  .backdrop-blur-sm,
+  .backdrop-blur,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .bg-white\/80,
+  .bg-white\/90,
+  .bg-white\/95,
+  .bg-slate-900\/40,
+  .bg-slate-900\/50,
+  .bg-slate-900\/60 {
+    background-color: var(--bg-surface) !important;
+  }
+}
+

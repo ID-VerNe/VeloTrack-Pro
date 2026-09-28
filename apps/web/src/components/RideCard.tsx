@@ -31,7 +31,8 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
   const dateObj = new Date(ride.start_time);
   const dateStr = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日`;
 
-  const isRoad = ride.title.includes('公路') || ride.title.toLowerCase().includes('road');
+  const titleStr = ride.title || '';
+  const isRoad = titleStr.includes('公路') || titleStr.toLowerCase().includes('road');
 
   // Calculate zero-distortion, aspect-ratio-preserved SVG path
   const { pathData, startPt, endPt } = useMemo(() => {
@@ -90,7 +91,7 @@ export default function RideCard({ ride, isHovered, onMouseEnter, onMouseLeave }
       to={`/ride/${ride.id}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`block bg-white rounded-lg p-4 transition-all group relative border ${
+      className={`block bg-white rounded-lg p-4 transition-all duration-150 ease-out transform-gpu active:scale-[0.985] cursor-pointer group relative border ${
         isHovered
           ? 'border-brand-500 bg-brand-50/20 shadow-2xs'
           : 'border-slate-200/80 hover:border-slate-300'

@@ -56,6 +56,19 @@ export default function Dashboard() {
     });
   }, [rides, selectedCity, searchTerm]);
 
+  const filterScopeLabel = useMemo(() => {
+    const parts: string[] = [];
+    if (selectedCity === 'cross_city') {
+      parts.push('跨城远征');
+    } else if (selectedCity !== 'all') {
+      parts.push(selectedCity);
+    }
+    if (searchTerm.trim()) {
+      parts.push(`"${searchTerm.trim()}"`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  }, [selectedCity, searchTerm]);
+
   return (
     <div className="h-full w-full flex flex-col lg:flex-row relative text-slate-900">
       {/* 2. Center Geospatial Map Canvas */}
@@ -79,7 +92,13 @@ export default function Dashboard() {
       </main>
 
       <aside className="w-full h-[50dvh] lg:h-full lg:w-[460px] xl:w-[480px] bg-white flex flex-col z-10 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200/80 absolute bottom-0 lg:static lg:bottom-auto rounded-t-2xl lg:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)] lg:shadow-none transition-transform">
-
+        {/* Mobile Sheet Grab Indicator */}
+        <div 
+          className="lg:hidden w-full flex items-center justify-center pt-2.5 pb-1.5 touch-none select-none"
+          aria-label="面板拖拽指示条"
+        >
+          <div className="w-10 h-1.5 rounded-full bg-slate-300 active:bg-slate-400 transition-colors" />
+        </div>
         
         {/* Top User Greeting Header */}
         <div className="px-6 pb-5 lg:py-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0">
@@ -88,7 +107,9 @@ export default function Dashboard() {
               {greetingText}
             </h1>
             <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-              已记录 {rides.length} 次骑行 · 目标踏频 85-95 rpm
+              {filteredRides.length === rides.length
+                ? `已记录 ${rides.length} 次骑行 · 目标踏频 85-95 rpm`
+                : `已筛选 ${filteredRides.length} 次骑行（共 ${rides.length} 次） · 目标踏频 85-95 rpm`}
             </p>
           </div>
 
@@ -100,10 +121,10 @@ export default function Dashboard() {
         {/* Scrollable Stream */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 [scrollbar-width:none]">
           {/* Global Aggregation Metric Card */}
-          <TotalStatsCard rides={rides} />
+          <TotalStatsCard rides={filteredRides} scopeLabel={filterScopeLabel} />
 
           {/* 52-Week Activity Consistency Matrix */}
-          <ConsistencyHeatmap rides={rides} />
+          <ConsistencyHeatmap rides={filteredRides} scopeLabel={filterScopeLabel} />
 
           {/* Filtered Activity Cards Feed */}
           <div className="space-y-3">

@@ -50,18 +50,13 @@ function distancePointToSegmentMeters(
   return Math.hypot(footX, footY);
 }
 
-/** 点到所有隐私圈的最小距离与对应半径（返回 null 表示轨迹无有效坐标） */
-function nearestZoneInfo(
-  lat: number, lng: number, zones: PrivacyZone[]
-): { distance: number; radius: number } | null {
-  let nearest: { distance: number; radius: number } | null = null;
-  for (const zone of zones) {
-    const d = getHaversineDistanceMeters(lat, lng, zone.latitude, zone.longitude);
-    if (!nearest || d / Math.max(1, zone.radius_meters) < nearest.distance / Math.max(1, nearest.radius)) {
-      nearest = { distance: d, radius: zone.radius_meters };
-    }
-  }
-  return nearest;
+function isPointInSafeBuffer(lat: number, lng: number, zone: PrivacyZone, bufferMeters: number): boolean {
+  const d = getHaversineDistanceMeters(
+    Number(lat), Number(lng),
+    Number(zone.latitude), Number(zone.longitude)
+  );
+  const safeRadius = Number(zone.radius_meters) + Number(bufferMeters);
+  return d <= safeRadius;
 }
 
 /**
@@ -86,8 +81,8 @@ export function scrubPrivacyZones(tcxData: ParsedTCX, zones: PrivacyZone[]): Par
   points.forEach((pt, i) => {
     if (pt.lat === undefined || pt.lng === undefined) return;
     for (const zone of zones) {
-      const d = getHaversineDistanceMeters(pt.lat, pt.lng, zone.latitude, zone.longitude);
-      if (d <= zone.radius_meters) {
+      const d = getHaversineDistanceMeters(Number(pt.lat), Number(pt.lng), Number(zone.latitude), Number(zone.longitude));
+      if (d <= Number(zone.radius_meters)) {
         scrubFlags[i] = true;
         break;
       }
@@ -101,11 +96,11 @@ export function scrubPrivacyZones(tcxData: ParsedTCX, zones: PrivacyZone[]): Par
     if (a.lat === undefined || a.lng === undefined || b.lat === undefined || b.lng === undefined) continue;
     for (const zone of zones) {
       const segDist = distancePointToSegmentMeters(
-        zone.latitude, zone.longitude,
-        a.lat, a.lng,
-        b.lat, b.lng
+        Number(zone.latitude), Number(zone.longitude),
+        Number(a.lat), Number(a.lng),
+        Number(b.lat), Number(b.lng)
       );
-      if (segDist <= zone.radius_meters + SEGMENT_BUFFER) {
+      if (segDist <= Number(zone.radius_meters) + Number(SEGMENT_BUFFER)) {
         scrubFlags[i - 1] = true;
         scrubFlags[i] = true;
         break;
@@ -119,8 +114,8 @@ export function scrubPrivacyZones(tcxData: ParsedTCX, zones: PrivacyZone[]): Par
   for (let i = 0; i < points.length; i++) {
     const pt = points[i];
     if (pt.lat === undefined || pt.lng === undefined) continue;
-    const info = nearestZoneInfo(pt.lat, pt.lng, zones);
-    if (info && info.distance <= info.radius + SAFE_START_BUFFER) {
+    const isUnsafe = zones.some((z) => isPointInSafeBuffer(pt.lat!, pt.lng!, z, SAFE_START_BUFFER));
+    if (isUnsafe) {
       scrubFlags[i] = true; // 距住址过近，一并擦除
       continue;
     }

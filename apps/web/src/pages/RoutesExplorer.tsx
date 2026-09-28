@@ -15,7 +15,7 @@ export default function RoutesExplorer() {
   });
 
   const handleAskCoachAboutRoute = () => {
-    const prompt = `我想去骑行【${selectedRoute.city}·${selectedRoute.name}】（距离 ${selectedRoute.distanceKm}km，爬升 ${selectedRoute.ascentM}m），请结合我的大行 P8 齿比配置与膝盖防护需求，给出战术配速节奏与补给建议。`;
+    const prompt = `我想去骑行【${selectedRoute.city}·${selectedRoute.name}】（距离 ${selectedRoute.distanceKm}km，爬升 ${selectedRoute.ascentM}m），请结合我的战车齿比配置与关节防护需求，给出战术配速节奏与补给建议。`;
     navigate('/ai-coach?prompt=' + encodeURIComponent(prompt));
   };
 
@@ -26,7 +26,7 @@ export default function RoutesExplorer() {
         <header className="h-16 px-4 md:px-8 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <div>
             <h1 className="text-base font-semibold text-slate-900 leading-tight">城市精选路线</h1>
-            <p className="text-[11px] font-mono text-slate-400 mt-0.5">大湾区经典骑行路线 · 包含推荐齿比与膝盖保护提示</p>
+            <p className="text-[11px] font-mono text-slate-400 mt-0.5">大湾区经典骑行路线 · 包含推荐齿比与关节保护提示</p>
           </div>
 
           <div className="flex items-center space-x-1 border border-slate-200 p-0.5 rounded font-mono text-xs">

@@ -69,7 +69,7 @@ export default function MemoryItemCard({
           </span>
 
           <span
-            className={`text-2xs font-bold px-1.5 py-0.2 rounded font-mono ${
+            className={`text-2xs font-bold px-1.5 py-0.5 rounded font-mono ${
               isCoachExtracted
                 ? 'bg-slate-100 text-slate-700 border border-slate-200'
                 : 'bg-slate-100 text-slate-600'

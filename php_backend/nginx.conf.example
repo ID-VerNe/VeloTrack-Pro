@@ -6,7 +6,7 @@
 #     rewrite ^/api/(.*)$ /php_backend/index.php last;
 # }
 #
-# location ~* \.(db|sqlite|sqlite3|log|db-journal)$ {
+# location ~* \.(db|sqlite|sqlite3|log|db-journal|db-wal|db-shm|env)$ {
 #     deny all;
 #     return 404;
 # }

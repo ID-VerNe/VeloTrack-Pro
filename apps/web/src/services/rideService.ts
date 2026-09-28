@@ -1,4 +1,4 @@
-import { getAdminToken } from '../utils/activity/adminApiClient';
+import { getAdminToken, authFetch } from '../utils/activity/adminApiClient';
 import { getNaturalWeekRange } from '../utils/dateUtils';
 export async function deleteRide(id: string): Promise<void> {
   const token = getAdminToken();
@@ -23,13 +23,14 @@ export async function deleteRide(id: string): Promise<void> {
 }
 
 export async function updateRideTitle(id: string, newTitle: string): Promise<void> {
-  const res = await fetch(`/api/rides/${id}`, {
+  const res = await authFetch(`/api/rides/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: newTitle.trim() }),
   });
   if (!res.ok) {
-    throw new Error('更新标题失败');
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `更新标题失败 (HTTP ${res.status})`);
   }
 }
 
@@ -45,7 +46,7 @@ export async function getWeeklyStats(): Promise<{ ridesCount: number; goalPct: n
     if (ridesRes.rides) {
       const ridesCount = ridesRes.rides.length;
 
-      const latestTime = Math.max(...ridesRes.rides.map((r: any) => r.start_time || 0));
+      const latestTime = ridesRes.rides.reduce((max: number, r: any) => Math.max(max, r.start_time || 0), 0);
       const weekRange = getNaturalWeekRange(latestTime > 0 ? latestTime : Date.now());
 
       const weekRides = ridesRes.rides.filter(

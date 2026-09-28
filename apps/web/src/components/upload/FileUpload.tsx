@@ -100,11 +100,11 @@ export function FileUpload({ onFilesSelect, status, batchProgress, errorMessage 
         <div className="flex flex-col items-center text-center space-y-3 p-6 pointer-events-none w-full max-w-md">
           {status === 'idle' && (
             <>
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-200/80 flex items-center justify-center text-slate-400">
+              <div className="w-14 h-14 rounded-xl bg-white shadow-2xs border border-slate-200/80 flex items-center justify-center text-slate-400">
                 {stagedFiles.length > 0 ? (
                   <Layers className="w-7 h-7 text-brand-500 stroke-[1.8]" />
                 ) : (
-                  <UploadCloud className="w-7 h-7 text-slate-400 stroke-[1.8]" />
+                  <UploadCloud className="w-7 h-7 text-slate-400 stroke-[1.8] -translate-y-[1px]" />
                 )}
               </div>
               <div>

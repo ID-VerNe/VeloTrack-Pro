@@ -16,11 +16,17 @@ function get_db_connection(): PDO
             $pdo = new PDO('sqlite:' . DATABASE_PATH);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            // SQLite 外键约束（级联删除等）需显式开启，设置忙等超时防并发写锁
+            $pdo->exec('PRAGMA journal_mode = WAL');
+            $pdo->exec('PRAGMA synchronous = NORMAL');
             $pdo->exec('PRAGMA foreign_keys = ON');
             $pdo->exec('PRAGMA busy_timeout = 5000');
         } catch (PDOException $e) {
-            send_error('Database connection failed: ' . $e->getMessage(), 500);
+            error_log('[database] Connection failed: ' . $e->getMessage());
+            if (function_exists('send_error')) {
+                send_error('Database connection failed: ' . $e->getMessage(), 500);
+            } else {
+                throw $e;
+            }
         }
     }
     return $pdo;

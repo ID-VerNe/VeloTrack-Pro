@@ -4,6 +4,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useBatchActivityUpload } from '../useBatchActivityUpload';
 import { uploadRide } from '../../utils/activity/adminApiClient';
 import { parseActivityFile } from '../../utils/activity/activityParser';
+import { getRiderProfile } from '../../services/riderService';
 
 vi.mock('../../utils/activity/adminApiClient', () => ({
   uploadRide: vi.fn().mockResolvedValue({ id: 'ride-1' }),
@@ -25,6 +26,14 @@ vi.mock('../../utils/activity/privacyScrubber', () => ({
 
 vi.mock('../../services/aiInsights', () => ({
   suggestRideTitle: vi.fn().mockResolvedValue({ title: 'AI 标准标题' }),
+}));
+
+vi.mock('../../services/riderService', () => ({
+  getRiderProfile: vi.fn().mockResolvedValue({
+    max_hr: 190,
+    resting_hr: 60,
+    name: '测试车手',
+  }),
 }));
 
 describe('useBatchActivityUpload Hook', () => {
@@ -74,5 +83,56 @@ describe('useBatchActivityUpload Hook', () => {
     expect(parseActivityFile).toHaveBeenCalledTimes(2);
     expect(uploadRide).toHaveBeenCalledTimes(2);
     expect(result.current.uploadStatus).toBe('success');
+  });
+
+  it('上传前注入车手档案心率到解析器', async () => {
+    const { result } = renderHook(() =>
+      useBatchActivityUpload({
+        zones: [],
+        activeZoneIds: new Set(),
+        zonesError: null,
+      })
+    );
+
+    const file = new File(['content'], 'ride.gpx', { type: 'application/gpx+xml' });
+    file.text = vi.fn().mockResolvedValue('<gpx>x</gpx>');
+
+    await act(async () => {
+      await result.current.handleBatchFileSelect([file]);
+    });
+
+    // getRiderProfile 被调用一次
+    expect(getRiderProfile).toHaveBeenCalledTimes(1);
+    // parseActivityFile 第三参数应携带档案心率 190/60
+    expect(parseActivityFile).toHaveBeenCalledWith(
+      '<gpx>x</gpx>',
+      'ride.gpx',
+      { userMaxHr: 190, userRestingHr: 60 }
+    );
+  });
+
+  it('明细缺失警告(DetailPointsMissing)计入成功并标注', async () => {
+    const detailMissing = new Error('明细点位入库失败，本次骑行详情将使用示意曲线');
+    (detailMissing as any).code = 'DETAIL_POINTS_MISSING';
+    vi.mocked(uploadRide).mockRejectedValueOnce(detailMissing);
+
+    const { result } = renderHook(() =>
+      useBatchActivityUpload({
+        zones: [],
+        activeZoneIds: new Set(),
+        zonesError: null,
+      })
+    );
+
+    const file = new File(['content'], 'ride.gpx', { type: 'application/gpx+xml' });
+    file.text = vi.fn().mockResolvedValue('<gpx>x</gpx>');
+
+    await act(async () => {
+      await result.current.handleBatchFileSelect([file]);
+    });
+
+    // 主记录已入库 → 计为 success，但 errorMessage 标注明细缺失
+    expect(result.current.uploadStatus).toBe('success');
+    expect(result.current.errorMessage).toContain('明细点位入库失败');
   });
 });

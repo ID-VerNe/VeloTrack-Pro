@@ -103,8 +103,8 @@ export function detectPauseClusters(
 
       const advice =
         gIdx === 0
-          ? '起步防护：提前降档至 46/19T 轻齿比，高踏频平稳起步，防膝盖半月板瞬间超负荷'
-          : '中后程衔接：绿灯亮起保持 85-90rpm 轻踏起步，平稳过渡至 46/17T 巡航甜点';
+          ? '起步防护：提前降至轻齿比，高踏频平稳起步，防膝关节瞬间超负荷'
+          : '中后程衔接：绿灯亮起保持 85-90rpm 轻踏起步，平稳过渡至巡航甜点档';
 
       pauseClusters.push({
         id: `pause-cluster-${gIdx}`,

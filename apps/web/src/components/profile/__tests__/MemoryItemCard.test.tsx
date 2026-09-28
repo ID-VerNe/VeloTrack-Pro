@@ -8,7 +8,7 @@ describe('MemoryItemCard', () => {
     id: 101,
     category: 'health',
     memory_key: 'test_knee',
-    content: '需维持85-95rpm踏频防护膝盖',
+    content: '需维持85-95rpm踏频防护关节',
     source: 'coach',
     created_at: 1700000000,
   };
@@ -24,7 +24,7 @@ describe('MemoryItemCard', () => {
       />
     );
 
-    expect(screen.getByText('需维持85-95rpm踏频防护膝盖')).toBeInTheDocument();
+    expect(screen.getByText('需维持85-95rpm踏频防护关节')).toBeInTheDocument();
     expect(screen.getByText('身体底线')).toBeInTheDocument();
     expect(screen.getByText('实战沟通沉淀')).toBeInTheDocument();
   });

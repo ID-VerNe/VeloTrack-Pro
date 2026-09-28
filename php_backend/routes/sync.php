@@ -31,9 +31,9 @@ route('GET', '/api/sync', function (array $p) {
                    max_speed_kmh, avg_heart_rate, start_lat, start_lng, city, cities, is_cross_city,
                    updated_at, created_at, deleted_at
             FROM rides
-            WHERE (updated_at >= ? OR (deleted_at IS NOT NULL AND deleted_at >= ?))
+            WHERE updated_at >= ?
             ORDER BY start_time DESC
-        ', [$safeSince, $safeSince])['results'];
+        ', [$safeSince])['results'];
     }
 
     foreach ($rows as &$row) {
@@ -67,7 +67,9 @@ route('POST', '/api/sync/push', function (array $p) {
     $results = [];
     $appliedCount = 0;
 
-    $pdo->beginTransaction();
+    $maxAllowedDrift = $serverTime + 300000; // 最多允许客户端时钟超前 5 分钟
+
+    $pdo->exec('BEGIN IMMEDIATE TRANSACTION');
     try {
         foreach ($mutations as $m) {
             $mId = $m['mutation_id'] ?? ('m_' . bin2hex(random_bytes(4)));
@@ -102,10 +104,11 @@ route('POST', '/api/sync/push', function (array $p) {
                     continue;
                 }
 
-                // 规则 2：最后写入胜出 (LWW)
+                // 规则 2：最后写入胜出 (LWW)，防远期时钟污染
                 $dbUpdated = (int)($current['updated_at'] ?? 0);
                 if ($clientUpdated >= $dbUpdated) {
-                    $now = max($clientUpdated, $serverTime);
+                    $safeClientTime = min($clientUpdated, $maxAllowedDrift);
+                    $now = max($safeClientTime, $serverTime);
                     db_run($pdo, 'UPDATE rides SET title = ?, updated_at = ? WHERE id = ?', [$newTitle, $now, $rideId]);
                     $results[] = ['mutation_id' => $mId, 'status' => 'applied'];
                     $appliedCount++;
@@ -123,8 +126,9 @@ route('POST', '/api/sync/push', function (array $p) {
                     continue;
                 }
 
-                // 墓碑标记
-                $now = max($clientDeleted, $serverTime);
+                // 墓碑标记，防远期时钟污染
+                $safeDeleteTime = min($clientDeleted, $maxAllowedDrift);
+                $now = max($safeDeleteTime, $serverTime);
                 db_run($pdo, 'UPDATE rides SET deleted_at = ?, updated_at = ? WHERE id = ?', [$now, $now, $rideId]);
                 $results[] = ['mutation_id' => $mId, 'status' => 'applied'];
                 $appliedCount++;
@@ -134,12 +138,13 @@ route('POST', '/api/sync/push', function (array $p) {
             }
         }
 
-        $pdo->commit();
+        $pdo->exec('COMMIT');
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
-            $pdo->rollBack();
+            $pdo->exec('ROLLBACK');
         }
-        send_error('Push sync transaction failed: ' . $e->getMessage(), 500);
+        error_log('[SyncPush] Write conflict: ' . $e->getMessage());
+        send_error('Push sync transaction failed: ' . $e->getMessage(), 409);
     }
 
     send_json([

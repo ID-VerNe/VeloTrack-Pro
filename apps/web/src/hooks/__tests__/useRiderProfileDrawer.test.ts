@@ -18,7 +18,7 @@ describe('useRiderProfileDrawer', () => {
         ok: true,
         json: async () => ({
           profile: { ...INITIAL_RIDER_PROFILE, name: 'Test Rider', weight_kg: 70 },
-          memories: [{ id: 1, category: 'health', content: '膝盖良好' }],
+          memories: [{ id: 1, category: 'health', content: '膝关节良好' }],
         }),
       })
     );

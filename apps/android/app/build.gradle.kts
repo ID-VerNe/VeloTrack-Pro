@@ -57,6 +57,9 @@ dependencies {
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // WorkManager:骑行同步后台保活(屏幕关闭/进程退后台仍继续上传)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
     // QR Code Scanning (ZXing Embedded, lightweight)
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 

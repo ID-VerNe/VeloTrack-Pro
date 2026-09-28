@@ -6,35 +6,48 @@ import {
 } from '../geoCalculations';
 
 describe('calculateHRZones 心率区间计算', () => {
-  it('心率低于最大心率的 60% 时属于 Z1', () => {
-    expect(calculateHRZones(100, 200)).toBe('z1');
+  // Karvonen 储备心率模型：reserve = (hr - restingHr) / (maxHR - restingHr)
+  // 默认 maxHR=188、restingHr=55 → HRR=133
+  // z1: reserve < 0.60   → hr < 55 + 133*0.60 = 134.8
+  // z2: 0.60 ≤ reserve < 0.70 → 134.8 ≤ hr < 148.1
+  // z3: 0.70 ≤ reserve < 0.80 → 148.1 ≤ hr < 161.4
+  // z4: 0.80 ≤ reserve < 0.90 → 161.4 ≤ hr < 174.7
+  // z5: reserve ≥ 0.90 → hr ≥ 174.7
+
+  it('储备 < 60% 属于 Z1', () => {
+    expect(calculateHRZones(100, 188, 55)).toBe('z1'); // reserve ≈ 0.338
   });
 
-  it('心率恰好等于最大心率的 60% 时属于 Z2（边界值）', () => {
-    expect(calculateHRZones(120, 200)).toBe('z2');
+  it('储备恰好 60% 边界属 Z2', () => {
+    expect(calculateHRZones(135, 188, 55)).toBe('z2'); // reserve ≈ 0.601
   });
 
-  it('心率恰好等于最大心率的 70% 时属于 Z3（边界值）', () => {
-    expect(calculateHRZones(140, 200)).toBe('z3');
+  it('储备恰好 70% 边界属 Z3', () => {
+    expect(calculateHRZones(149, 188, 55)).toBe('z3'); // reserve = 94/133 ≈ 0.707
   });
 
-  it('心率恰好等于最大心率的 80% 时属于 Z4（边界值）', () => {
-    expect(calculateHRZones(160, 200)).toBe('z4');
+  it('储备恰好 80% 边界属 Z4', () => {
+    expect(calculateHRZones(162, 188, 55)).toBe('z4'); // reserve ≈ 0.805
   });
 
-  it('心率达到最大心率的 90% 及以上时属于 Z5（边界值）', () => {
-    expect(calculateHRZones(180, 200)).toBe('z5');
-    expect(calculateHRZones(200, 200)).toBe('z5');
+  it('储备 ≥ 90% 属 Z5', () => {
+    expect(calculateHRZones(175, 188, 55)).toBe('z5'); // reserve ≈ 0.902
+    expect(calculateHRZones(188, 188, 55)).toBe('z5'); // reserve = 1.0
   });
 
-  it('未传入 maxHR 时使用默认值 190', () => {
-    expect(calculateHRZones(100)).toBe('z1'); // 100/190 ≈ 0.526
-    expect(calculateHRZones(180)).toBe('z5'); // 180/190 ≈ 0.947
+  it('未传入 maxHR 时使用默认值 188/55', () => {
+    expect(calculateHRZones(100)).toBe('z1'); // reserve ≈ 0.338
+    expect(calculateHRZones(180)).toBe('z5'); // reserve ≈ 0.940
   });
 
-  it('支持自定义 maxHR', () => {
-    expect(calculateHRZones(100, 150)).toBe('z2'); // 100/150 ≈ 0.667
-    expect(calculateHRZones(190, 200)).toBe('z5'); // 0.95
+  it('支持自定义 maxHR/restingHr', () => {
+    // maxHR=200、restingHr=50 → HRR=150
+    // hr=120 → reserve = 70/150 ≈ 0.467 → z1
+    expect(calculateHRZones(120, 200, 50)).toBe('z1');
+    // hr=160 → reserve = 110/150 ≈ 0.733 → z3
+    expect(calculateHRZones(160, 200, 50)).toBe('z3');
+    // hr=190 → reserve = 140/150 ≈ 0.933 → z5
+    expect(calculateHRZones(190, 200, 50)).toBe('z5');
   });
 });
 

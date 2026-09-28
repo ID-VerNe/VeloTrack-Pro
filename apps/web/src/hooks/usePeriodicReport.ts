@@ -38,7 +38,7 @@ export function usePeriodicReport({
       .then((res) => res.json())
       .then((data) => {
         if (data.rides && data.rides.length > 0) {
-          const maxTime = Math.max(...data.rides.map((r: any) => r.start_time || 0));
+          const maxTime = data.rides.reduce((max: number, r: any) => Math.max(max, r.start_time || 0), 0);
           if (maxTime > 0) {
             setLatestActiveTimestamp(maxTime);
             setCurrentTimestamp(maxTime);
@@ -71,8 +71,31 @@ export function usePeriodicReport({
   }, [periodType, currentTimestamp, cacheKey]);
 
   useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
+    let cancelled = false;
+    setIsLoading(true);
+
+    const cachedInsight = sessionStorage.getItem(cacheKey);
+    if (cachedInsight) {
+      setAiInsight(cachedInsight);
+    } else {
+      setAiInsight(null);
+    }
+
+    computePeriodicSummary(periodType, currentTimestamp)
+      .then((data) => {
+        if (!cancelled) setReportData(data);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error(err);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [periodType, currentTimestamp, cacheKey]);
 
   const handlePrevPeriod = useCallback(() => {
     const d = new Date(currentTimestamp);

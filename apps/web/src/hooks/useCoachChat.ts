@@ -4,16 +4,16 @@ import { getCoachSessions, getCoachMessages, deleteCoachSession, chatWithCoach }
 import { getRiderProfile } from '../services/riderService';
 
 export const SUGGESTED_PROMPTS = [
-  '测算大行P8在46T齿比下平路巡航20km/h的推荐踏频与档位',
+  '测算我当前传动在平路巡航 20km/h 的推荐踏频与档位',
   '结合近期实战双均速与负荷，评估下一阶段周里程与均速目标',
-  '评估大齿比爬坡对右膝半月板的受力影响与降档节奏',
+  '评估大齿比爬坡对膝关节的受力影响与降档节奏',
   '对比深圳湾与二沙岛等路线的巡航做功特征与心率恢复',
 ];
 
 export const DEFAULT_WELCOME_MSG: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
-  content: '### 战术与生理诊断就绪\n\n已装载 **大行 P8 (46T/11-28T)** 传动系统参数与近期骑行遥测数据库。\n\n可直接输入训练诉求进行 **齿比配速推演**、**心肺与踏频负荷诊断** 或 **自适应周目标调整**。',
+  content: '### 战术与生理诊断就绪\n\n已装载你的战车传动系统参数与近期骑行遥测数据库。\n\n可直接输入训练诉求进行 **齿比配速推演**、**心肺与踏频负荷诊断** 或 **自适应周目标调整**。',
 };
 
 export interface UseCoachChatOptions {
@@ -30,7 +30,7 @@ export function useCoachChat({ initialPrompt }: UseCoachChatOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [riderInfo, setRiderInfo] = useState<{ weight: number; bike: string }>({ weight: 75, bike: '大行 P8' });
+  const [riderInfo, setRiderInfo] = useState<{ weight: number; bike: string }>({ weight: 75, bike: '' });
 
   // Floating Toast Notification State
   const [toast, setToast] = useState<{ title: string; desc: string; type: 'goal' | 'profile'; link?: string } | null>(null);
@@ -45,18 +45,20 @@ export function useCoachChat({ initialPrompt }: UseCoachChatOptions = {}) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadSessionMessages = useCallback(async (sid: string) => {
+  const loadSessionMessages = useCallback(async (sid: string, signal?: AbortSignal) => {
     try {
-      const msgs = await getCoachMessages(sid);
+      const msgs = await getCoachMessages(sid, signal);
+      if (signal?.aborted) return;
       if (msgs && msgs.length > 0) {
         setMessages(msgs as unknown as ChatMessage[]);
       } else {
         setMessages([DEFAULT_WELCOME_MSG]);
       }
     } catch (err) {
+      if (signal?.aborted) return;
       console.error('Failed to load messages:', err);
     } finally {
-      setIsSessionLoaded(true);
+      if (!signal?.aborted) setIsSessionLoaded(true);
     }
   }, []);
 
@@ -74,17 +76,19 @@ export function useCoachChat({ initialPrompt }: UseCoachChatOptions = {}) {
       const profile = await getRiderProfile();
       setRiderInfo({
         weight: profile.weight_kg || 75,
-        bike: profile.current_bike || '大行 P8',
+        bike: profile.current_bike || '未配置',
       });
     } catch {}
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     localStorage.setItem('velotrack_coach_session_id', sessionId);
     setIsSessionLoaded(false);
-    loadSessionMessages(sessionId);
+    loadSessionMessages(sessionId, controller.signal);
     loadSessionsList();
     fetchRiderInfo();
+    return () => controller.abort();
   }, [sessionId, loadSessionMessages]);
 
   useEffect(() => {
@@ -153,7 +157,7 @@ export function useCoachChat({ initialPrompt }: UseCoachChatOptions = {}) {
     try {
       const result = await chatWithCoach(sessionId, query.trim());
       const reply = result.reply || '';
-      if (!reply || reply.includes('未能获取回复') || reply.includes('异常')) {
+      if (result.error || !reply) {
         setMessages((prev) => [
           ...prev,
           {

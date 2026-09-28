@@ -37,6 +37,36 @@ export function deriveCadenceFromSpeed(
   return Number(cadence.toFixed(1));
 }
 
+/**
+ * 从车手传动配置推导巡航档与起步轻档
+ * - cruisingCog: 在目标巡航时速下踏频最接近 90 rpm 的飞轮齿（黄金高效有氧区间）
+ * - lightStartCog: 飞轮中最大齿（齿比最小，用于红绿灯起步轻踏）
+ */
+export function deriveCogsFromTarget(
+  chainring: number,
+  cogs: number[] = [11, 13, 15, 17, 19, 21, 24, 28],
+  wheelSpec: string,
+  targetCruisingKmh: number
+): { cruisingCog: number; lightStartCog: number; cruisingCadenceRpm: number } {
+  const circ = STANDARD_WHEEL_CIRCUMFERENCES[wheelSpec] || 1.54;
+  const validCogs = Array.isArray(cogs) && cogs.length > 0 ? cogs : [11, 13, 15, 17, 19, 21, 24, 28];
+  const sorted = [...validCogs].sort((a, b) => a - b);
+  let cruisingCog = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length / 2))];
+  let cruisingCadence = deriveCadenceFromSpeed(targetCruisingKmh, chainring, cruisingCog, circ);
+  let minDiffTo90 = Math.abs(cruisingCadence - 90);
+  for (const cog of sorted) {
+    const cad = deriveCadenceFromSpeed(targetCruisingKmh, chainring, cog, circ);
+    const diff = Math.abs(cad - 90);
+    if (diff < minDiffTo90) {
+      minDiffTo90 = diff;
+      cruisingCog = cog;
+      cruisingCadence = cad;
+    }
+  }
+  const lightStartCog = sorted[sorted.length - 1];
+  return { cruisingCog, lightStartCog, cruisingCadenceRpm: cruisingCadence };
+}
+
 export interface GearCadenceSpeedOptions {
   chainring: number;
   cogs?: number[];
@@ -182,7 +212,7 @@ export function calculateClimbingPower(options: ClimbingPowerOptions): ClimbingP
 
   let kneeAdvice = '爬升坡度平缓，维持 85+ rpm 顺畅踩踏即可。';
   if (gravityPowerWatts >= 50 || ascent > 200) {
-    kneeAdvice = '爬升做功显著！遇到坡道务必提前 1-2 档降至小齿比，保持踏频不跌破 80 rpm，切忌站立摇车重踩以保护右膝半月板。';
+    kneeAdvice = '爬升做功显著！遇到坡道务必提前 1-2 档降至小齿比，保持踏频不跌破 80 rpm，切忌站立摇车重踩以保护膝关节。';
   } else if (ascent > 80) {
     kneeAdvice = '起伏路段注意坡底提前减档，避免大齿比死蹬增加关节剪切应力。';
   }

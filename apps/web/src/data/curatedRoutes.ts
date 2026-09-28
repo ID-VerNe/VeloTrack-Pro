@@ -28,7 +28,7 @@ export const CURATED_ROUTES: RouteItem[] = [
     difficulty: '初级平路',
     suitableBike: '折叠车 / 公路车 / 平把公路',
     recommendedGear: '46T × 17T~19T (维持 85~95 rpm 高踏频)',
-    kneeSafetyAdvice: '全程极少坡度，注意海风逆风段及时降档，避免大齿比重踏加重半月板受力。',
+    kneeSafetyAdvice: '全程极少坡度，注意海风逆风段及时降档，避免大齿比重踏加重关节受力。',
     description: '从红树林保护区一路沿海延伸至蛇口海上世界，视野开阔、路面平整，是深圳最经典的平路巡航与恢复骑路线。',
     highlights: ['全程平整沥青与专属骑行道', '沿海景观与红树林海风', '夜间照明充足安全'],
     coordinates: [
@@ -113,7 +113,7 @@ export const CURATED_ROUTES: RouteItem[] = [
     difficulty: '耐力爬坡',
     suitableBike: '公路车 / 46T-28T/32T 折叠车',
     recommendedGear: '连续爬坡必须挂至 28T/32T 最大飞轮',
-    kneeSafetyAdvice: '总爬升较大，若右膝有任何微酸紧绷感，请立即在坡道顶端停车拉伸股四头肌 3 分钟。',
+    kneeSafetyAdvice: '总爬升较大，若膝关节有任何微酸紧绷感，请立即在坡道顶端停车拉伸股四头肌 3 分钟。',
     description: '光明科学城森林公园周边丘陵起伏路线，环境幽静，适合备战 50km 长距离耐力与爬坡做功。',
     highlights: ['连续起伏丘陵挑战', '空气负氧离子极高', '综合锻炼心肺与耐力极限'],
     coordinates: [

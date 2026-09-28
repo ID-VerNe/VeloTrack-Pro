@@ -7,9 +7,10 @@ interface Props {
   ride: any;
   calories: number;
   speedDistribution?: CruisingAnalysisResult | null;
+  gear?: { chainring: number; cruisingCog: number };
 }
 
-export default function RideMetricsGrid({ ride, calories, speedDistribution }: Props) {
+export default function RideMetricsGrid({ ride, calories, speedDistribution, gear }: Props) {
   const {
     movingAvgSpeedKmh,
     elapsedAvgSpeedKmh,
@@ -30,7 +31,8 @@ export default function RideMetricsGrid({ ride, calories, speedDistribution }: P
   const distanceKm = ((ride?.distance_meters || 0) / 1000).toFixed(2);
 
   // 若未直接传入 speedDistribution，则自动计算平稳经验兜底值
-  const speedDist = speedDistribution || analyzeSpeedDistribution(null, movingAvgSpeedKmh, 46, 15);
+  const speedDist = speedDistribution || analyzeSpeedDistribution(null, movingAvgSpeedKmh, gear?.chainring || 46, gear?.cruisingCog || 15);
+  const gearLabel = gear ? `${gear.chainring}/${gear.cruisingCog}T` : '主档';
 
   return (
     <div className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -49,7 +51,7 @@ export default function RideMetricsGrid({ ride, calories, speedDistribution }: P
         unit="km/h"
         subLabel={
           <div className="flex flex-wrap items-center gap-1.5">
-            <span>46/15T 踏频 ~{speedDist.derived_cadence_rpm} rpm</span>
+            <span>{gearLabel} 踏频 ~{speedDist.derived_cadence_rpm} rpm</span>
             <span
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${
                 speedDist.cadence_zone_status === 'golden'

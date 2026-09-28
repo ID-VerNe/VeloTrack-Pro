@@ -1,9 +1,13 @@
 # 拒绝外部访问敏感文件：数据库、日志、SQLite 临时文件。
 # cycling.db 在仓库根（vhost web root），不经 php_backend/ 子目录，
 # 故根目录单独写一条 .htaccess 覆盖。
-<FilesMatch "\.(log|db|sqlite|sqlite3|db-journal)$">
+<FilesMatch "(?i)\.(log|db|sqlite|sqlite3|db-journal|db-wal|db-shm|env)$">
     Require all denied
 </FilesMatch>
+
+RewriteCond %{REQUEST_URI} !/php_backend/index\.php$
+RewriteRule ^php_backend/.*\.php$ - [F,L]
+
 
 # 生产：所有 /api/* 请求交给 PHP 前置控制器处理。
 # 前端 SPA 用相对路径 fetch('/api/...')，部署同域时需要这条把

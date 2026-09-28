@@ -7,6 +7,7 @@ import {
   calculateClimbingPower,
   calculateHeartRateZones,
   calculateGoalTimeline,
+  deriveCogsFromTarget,
 } from '../../utils/cyclingPhysicsEngine';
 import { analyzeSpeedDistribution } from '../../utils/speedDistribution';
 import { calculateDualSpeeds } from '../../utils/cyclingCalculations';
@@ -14,6 +15,7 @@ import {
   updateRiderProfile,
   updateTrainingGoals,
   addGoalMilestone,
+  getRiderProfile,
 } from '../riderService';
 
 export const COACH_TOOLS = [
@@ -87,18 +89,19 @@ export const COACH_TOOLS = [
     type: 'function',
     function: {
       name: 'update_rider_profile',
-      description: '当车手透露了体重、身高、车型、齿比、外胎、车重、改装件、伤病或目标时自动更新档案',
+      description: '当车手透露了体重、身高、车型、传动齿比、外胎、车重、改装件或目标时自动更新档案',
       parameters: {
         type: 'object',
         properties: {
           weight_kg: { type: 'number', description: '车手体重(kg)' },
           height_cm: { type: 'number', description: '车手身高(cm)' },
           current_bike: { type: 'string', description: '主力战车型号' },
-          gear_ratio: { type: 'string', description: '齿比与变速配置' },
+          chainring: { type: 'number', description: '前牙盘齿数，如 46 或 53' },
+          cogs: { type: 'array', items: { type: 'number' }, description: '后飞轮齿数列表，如 [11,13,15,17,19,21,24,28]' },
+          wheel_spec: { type: 'string', description: '轮径规格，如 "20x2.0" / "700x25c"' },
           tires: { type: 'string', description: '外胎规格与胎压' },
           bike_weight_kg: { type: 'number', description: '战车净重(kg)' },
           custom_specs: { type: 'object', description: '任意其他自定义硬件/配件/生理属性键值对' },
-          injuries_notes: { type: 'string', description: '既往旧伤或身体不适备忘' },
           primary_goal: { type: 'string', description: '阶段训练目标' },
         },
       },
@@ -113,25 +116,28 @@ export async function executeCoachTool(name: string, args: any): Promise<any> {
   if (name === 'calculate_cycling_kinematics') {
     const op = args.operation;
     if (op === 'gear_cadence_speed') {
+      const profile = await getRiderProfile();
       return calculateGearCadenceSpeed({
-        chainring: args.chainring || 46,
-        cogs: args.cogs || [11, 13, 15, 17, 19, 21, 24, 28],
-        wheelSpec: args.wheel_spec || '20x2.0',
+        chainring: args.chainring || profile.chainring,
+        cogs: args.cogs || profile.cogs,
+        wheelSpec: args.wheel_spec || profile.wheel_spec,
         cadenceRpm: args.cadence_rpm,
         targetSpeedKmh: args.target_speed_kmh,
       });
     } else if (op === 'climbing_power') {
+      const profile = await getRiderProfile();
       return calculateClimbingPower({
-        riderWeightKg: args.rider_weight_kg || 75,
-        bikeWeightKg: args.bike_weight_kg || 11.5,
+        riderWeightKg: args.rider_weight_kg || profile.weight_kg,
+        bikeWeightKg: args.bike_weight_kg || profile.bike_weight_kg || 11.5,
         ascentMeters: args.ascent_meters || 0,
         movingTimeSeconds: args.moving_time_seconds || 3600,
-        ftpWatts: args.ftp_watts || 165,
+        ftpWatts: args.ftp_watts || profile.ftp_watts,
       });
     } else if (op === 'hr_zones') {
+      const profile = await getRiderProfile();
       return calculateHeartRateZones({
-        maxHr: args.max_hr || 188,
-        restingHr: args.resting_hr || 55,
+        maxHr: args.max_hr || profile.max_hr,
+        restingHr: args.resting_hr || profile.resting_hr,
         currentAvgHr: args.current_hr,
       });
     } else if (op === 'goal_timeline') {
@@ -167,15 +173,25 @@ export async function executeCoachTool(name: string, args: any): Promise<any> {
       movingRatioPct,
     } = calculateDualSpeeds(totalDistMeters, totalMovingSec, totalElapsedSec);
 
-    const speedDist = analyzeSpeedDistribution(null, overallMovingAvgSpeed, 46, 15);
+    const speedDistPromise = (async () => {
+      const profile = await getRiderProfile();
+      const { cruisingCog } = deriveCogsFromTarget(
+        profile.chainring, profile.cogs, profile.wheel_spec, overallMovingAvgSpeed
+      );
+      return { profile, cruisingCog, dist: analyzeSpeedDistribution(null, overallMovingAvgSpeed, profile.chainring, cruisingCog) };
+    })();
+
+    const { profile, cruisingCog, dist } = await speedDistPromise;
 
     return {
       city_queried: city,
       ride_count: filtered.length,
       total_distance_km: totalDistKm,
       moving_avg_speed_kmh: overallMovingAvgSpeed,
-      cruising_avg_speed_kmh: speedDist.cruising_avg_speed_kmh,
-      speed_loss_kmh: speedDist.speed_loss_kmh,
+      cruising_avg_speed_kmh: dist.cruising_avg_speed_kmh,
+      cruising_cog: cruisingCog,
+      chainring: profile.chainring,
+      speed_loss_kmh: dist.speed_loss_kmh,
       elapsed_avg_speed_kmh: overallElapsedAvgSpeed,
       total_moving_time_hours: Number((totalMovingSec / 3600).toFixed(1)),
       total_paused_time_hours: Number((totalPausedSec / 3600).toFixed(1)),

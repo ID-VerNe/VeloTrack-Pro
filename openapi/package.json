@@ -1,0 +1,13 @@
+{
+  "name": "openapi-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "generate:ts": "openapi-typescript openapi.yaml -o generated/types.ts",
+    "lint": "redocly lint openapi.yaml"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.5.0",
+    "@redocly/cli": "^1.27.0"
+  }
+}

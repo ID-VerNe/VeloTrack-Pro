@@ -3,7 +3,7 @@
  * 负责与后端 /api/ai/coach/* REST 端点交互
  */
 
-import { getAdminToken } from '../../utils/activity/adminApiClient';
+import { getAdminToken, authFetch } from '../../utils/activity/adminApiClient';
 
 export interface CoachSession {
   session_id: string;
@@ -29,19 +29,23 @@ export interface CoachMessage {
   created_at?: number;
 }
 
-export async function getCoachMessages(sessionId: string): Promise<CoachMessage[]> {
-  const res = await fetch(`/api/ai/coach/${sessionId}/messages`);
+export async function getCoachMessages(sessionId: string, signal?: AbortSignal): Promise<CoachMessage[]> {
+  const res = await fetch(`/api/ai/coach/${sessionId}/messages`, { signal });
   if (!res.ok) return [];
   const data = await res.json();
   return data.messages || [];
 }
 
 export async function appendMessage(sessionId: string, msg: CoachMessage): Promise<void> {
-  await fetch(`/api/ai/coach/${sessionId}/messages`, {
+  const res = await authFetch(`/api/ai/coach/${sessionId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(msg),
   });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error('[coachApi] appendMessage failed:', err);
+  }
 }
 
 export async function deleteCoachSession(sessionId: string): Promise<void> {

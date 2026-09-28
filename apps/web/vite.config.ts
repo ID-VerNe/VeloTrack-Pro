@@ -2,9 +2,15 @@
 // vitest v4：必须从 vitest/config 导入 defineConfig 才能识别 test 配置块
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@velotrack/core': fileURLToPath(new URL('../../packages/core/src/index.ts', import.meta.url)),
+    },
+  },
   optimizeDeps: {
     exclude: ['maplibre-gl']
   },

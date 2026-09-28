@@ -10,18 +10,10 @@ object PrivacyScrubber {
     private const val SEGMENT_BUFFER = 50.0
     private const val SAFE_START_BUFFER = 300.0
 
-    private data class NearestZone(val distance: Double, val radius: Double)
-
-    private fun nearestZoneInfo(lat: Double, lng: Double, zones: List<PrivacyZone>): NearestZone? {
-        var nearest: NearestZone? = null
-        for (zone in zones) {
-            val d = GeoCalculations.getHaversineDistanceMeters(lat, lng, zone.latitude, zone.longitude)
-            val zRadius = max(1.0, zone.radiusMeters)
-            if (nearest == null || d / zRadius < nearest.distance / nearest.radius) {
-                nearest = NearestZone(d, zone.radiusMeters)
-            }
-        }
-        return nearest
+    private fun isPointInSafeBuffer(lat: Double, lng: Double, zone: PrivacyZone, bufferMeters: Double): Boolean {
+        val d = GeoCalculations.getHaversineDistanceMeters(lat, lng, zone.latitude, zone.longitude)
+        val safeRadius = zone.radiusMeters + bufferMeters
+        return d <= safeRadius
     }
 
     /**
@@ -84,8 +76,8 @@ object PrivacyScrubber {
             val pLat = pt.lat
             val pLng = pt.lng
             if (pLat != null && pLng != null) {
-                val info = nearestZoneInfo(pLat, pLng, zones)
-                if (info != null && info.distance <= info.radius + SAFE_START_BUFFER) {
+                val isUnsafe = zones.any { isPointInSafeBuffer(pLat, pLng, it, SAFE_START_BUFFER) }
+                if (isUnsafe) {
                     scrubFlags[i] = true
                     continue
                 }
@@ -109,7 +101,11 @@ object PrivacyScrubber {
         if (wasScrubbed) {
             val validGps = scrubbedPoints.filter { it.lat != null && it.lng != null }
             val sampled = GeoCalculations.downsamplePoints(validGps)
-            val coords = sampled.map { Pair(it.lat!!, it.lng!!) }
+            val coords = sampled.mapNotNull {
+                val lat = it.lat
+                val lng = it.lng
+                if (lat != null && lng != null) Pair(lat, lng) else null
+            }
             newPolyline = PolylineEncoder.encode(coords)
         }
 

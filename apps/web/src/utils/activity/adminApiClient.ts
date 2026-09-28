@@ -29,7 +29,11 @@ export async function authFetch(url: string, init: RequestInit = {}, timeoutMs =
     headers.set('Authorization', `Bearer ${token}`);
     headers.set('X-Admin-Token', token);
   }
-  return fetch(url, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const combinedSignal = init.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
+  return fetch(url, { ...init, headers, signal: combinedSignal });
 }
 
 async function uploadDetailPoints(ride: ParsedTCX): Promise<void> {
@@ -71,10 +75,14 @@ export async function uploadRide(ride: ParsedTCX): Promise<void> {
     throw new Error(`Upload failed: ${text}`);
   }
 
+  // 区分处理：明细失败不阻断主记录（已入库），但向上回传带标记的 warning，
+  // 由 UI 层向用户标注「明细缺失，详情页将退化为示意曲线」。
   try {
     await uploadDetailPoints(ride);
-  } catch (err) {
-    console.error('逐点明细入库失败，本次骑行详情将使用示意曲线：', err);
+  } catch (err: any) {
+    const warning = new Error(`明细点位入库失败，本次骑行详情将使用示意曲线：${err?.message || err}`);
+    (warning as any).code = 'DETAIL_POINTS_MISSING';
+    throw warning;
   }
 }
 

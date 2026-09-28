@@ -9,7 +9,9 @@ route('GET', '/api/ai/rider/profile', function (array $p) {
     $profile = db_first($pdo, 'SELECT * FROM rider_profile WHERE id = 1');
     if (!$profile) send_json(['profile' => null, 'memories' => []]);
 
-    $profile['bike_weight_kg'] = $profile['bike_weight_kg'] ? (float)$profile['bike_weight_kg'] : 11.5;
+    $profile['bike_weight_kg'] = (isset($profile['bike_weight_kg']) && is_numeric($profile['bike_weight_kg']))
+        ? (float)$profile['bike_weight_kg']
+        : 11.5;
     $memories = db_all($pdo, 'SELECT * FROM rider_memories ORDER BY is_active DESC, importance DESC, created_at DESC')['results'];
     send_json(['profile' => $profile, 'memories' => $memories]);
 });
@@ -26,9 +28,11 @@ route('PUT', '/api/ai/rider/profile', function (array $p) {
     $rawCur = $cur['custom_specs'] ?? '';
     if (is_string($rawCur) && $rawCur !== '') {
         $decoded = json_decode($rawCur, true);
-        if (is_array($decoded)) $mergedSpecs = $decoded;
-    } elseif (is_string($rawCur) && $rawCur !== '') {
-        $mergedSpecs = ['notes' => $rawCur];
+        if (is_array($decoded)) {
+            $mergedSpecs = $decoded;
+        } else {
+            $mergedSpecs = ['notes' => $rawCur];
+        }
     }
     if (isset($data['custom_specs'])) {
         $cs = $data['custom_specs'];
@@ -41,23 +45,30 @@ route('PUT', '/api/ai/rider/profile', function (array $p) {
         }
     }
 
-    $gear = $data['gear_ratio'] ?? $cur['gear_ratio'];
     $tires = $data['tires'] ?? $cur['tires'];
-    $bikeWeight = isset($data['bike_weight_kg']) ? (float)$data['bike_weight_kg'] : (float)$cur['bike_weight_kg'];
+    $bikeWeight = (isset($data['bike_weight_kg']) && is_numeric($data['bike_weight_kg']))
+        ? (float)$data['bike_weight_kg']
+        : ((isset($cur['bike_weight_kg']) && is_numeric($cur['bike_weight_kg'])) ? (float)$cur['bike_weight_kg'] : 11.5);
 
-    // bike_specs 综合合成
-    $parts = [];
-    if ($gear) $parts[] = $gear;
-    if ($tires) $parts[] = $tires;
-    if ($bikeWeight) $parts[] = "车重{$bikeWeight}kg";
-    foreach ($mergedSpecs as $k => $v) {
-        if (is_string($v) && $v !== '') $parts[] = "$k: $v";
+    // 结构化传动参数（替代自由文本 gear_ratio/bike_specs）
+    $chainring = isset($data['chainring']) ? (int)$data['chainring'] : (int)$cur['chainring'];
+    $wheelSpec = $data['wheel_spec'] ?? $cur['wheel_spec'];
+    // cogs：前端传数组则 json_encode 存，否则保留既有 JSON 文本
+    $cogsRaw = $cur['cogs'] ?? '[11,13,15,17,19,21,24,28]';
+    if (isset($data['cogs'])) {
+        if (is_array($data['cogs'])) {
+            $cogsJson = json_encode(array_values(array_map('intval', $data['cogs'])));
+        } else {
+            $decoded = json_decode($data['cogs'], true);
+            $cogsJson = is_array($decoded)
+                ? json_encode(array_values(array_map('intval', $decoded)))
+                : $cogsRaw;
+        }
+    } else {
+        $cogsJson = $cogsRaw;
     }
-    $bikeSpecs = (isset($data['bike_specs']) && str_contains($data['bike_specs'], '|'))
-        ? $data['bike_specs']
-        : (count($parts) > 0 ? implode(' | ', $parts) : ($data['bike_specs'] ?? $cur['bike_specs']));
 
-    $fields = ['name', 'gender', 'current_bike', 'injuries_notes', 'primary_goal'];
+    $fields = ['name', 'gender', 'current_bike', 'primary_goal'];
     $vals = [];
     foreach ($fields as $f) {
         $vals[$f] = $data[$f] ?? $cur[$f];
@@ -65,22 +76,22 @@ route('PUT', '/api/ai/rider/profile', function (array $p) {
 
     db_run($pdo, 'UPDATE rider_profile SET
         name = ?, gender = ?, weight_kg = ?, height_cm = ?, max_hr = ?, resting_hr = ?, ftp_watts = ?,
-        current_bike = ?, gear_ratio = ?, tires = ?, bike_weight_kg = ?, bike_specs = ?, custom_specs = ?,
-        injuries_notes = ?, primary_goal = ?, updated_at = unixepoch() WHERE id = 1', [
+        current_bike = ?, chainring = ?, cogs = ?, wheel_spec = ?, tires = ?, bike_weight_kg = ?, custom_specs = ?,
+        primary_goal = ?, updated_at = unixepoch() WHERE id = 1', [
         $vals['name'],
         $vals['gender'],
-        isset($data['weight_kg']) ? (float)$data['weight_kg'] : (float)$cur['weight_kg'],
-        isset($data['height_cm']) ? (float)$data['height_cm'] : (float)$cur['height_cm'],
+        (isset($data['weight_kg']) && is_numeric($data['weight_kg'])) ? (float)$data['weight_kg'] : ((isset($cur['weight_kg']) && is_numeric($cur['weight_kg'])) ? (float)$cur['weight_kg'] : 75.0),
+        (isset($data['height_cm']) && is_numeric($data['height_cm'])) ? (float)$data['height_cm'] : ((isset($cur['height_cm']) && is_numeric($cur['height_cm'])) ? (float)$cur['height_cm'] : 173.0),
         isset($data['max_hr']) ? (int)$data['max_hr'] : (int)$cur['max_hr'],
         isset($data['resting_hr']) ? (int)$data['resting_hr'] : (int)$cur['resting_hr'],
         isset($data['ftp_watts']) ? (int)$data['ftp_watts'] : (int)$cur['ftp_watts'],
         $vals['current_bike'],
-        $gear,
+        $chainring,
+        $cogsJson,
+        $wheelSpec,
         $tires,
         $bikeWeight,
-        $bikeSpecs,
         json_encode($mergedSpecs, JSON_UNESCAPED_UNICODE),
-        $vals['injuries_notes'],
         $vals['primary_goal'],
     ]);
 
@@ -96,6 +107,7 @@ route('GET', '/api/ai/rider/memories', function (array $p) {
 });
 
 // POST /api/ai/rider/memories — upsert（去重 + 合并），照搬 upsertRiderMemory
+// 软删防回流：命中 is_active=0 的已删行时不复活，拒绝写入（triggerMemoryReflection 再提炼同内容也存不回）
 route('POST', '/api/ai/rider/memories', function (array $p) {
     $body = read_json_body();
     $content = trim($body['content'] ?? '');
@@ -112,8 +124,12 @@ route('POST', '/api/ai/rider/memories', function (array $p) {
     if ($category === 'coaching' || $category === 'goal') $normalizedCat = 'preference';
 
     $pdo = get_db_connection();
-    $existing = db_first($pdo, 'SELECT id, content FROM rider_memories WHERE memory_key = ? OR content = ? LIMIT 1', [$key, $content]);
+    $existing = db_first($pdo, 'SELECT id, content, is_active FROM rider_memories WHERE memory_key = ? OR content = ? LIMIT 1', [$key, $content]);
     if ($existing) {
+        // 命中软删行：尊重删除决定，不复活、不更新，静默拒绝
+        if ((int)$existing['is_active'] === 0) {
+            send_json(['success' => true, 'id' => (int)$existing['id'], 'suppressed' => true]);
+        }
         db_run($pdo, 'UPDATE rider_memories SET category = ?, content = ?, source = ?, importance = ?, is_active = 1, updated_at = unixepoch() WHERE id = ?',
             [$normalizedCat, $content, $source, $importance, $existing['id']]);
         send_json(['success' => true, 'id' => (int)$existing['id']]);
@@ -124,9 +140,9 @@ route('POST', '/api/ai/rider/memories', function (array $p) {
     send_json(['success' => true, 'id' => db_last_insert_id($pdo)]);
 });
 
-// DELETE /api/ai/rider/memories/:id
+// DELETE /api/ai/rider/memories/:id — 软删（is_active=0），防止反思回流复活
 route('DELETE', '/api/ai/rider/memories/:id', function (array $p) {
     $pdo = get_db_connection();
-    db_run($pdo, 'DELETE FROM rider_memories WHERE id = ?', [(int)$p['id']]);
+    db_run($pdo, 'UPDATE rider_memories SET is_active = 0, updated_at = unixepoch() WHERE id = ?', [(int)$p['id']]);
     send_json(['success' => true]);
 });

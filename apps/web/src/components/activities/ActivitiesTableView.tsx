@@ -50,14 +50,14 @@ export default function ActivitiesTableView({
               key={ride.id}
               data-testid={`activity-row-${ride.id}`}
               onClick={() => onRideClick(ride.id)}
-              className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors group cursor-pointer"
+              className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 active:bg-slate-100/70 transition-colors group cursor-pointer"
             >
               <div className="min-w-0 flex-1 pr-3">
                 <div className="flex items-center space-x-2">
                   <span className="text-xs font-medium text-slate-900 group-hover:text-slate-950 transition-colors truncate">
                     {ride.title}
                   </span>
-                  <span className="text-[10px] font-mono bg-slate-50 text-slate-500 border border-slate-200 px-1.5 py-0.2 rounded shrink-0">
+                  <span className="text-[10px] font-mono bg-slate-50 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded shrink-0">
                     {city}
                   </span>
                 </div>
@@ -81,7 +81,7 @@ export default function ActivitiesTableView({
                   type="button"
                   onClick={(e) => onDeleteRequest(e, ride.id, ride.title)}
                   disabled={deletingId === ride.id}
-                  className="p-1 rounded text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-md text-slate-300 hover:text-rose-600 hover:bg-rose-50 active:scale-[0.92] transition-all duration-100 ease-out cursor-pointer"
                   aria-label="删除此记录"
                 >
                   <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />

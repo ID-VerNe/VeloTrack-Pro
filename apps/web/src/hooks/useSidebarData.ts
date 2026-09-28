@@ -8,11 +8,12 @@ export const INITIAL_SIDEBAR_PROFILE: RiderProfile = {
   weight_kg: 75,
   height_cm: 175,
   max_hr: 188,
-  resting_hr: 60,
+  resting_hr: 55,
   ftp_watts: 200,
   current_bike: '',
-  bike_specs: '',
-  injuries_notes: '',
+  chainring: 46,
+  cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+  wheel_spec: '20x2.0',
   primary_goal: '',
 };
 

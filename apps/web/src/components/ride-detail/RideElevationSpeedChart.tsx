@@ -79,26 +79,26 @@ export default function RideElevationSpeedChart({
     });
 
   return (
-    <div className="pt-4 space-y-6 border-t border-black/10 mt-6">
+    <div className="pt-4 space-y-6 border-t border-slate-200/80 mt-6">
       {/* Header & Section Badges */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[15px] font-medium text-black flex items-center space-x-1.5 font-sans">
-            <Gauge className="w-4 h-4 text-black/64" />
+          <h3 className="text-[15px] font-semibold text-slate-900 flex items-center space-x-1.5 font-sans">
+            <Gauge className="w-4 h-4 text-slate-500" />
             <span>速度、海拔与微观路段剖面</span>
           </h3>
           <div className="flex items-center space-x-3">
             {/* 数据源标注 */}
             {isRealData ? (
               <span
-                className="text-[12px] text-black/44"
+                className="text-[12px] text-slate-400 font-mono"
                 title="海拔与速度曲线来自码表逐点实测记录"
               >
                 实测逐点数据
               </span>
             ) : (
               <span
-                className="text-[12px] text-black/44"
+                className="text-[12px] text-slate-400 font-mono"
                 title="此骑行无逐点明细（旧数据），海拔曲线为基于总爬升/最高海拔的示意拟合，速度为由 GPS 位移推算的估算值"
               >
                 示意曲线

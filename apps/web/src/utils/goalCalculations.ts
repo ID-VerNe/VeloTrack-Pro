@@ -71,7 +71,7 @@ export function computeGoalStatsFromRides(rides: any[]): ComputedGoalStats {
     }
   });
 
-  const latestRideTime = Math.max(...rides.map((r) => r.start_time || 0));
+  const latestRideTime = rides.reduce((max, r) => Math.max(max, r.start_time || 0), 0);
   const refTime = latestRideTime > 0 ? latestRideTime : Date.now();
 
   const weekRange = getNaturalWeekRange(refTime);
@@ -145,14 +145,14 @@ export function computeGoalStatsFromRides(rides: any[]): ComputedGoalStats {
           icon: '⛰️',
           desc: `当前累计爬升: ${totalAscentM}m / 1000m`,
         },
-    // 4. 高踏频膝盖守护
+    // 4. 高踏频关节守护
     {
       id: 'ach_knee_health',
       unlocked: true,
-      title: '高踏频膝盖守护使者',
+      title: '高踏频关节守护使者',
       date: '持续保持',
       icon: '🛡️',
-      desc: '坚持 85+ rpm 踏频，平路 46x18T/21T 巡航，有效降低膝关节剪切力矩',
+      desc: '坚持 85+ rpm 踏频，平路中轻档高踏频巡航，有效降低膝关节剪切力矩',
     },
   ];
 

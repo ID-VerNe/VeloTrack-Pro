@@ -3,6 +3,7 @@ import { decodePolylineToLngLats } from '../utils/geoUtils';
 import { getRideInsight } from '../services/aiInsights';
 import { getRiderProfile } from '../services/riderService';
 import { analyzeSpeedDistribution } from '../utils/speedDistribution';
+import { deriveCogsFromTarget } from '../utils/cyclingPhysicsEngine';
 import { calculateCyclingCalories } from '../utils/cyclingCalculations';
 import { getLocalRideDetail, saveLocalRideDetail, deleteLocalRide } from '../utils/storage/indexedDb';
 import type { RideDetailPoint } from '../utils/telemetrySegments';
@@ -18,6 +19,12 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
   const [detailPoints, setDetailPoints] = useState<RideDetailPoint[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [riderWeight, setRiderWeight] = useState<number>(75.0);
+  const [gear, setGear] = useState<{ chainring: number; cogs: number[]; wheel_spec: string; cruisingCog: number }>({
+    chainring: 46,
+    cogs: [11, 13, 15, 17, 19, 21, 24, 28],
+    wheel_spec: '20x2.0',
+    cruisingCog: 15,
+  });
 
   // Performance Insight State
   const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -30,15 +37,24 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
 
   const hasLocalDetailRef = useRef(false);
 
-  // Fetch Rider Profile Weight
+  // Fetch Rider Profile Weight + Gear
   useEffect(() => {
     getRiderProfile()
       .then((profile) => {
         if (profile.weight_kg) {
           setRiderWeight(profile.weight_kg);
         }
+        const { cruisingCog } = deriveCogsFromTarget(
+          profile.chainring, profile.cogs, profile.wheel_spec, 25.5
+        );
+        setGear({
+          chainring: profile.chainring,
+          cogs: profile.cogs,
+          wheel_spec: profile.wheel_spec,
+          cruisingCog,
+        });
       })
-      .catch((err) => console.error('Failed to load profile weight', err));
+      .catch((err) => console.error('Failed to load profile', err));
   }, []);
 
   const applyRideData = useCallback((data: { ride: any; detailPoints?: any[] | null }) => {
@@ -53,7 +69,7 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
   }, []);
 
   // Fetch Ride Details (Local-First 0ms 秒开 + 后台静默对齐)
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (signal?: AbortSignal) => {
     if (!id) return;
     setLoadError(null);
 
@@ -68,7 +84,8 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
 
     // 2. 发起网络请求
     try {
-      const res = await fetch(`/api/rides/${id}`);
+      const res = await fetch(`/api/rides/${id}`, { signal });
+      if (signal?.aborted) return;
       if (!res.ok) {
         if (!hasLocalDetailRef.current) {
           setLoadError(res.status === 404 ? '骑行记录不存在或已被删除' : `加载失败（HTTP ${res.status}）`);
@@ -76,13 +93,15 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
         return;
       }
       const data = await res.json();
+      if (signal?.aborted) return;
       if (data.ride) {
         applyRideData(data);
         saveLocalRideDetail(id, data.ride, data.detailPoints).catch(() => {});
       } else if (!hasLocalDetailRef.current) {
         setLoadError('骑行数据格式异常');
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (signal?.aborted || err?.name === 'AbortError') return;
       console.error('Failed to load ride detail', err);
       if (!hasLocalDetailRef.current) {
         setLoadError('网络异常，无法加载骑行详情');
@@ -91,31 +110,37 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
   }, [id, applyRideData]);
 
   useEffect(() => {
-    loadData();
+    const controller = new AbortController();
+    loadData(controller.signal);
+    return () => controller.abort();
   }, [loadData]);
 
   // Fetch AI Insight
   const fetchInsight = useCallback(
-    async (forceRegenerate = false) => {
+    async (forceRegenerate = false, signal?: AbortSignal) => {
       if (!id) return;
       setAiLoading(true);
       try {
-        const result = await getRideInsight(id, forceRegenerate);
+        const result = await getRideInsight(id, forceRegenerate, signal);
+        if (signal?.aborted) return;
         if (result.insight) {
           setAiInsight(result.insight);
           setIsCached(result.cached);
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (signal?.aborted || err?.name === 'AbortError') return;
         console.error('Failed to fetch AI insight', err);
       } finally {
-        setAiLoading(false);
+        if (!signal?.aborted) setAiLoading(false);
       }
     },
     [id]
   );
 
   useEffect(() => {
-    fetchInsight(false);
+    const controller = new AbortController();
+    fetchInsight(false, controller.signal);
+    return () => controller.abort();
   }, [fetchInsight]);
 
   // Delete Ride Handler
@@ -144,8 +169,8 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
 
   const speedDist = useMemo(() => {
     if (!ride) return null;
-    return analyzeSpeedDistribution(detailPoints, movingAvgSpeedKmh, 46, 15);
-  }, [ride, detailPoints, movingAvgSpeedKmh]);
+    return analyzeSpeedDistribution(detailPoints, movingAvgSpeedKmh, gear.chainring, gear.cruisingCog);
+  }, [ride, detailPoints, movingAvgSpeedKmh, gear]);
 
   const calories = useMemo(() => {
     if (!ride) return 0;
@@ -166,6 +191,7 @@ export function useRideDetailData({ id, onDeleteSuccess }: UseRideDetailDataOpti
     detailPoints,
     loadError,
     riderWeight,
+    gear,
     aiInsight,
     aiLoading,
     isCached,

@@ -36,14 +36,14 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-xs transition-opacity animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="车手与战车档案舱"
         tabIndex={-1}
-        className="w-full sm:w-[480px] bg-white h-full flex flex-col border-l border-slate-200/80 animate-in slide-in-from-right duration-200 focus:outline-none"
+        className="w-full sm:w-[480px] bg-white h-full flex flex-col border-l border-slate-200/80 transform-gpu duration-300 ease-apple-spring animate-in slide-in-from-right focus:outline-none shadow-2xl"
       >
         {/* Top Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
@@ -55,13 +55,13 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
               </span>
             </div>
             <p className="text-[11px] font-mono text-slate-400 truncate max-w-[320px] mt-0.5">
-              {profile.current_bike || '大行 P8'} · {profile.primary_goal || '巡航 20km/h'}
+              {profile.current_bike || '未配置'} · {profile.primary_goal || '未设定目标'}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg active:scale-[0.95] transition-all duration-100 ease-out cursor-pointer"
             aria-label="关闭"
           >
             <X className="w-4 h-4" />
@@ -102,7 +102,7 @@ export default function RiderProfileDrawer({ isOpen, onClose }: Props) {
               }`}
             >
               <span>习惯与身体备忘</span>
-              <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
+              <span className={`text-[10px] px-1 py-0.5 rounded font-mono ${
                 activeTab === 'memories' ? 'bg-brand-700 text-brand-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {memories.length}

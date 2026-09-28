@@ -3,9 +3,7 @@ package com.velotrack.sync.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -22,14 +20,28 @@ class ApiService(private val configRepo: ConfigRepository) {
         const val MAX_DETAIL_POINTS = 1500
     }
 
-    // 与 admin web 端 JSON.stringify 行为对齐：
-    //   - encodeDefaults=true：非空默认值字段（如 hr_z*_seconds=0）照常序列化，admin 也是显式输出 0
-    //   - explicitNulls=false：可空字段为 null 时不写出，等价于 admin 的 `...(x !== undefined ? {x} : {})`
-    // 既保证主记录心率区间 0 值入库不被丢成 NULL，又让 detail-points 隐私圈擦除段不膨胀 body。
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
         explicitNulls = false
+    }
+
+    /**
+     * 拉取车手档案以注入用户自定义心率(max_hr / resting_hr)。
+     * 失败时返回 null,调用方用默认 188/55 兜底。
+     */
+    suspend fun fetchRiderProfile(): Result<RiderProfile?> = withContext(Dispatchers.IO) {
+        try {
+            val req = buildRequest("/api/ai/rider/profile", "GET")
+            client.newCall(req).execute().use { resp ->
+                if (!resp.isSuccessful) return@withContext Result.success(null)
+                val bodyStr = resp.body?.string() ?: return@withContext Result.success(null)
+                val profile = json.decodeFromString<RiderProfile>(bodyStr)
+                Result.success(profile)
+            }
+        } catch (e: Exception) {
+            Result.success(null)
+        }
     }
 
     private val client = OkHttpClient.Builder()
@@ -53,7 +65,11 @@ class ApiService(private val configRepo: ConfigRepository) {
 
     private suspend fun buildRequest(path: String, method: String, body: RequestBody? = null): Request {
         val config = configRepo.getConfig()
-        val url = "${config.baseUrl}${if (path.startsWith("/")) path else "/$path"}"
+        val base = config.baseUrl
+        require(base.startsWith("http://") || base.startsWith("https://")) {
+            "Invalid base URL scheme: $base"
+        }
+        val url = "$base${if (path.startsWith("/")) path else "/$path"}"
         val builder = Request.Builder().url(url)
 
         val cleanId = cleanToken(config.cfClientId)
@@ -84,17 +100,15 @@ class ApiService(private val configRepo: ConfigRepository) {
             val req = buildRequest("/api/admin/privacy-zones", "GET")
             client.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) {
-                    return@withContext Result.failure(IOException("拉取隐私圈失败: HTTP ${resp.code} ${resp.message}"))
+                    val cached = configRepo.getCachedZones()
+                    return@withContext if (cached.isNotEmpty()) Result.success(cached)
+                    else Result.failure(IOException("拉取隐私圈失败: HTTP ${resp.code} ${resp.message}"))
                 }
                 val bodyStr = resp.body?.string() ?: "{}"
                 val zones = try {
                     json.decodeFromString<PrivacyZonesResponse>(bodyStr).zones
                 } catch (_: Exception) {
-                    try {
-                        json.decodeFromString<List<PrivacyZone>>(bodyStr)
-                    } catch (_: Exception) {
-                        emptyList()
-                    }
+                    json.decodeFromString<List<PrivacyZone>>(bodyStr)
                 }
                 configRepo.saveCachedZones(zones)
                 Result.success(zones)
@@ -174,19 +188,24 @@ class ApiService(private val configRepo: ConfigRepository) {
             val body = payloadJson.toRequestBody("application/json".toMediaType())
             val req = buildRequest("/api/ai/suggest-title", "POST", body)
             client.newBuilder()
-                .readTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(1500, TimeUnit.MILLISECONDS)
+                .connectTimeout(1500, TimeUnit.MILLISECONDS)
                 .build()
                 .newCall(req)
                 .execute()
                 .use { resp ->
-                    if (resp.isSuccessful) {
-                        val respBody = resp.body?.string() ?: return@use null
-                        val obj = json.parseToJsonElement(respBody)
-                        obj.toString()
-                    } else null
+                    if (!resp.isSuccessful) return@withContext null
+                    val respBody = resp.body?.string() ?: return@withContext null
+                    val element = json.parseToJsonElement(respBody)
+                    if (element is JsonObject) {
+                        element["title"]?.jsonPrimitive?.contentOrNull
+                            ?: element["suggested_title"]?.jsonPrimitive?.contentOrNull
+                    } else {
+                        element.jsonPrimitive.contentOrNull
+                    }
                 }
         } catch (_: Exception) {
-            null
+            null // 网络或 404 故障直接静默降级为本地规则命名，坚决不阻塞上传流程
         }
     }
 }

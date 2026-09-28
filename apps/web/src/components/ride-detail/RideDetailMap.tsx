@@ -62,6 +62,7 @@ export default function RideDetailMap({
   const scrubberMarkerRef = useRef<Marker | null>(null);
   const scrubberPopupRef = useRef<Popup | null>(null);
   const customMarkersRef = useRef<Marker[]>([]);
+  const layerListenersRef = useRef<{ event: string; layerId: string; listener: any }[]>([]);
 
   // 底图偏好全局共享：与仪表盘联动，localStorage 持久化
   const { mapStyle: activeStyle, setMapStyle: setActiveStyle } = useMapStyle();
@@ -131,6 +132,14 @@ export default function RideDetailMap({
         });
       }
 
+      // Clean up previous event listeners on route-hit-target
+      layerListenersRef.current.forEach(({ event, layerId, listener }) => {
+        try {
+          map.off(event, layerId, listener);
+        } catch (_) {}
+      });
+      layerListenersRef.current = [];
+
       // Remove existing route layers before re-adding
       ['route-glow', 'route-casing', 'route-inner', 'route-hit-target'].forEach((layerId) => {
         if (map.getLayer(layerId)) map.removeLayer(layerId);
@@ -183,11 +192,11 @@ export default function RideDetailMap({
         })
       );
 
-      map.on('mouseenter', 'route-hit-target', () => {
+      const onMouseEnter = () => {
         map.getCanvas().style.cursor = 'crosshair';
-      });
+      };
 
-      map.on('mousemove', 'route-hit-target', (e) => {
+      const onMouseMove = (e: any) => {
         if (!e.lngLat) return;
         const targetCoord: [number, number] = [e.lngLat.lng, e.lngLat.lat];
         const closest = findClosestTelemetryIndex(
@@ -198,12 +207,22 @@ export default function RideDetailMap({
         if (closest.chartIndex !== undefined) {
           onMapHoverPoint?.(closest.chartIndex);
         }
-      });
+      };
 
-      map.on('mouseleave', 'route-hit-target', () => {
+      const onMouseLeave = () => {
         map.getCanvas().style.cursor = '';
         onMapLeavePoint?.();
-      });
+      };
+
+      map.on('mouseenter', 'route-hit-target', onMouseEnter);
+      map.on('mousemove', 'route-hit-target', onMouseMove);
+      map.on('mouseleave', 'route-hit-target', onMouseLeave);
+
+      layerListenersRef.current = [
+        { event: 'mouseenter', layerId: 'route-hit-target', listener: onMouseEnter },
+        { event: 'mousemove', layerId: 'route-hit-target', listener: onMouseMove },
+        { event: 'mouseleave', layerId: 'route-hit-target', listener: onMouseLeave },
+      ];
 
       // Start Marker
       const sMarker = createStartMarker(adaptedCoords[0]).addTo(map);
@@ -276,6 +295,12 @@ export default function RideDetailMap({
     });
 
     return () => {
+      layerListenersRef.current.forEach(({ event, layerId, listener }) => {
+        try {
+          mapRef.current?.off(event, layerId, listener);
+        } catch (_) {}
+      });
+      layerListenersRef.current = [];
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -382,7 +407,7 @@ export default function RideDetailMap({
 
       {/* Speed Gradient Color Heatmap Legend */}
       {showHeatmapLegend && (
-        <SpeedGradientLegend className="absolute bottom-8 left-6 z-20" />
+        <SpeedGradientLegend className="hidden sm:flex absolute bottom-8 left-6 z-20" />
       )}
 
       {/* Floating Zoom & Controls (iOS style integrated capsule) */}
